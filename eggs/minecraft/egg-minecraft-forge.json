@@ -1,0 +1,18 @@
+{
+  "_comment": "Forge Minecraft server egg.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Minecraft Forge",
+  "author": "GrassNotFound",
+  "description": "Minecraft Java server using Forge.",
+  "features": ["eula", "java_version", "pid_limit"],
+  "docker_images": {"Java 25": "ghcr.io/pelican-eggs/yolks:java_25", "Java 21": "ghcr.io/pelican-eggs/yolks:java_21", "Java 17": "ghcr.io/pelican-eggs/yolks:java_17"},
+  "file_denylist": [],
+  "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 @user_jvm_args.txt @libraries/net/minecraftforge/forge/{{MC_VERSION}}-{{FORGE_VERSION}}/unix_args.txt nogui",
+  "config": {"files": "{}", "startup": "{}", "logs": "{}", "stop": "stop"},
+  "scripts": {"installation": {"script": "#!/bin/bash\nmkdir -p /mnt/server\ncd /mnt/server\nFORGE_INSTALLER=forge-${MC_VERSION}-${FORGE_VERSION}-installer.jar\ncurl -fLo ${FORGE_INSTALLER} https://maven.minecraftforge.net/net/minecraftforge/forge/${MC_VERSION}-${FORGE_VERSION}/${FORGE_INSTALLER}\njava -jar ${FORGE_INSTALLER} --installServer\nrm -f ${FORGE_INSTALLER}\necho 'Install Complete'", "container": "ghcr.io/pelican-eggs/installers:debian", "entrypoint": "bash"}},
+  "variables": [
+    {"name": "Minecraft Version", "description": "Minecraft version, for example 1.20.1.", "env_variable": "MC_VERSION", "default_value": "1.20.1", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"},
+    {"name": "Forge Version", "description": "Forge version matching the Minecraft version, for example 47.4.0.", "env_variable": "FORGE_VERSION", "default_value": "47.4.0", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"}
+  ]
+}

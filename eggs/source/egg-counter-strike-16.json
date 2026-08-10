@@ -1,0 +1,24 @@
+{
+  "_comment": "Counter-Strike 1.6 HLDS egg based on the current Pelican HLDS layout.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Counter-Strike 1.6",
+  "author": "GrassNotFound",
+  "description": "Counter-Strike 1.6 dedicated server.",
+  "features": ["steam_disk_space"],
+  "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},
+  "file_denylist": [],
+  "startup": "./hlds_run -console -game cstrike -port {{SERVER_PORT}} -sport {{VAC_PORT}} +map {{SRCDS_MAP}} +ip 0.0.0.0 -strictportbind -norestart",
+  "config": {"files": "{}", "startup": "{\"done\": \"Connection to Steam servers successful\"}", "logs": "{}", "stop": "quit"},
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_set_config 90 mod cstrike +app_update 90 validate +quit\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so",
+      "container": "ghcr.io/parkervcp/installers:debian",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {"name": "Map", "description": "The default map.", "env_variable": "SRCDS_MAP", "default_value": "de_dust2", "user_viewable": true, "user_editable": true, "rules": "required|string|alpha_dash", "field_type": "text"},
+    {"name": "VAC Port", "description": "VAC port. Default 26900.", "env_variable": "VAC_PORT", "default_value": "26900", "user_viewable": true, "user_editable": false, "rules": "required|numeric|digits_between:1,5", "field_type": "text"}
+  ]
+}

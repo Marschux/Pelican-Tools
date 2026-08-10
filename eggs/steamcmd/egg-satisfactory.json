@@ -1,0 +1,18 @@
+{
+  "_comment": "Satisfactory dedicated server egg.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Satisfactory",
+  "author": "GrassNotFound",
+  "description": "Satisfactory dedicated server.",
+  "features": ["steam_disk_space"],
+  "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},
+  "file_denylist": [],
+  "startup": "./FactoryServer.sh -unattended -Port={{SERVER_PORT}} -QueryPort={{QUERY_PORT}} -BeaconPort={{BEACON_PORT}}",
+  "config": {"files": "{}", "startup": "{\"done\":\"Engine is initialized.\"}", "logs": "{}", "stop": "^C"},
+  "scripts": {"installation": {"script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update 1690800 validate +quit\nchmod +x /mnt/server/FactoryServer.sh\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so", "container": "ghcr.io/parkervcp/installers:debian", "entrypoint": "bash"}},
+  "variables": [
+    {"name": "Query Port", "description": "Server query port.", "env_variable": "QUERY_PORT", "default_value": "15777", "user_viewable": false, "user_editable": false, "rules": "required|numeric|between:1000,65535", "field_type": "text"},
+    {"name": "Beacon Port", "description": "Beacon port.", "env_variable": "BEACON_PORT", "default_value": "15000", "user_viewable": false, "user_editable": false, "rules": "required|numeric|between:1000,65535", "field_type": "text"}
+  ]
+}

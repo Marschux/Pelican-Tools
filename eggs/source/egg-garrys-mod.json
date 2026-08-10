@@ -1,0 +1,19 @@
+{
+  "_comment": "Garry's Mod dedicated server egg.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Garry's Mod",
+  "author": "GrassNotFound",
+  "description": "Garry's Mod dedicated server.",
+  "features": ["steam_disk_space"],
+  "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},
+  "file_denylist": [],
+  "startup": "./srcds_run -game garrysmod -console -port {{SERVER_PORT}} +maxplayers {{MAX_PLAYERS}} +map {{MAP}} {{EXTRA_FLAGS}}",
+  "config": {"files": "{}", "startup": "{\"done\":\" games\"}", "logs": "{}", "stop": "quit"},
+  "scripts": {"installation": {"script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update 4020 validate +quit\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so", "container": "ghcr.io/parkervcp/installers:debian", "entrypoint": "bash"}},
+  "variables": [
+    {"name": "Map", "description": "Startmap.", "env_variable": "MAP", "default_value": "gm_construct", "user_viewable": true, "user_editable": true, "rules": "required|string|alpha_dash", "field_type": "text"},
+    {"name": "Max Players", "description": "Maximale Spielerzahl.", "env_variable": "MAX_PLAYERS", "default_value": "16", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:1,128", "field_type": "text"},
+    {"name": "Extra Flags", "description": "Optionale zusätzliche Startparameter.", "env_variable": "EXTRA_FLAGS", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:255", "field_type": "text"}
+  ]
+}

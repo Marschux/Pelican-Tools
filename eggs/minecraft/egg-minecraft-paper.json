@@ -1,0 +1,19 @@
+{
+  "_comment": "Paper Minecraft server egg.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Minecraft Paper",
+  "author": "GrassNotFound",
+  "description": "High-performance Minecraft Java server based on Paper.",
+  "features": ["eula", "java_version", "pid_limit"],
+  "docker_images": {"Java 25": "ghcr.io/pelican-eggs/yolks:java_25", "Java 21": "ghcr.io/pelican-eggs/yolks:java_21", "Java 17": "ghcr.io/pelican-eggs/yolks:java_17"},
+  "file_denylist": [],
+  "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}",
+  "config": {"files": "{\"server.properties\":{\"parser\":\"properties\",\"find\":{\"server-ip\":\"\",\"server-port\":\"{{server.build.default.port}}\",\"query.port\":\"{{server.build.default.port}}\"}}}", "startup": "{\"done\": \")! For help, type \"}", "logs": "{}", "stop": "stop"},
+  "scripts": {"installation": {"script": "#!/bin/ash\nmkdir -p /mnt/server\ncd /mnt/server\nif [ -z \"${PAPER_VERSION}\" ] || [ \"${PAPER_VERSION}\" = \"latest\" ]; then PAPER_VERSION=$(curl -s https://api.papermc.io/v2/projects/paper | jq -r '.versions[-1]'); fi\nif [ -z \"${BUILD_NUMBER}\" ] || [ \"${BUILD_NUMBER}\" = \"latest\" ]; then BUILD_NUMBER=$(curl -s https://api.papermc.io/v2/projects/paper/versions/${PAPER_VERSION} | jq -r '.builds[-1]'); else BUILD_NUMBER=${BUILD_NUMBER}; fi\ncurl -fLo ${SERVER_JARFILE} https://api.papermc.io/v2/projects/paper/versions/${PAPER_VERSION}/builds/${BUILD_NUMBER}/downloads/paper-${PAPER_VERSION}-${BUILD_NUMBER}.jar\necho 'Install Complete'", "container": "ghcr.io/pelican-eggs/installers:alpine", "entrypoint": "ash"}},
+  "variables": [
+    {"name": "Server Jar File", "description": "The jar file to run.", "env_variable": "SERVER_JARFILE", "default_value": "server.jar", "user_viewable": false, "user_editable": false, "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/", "field_type": "text"},
+    {"name": "Paper Version", "description": "Minecraft version, or latest.", "env_variable": "PAPER_VERSION", "default_value": "latest", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"},
+    {"name": "Build Number", "description": "Paper build number, or latest.", "env_variable": "BUILD_NUMBER", "default_value": "latest", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"}
+  ]
+}

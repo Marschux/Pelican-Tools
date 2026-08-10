@@ -1,0 +1,28 @@
+{
+  "_comment": "Counter-Strike 2 dedicated server egg.",
+  "meta": {"version": "PTDL_v2", "update_url": null},
+  "exported_at": "2026-08-10T00:00:00+02:00",
+  "name": "Counter-Strike 2",
+  "author": "GrassNotFound",
+  "description": "Counter-Strike 2 dedicated server.",
+  "features": ["steam_disk_space"],
+  "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},
+  "file_denylist": [],
+  "startup": "./game/bin/linuxsteamrt64/cs2 -dedicated -console -usercon -port {{SERVER_PORT}} +ip 0.0.0.0 +sv_setsteamaccount {{STEAM_ACC}} +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} +mapgroup {{MAPGROUP}} +map {{SRCDS_MAP}} +maxplayers {{MAX_PLAYERS}}",
+  "config": {"files": "{}", "startup": "{\"done\": \"Connection to Steam servers successful\"}", "logs": "{}", "stop": "quit"},
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update 730 validate +quit\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so",
+      "container": "ghcr.io/parkervcp/installers:debian",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {"name": "Game Server Login Token", "description": "Optional Steam Game Server Login Token for public servers.", "env_variable": "STEAM_ACC", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
+    {"name": "Map", "description": "The default map.", "env_variable": "SRCDS_MAP", "default_value": "de_dust2", "user_viewable": true, "user_editable": true, "rules": "required|string|alpha_dash", "field_type": "text"},
+    {"name": "Map Group", "description": "The map group.", "env_variable": "MAPGROUP", "default_value": "mg_active", "user_viewable": true, "user_editable": true, "rules": "required|string|max:64", "field_type": "text"},
+    {"name": "Game Type", "description": "CS2 game type.", "env_variable": "GAME_TYPE", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,1", "field_type": "text"},
+    {"name": "Game Mode", "description": "CS2 game mode.", "env_variable": "GAME_MODE", "default_value": "1", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,30", "field_type": "text"},
+    {"name": "Max Players", "description": "Maximum visible player count.", "env_variable": "MAX_PLAYERS", "default_value": "16", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:1,64", "field_type": "text"}
+  ]
+}
