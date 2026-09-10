@@ -20,8 +20,10 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Marschux\GameQuery\Filament\Admin\Resources\GameQueries\Pages\ManageGameQueries;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Query\QueryResult;
@@ -70,7 +72,19 @@ class GameQueryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // without this every row would load its eggs separately just to draw the icons
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('eggs'))
             ->columns([
+                ImageColumn::make('icon')
+                    ->label('')
+                    // an entry can cover several eggs, so all their icons are stacked rather
+                    // than picking one of them arbitrarily. Eggs without an icon yield null
+                    // and are dropped instead of rendering a broken image.
+                    ->state(fn (GameQuery $record) => $record->eggs->map(fn ($egg) => $egg->icon)->filter()->values()->all())
+                    ->stacked()
+                    ->limit(3)
+                    ->limitedRemainingText()
+                    ->size(28),
                 TextColumn::make('name')
                     ->label(trans('game-query::query.name'))
                     // without a label the type is the only thing identifying a row
