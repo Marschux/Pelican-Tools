@@ -4,9 +4,11 @@ namespace Marschux\GameQuery\Query\Schemas;
 
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
+use Marschux\GameQuery\Query\ConsoleLog;
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryResult;
 use Marschux\GameQuery\Query\QueryTypeService;
+use Marschux\GameQuery\Query\ValheimLogParser;
 use Throwable;
 use xPaw\SourceQuery\SourceQuery;
 
@@ -33,9 +35,34 @@ class ValheimSchema extends SourceSchema
 
     public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult
     {
-        $result = $this->run($ip, $port, SourceQuery::SOURCE, $withRules);
+        $result = $this->run($ip, $port, SourceQuery::SOURCE, $withRules)
+            ?? $this->fromConsole($server);
 
         return $result?->withSeed($this->seed($server));
+    }
+
+    /**
+     * With crossplay on, Valheim routes through the PlayFab relay and never opens the udp
+     * ports locally, so no A2S query can reach it. It does log its session state though, and
+     * that is the only place a player count exists in that mode.
+     */
+    private function fromConsole(Server $server): ?QueryResult
+    {
+        $lines = ConsoleLog::tail($server);
+
+        $players = ValheimLogParser::players($lines);
+
+        if ($players === null) {
+            return null;
+        }
+
+        return new QueryResult(
+            hostname: ValheimLogParser::hostname($lines) ?? '',
+            players: $players,
+            // valheim's own hard limit; the log does not carry it
+            maxPlayers: 10,
+            joinCode: ValheimLogParser::joinCode($lines),
+        );
     }
 
     private function seed(Server $server): ?string

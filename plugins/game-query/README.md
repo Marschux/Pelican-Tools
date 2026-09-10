@@ -43,6 +43,13 @@ daemon file api, from `savegames/worlds_local`, using the `WORLD` startup variab
 world. Both layouts are handled: the pre-1.0 `<world>.fwl` and the 1.0 `<world>/_main.N.fwl2`
 folder.
 
+With crossplay enabled Valheim routes everything through the PlayFab relay and never opens the
+udp ports locally, so no A2S query can reach it. In that case the schema falls back to reading
+the server's own console output through the daemon, where Valheim logs its session state -
+player count, server name and the crossplay join code. Wings caps that at the last 100 lines,
+so the count is only available while a session line is still within them, and this route gives
+no player names.
+
 The 1.0 header layout is not documented anywhere, so the parser validates what it reads and
 returns nothing when the bytes do not look like a seed. An empty seed field means "could not
 read it", never a wrong value.

@@ -11,9 +11,12 @@
 require __DIR__ . '/src/Query/QueryPlayer.php';
 require __DIR__ . '/src/Query/QueryResult.php';
 require __DIR__ . '/src/Query/FwlSeedParser.php';
+require __DIR__ . '/src/Query/ConsoleLog.php';
+require __DIR__ . '/src/Query/ValheimLogParser.php';
 
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryPlayer;
+use Marschux\GameQuery\Query\ValheimLogParser;
 use Marschux\GameQuery\Query\QueryResult;
 
 /** Builds a valheim world metadata file: two int32 headers, then two length-prefixed strings. */
@@ -49,6 +52,24 @@ assert(QueryResult::plain('A <bogus>tag</bogus> stays') === 'A <bogus>tag</bogus
 
 // the icon is not offered as a toggle: nothing renders a data uri in a stat block
 assert(!in_array('icon', QueryResult::FIELDS, true));
+
+// crossplay servers never answer A2S, so the player count comes out of their own log
+$log = [
+    '09/10/2026 22:35:40: Session \"<color=lime>Tormax</color>\" registered with join code 001340',
+    '09/10/2026 22:35:44: Session \"<color=lime>Tormax</color>\" with join code 688911 and IP 89.245.16.209:2456 is active with 0 player(s)',
+    '09/10/2026 22:43:19: Got character ZDOID from Ichfrauson : 3090414758:5',
+    '09/10/2026 22:44:02: Session \"<color=lime>Tormax</color>\" with join code 688911 and IP 89.245.16.209:2456 is active with 2 player(s)',
+];
+
+assert(ValheimLogParser::players($log) === 2, 'the newest count wins, not the first');
+assert(ValheimLogParser::hostname($log) === 'Tormax', 'markup is stripped here too');
+assert(ValheimLogParser::joinCode($log) === '688911');
+assert(ValheimLogParser::players([]) === null, 'empty log is not zero players');
+assert(ValheimLogParser::players(['nothing to see here']) === null);
+
+// only the registration line present: no count yet, but name and code are already known
+assert(ValheimLogParser::players([$log[0]]) === null);
+assert(ValheimLogParser::joinCode([$log[0]]) === '001340');
 
 // a CS2 server whose 12/12 are mostly bots
 $cs2 = new QueryResult(

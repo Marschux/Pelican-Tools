@@ -29,6 +29,7 @@ readonly class QueryResult
         public ?string $os = null,
         public ?string $icon = null,
         public ?string $seed = null,
+        public ?string $joinCode = null,
         public ?array $playerList = null,
         public ?array $rules = null,
     ) {
@@ -63,6 +64,7 @@ readonly class QueryResult
         'secure',
         'os',
         'seed',
+        'joinCode',
     ];
 
     /** Human players, i.e. without the bots the server counts towards its player number. */
@@ -97,6 +99,7 @@ readonly class QueryResult
             os: $this->os,
             icon: $this->icon,
             seed: $seed,
+            joinCode: $this->joinCode,
             playerList: $this->playerList,
             rules: $this->rules,
         );
@@ -118,6 +121,7 @@ readonly class QueryResult
             'os' => $this->os,
             'icon' => $this->icon,
             'seed' => $this->seed,
+            'join_code' => $this->joinCode,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,
                 'score' => $p->score,

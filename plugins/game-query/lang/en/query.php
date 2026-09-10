@@ -37,6 +37,7 @@ return [
         'passworded' => 'Password',
         'secure' => 'VAC',
         'os' => 'OS',
+        'joinCode' => 'Join Code',
         'seed' => 'World Seed',
         'icon' => 'Server Icon',
     ],
