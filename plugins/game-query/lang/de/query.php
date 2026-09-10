@@ -84,7 +84,9 @@ return [
 
     'table' => [
         'no_players' => 'Keine Spieler gefunden',
-        'no_players_description' => 'Entweder ist niemand online oder die Query ist auf diesem Server deaktiviert',
+        'no_players_description' => 'Gerade ist niemand verbunden',
+        'failed' => 'Query hat nicht geantwortet',
+        'failed_description' => 'Der Server läuft, antwortet aber nicht. Prüfe den Port-Offset und die Query-Adresse in den Plugin-Einstellungen.',
         'server_offline' => 'Server ist offline',
     ],
 

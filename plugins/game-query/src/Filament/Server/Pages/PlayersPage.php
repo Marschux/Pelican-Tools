@@ -91,7 +91,12 @@ class PlayersPage extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $result = $this->result();
         $players = $this->players();
+
+        // "nobody is online" and "the query never answered" are completely different problems
+        // and used to produce the same message, which sent us chasing the wrong one
+        $failed = $result === null;
 
         return $table
             ->records(fn () => $players)
@@ -108,9 +113,9 @@ class PlayersPage extends Page implements HasTable
                     ->formatStateUsing(fn ($state) => $state === null ? null : gmdate($state >= 3600 ? 'H:i:s' : 'i:s', (int) $state)),
             ])
             ->recordActions($this->playerActions())
-            ->emptyStateIcon('tabler-users-group')
-            ->emptyStateHeading(trans('game-query::query.table.no_players'))
-            ->emptyStateDescription(trans('game-query::query.table.no_players_description'));
+            ->emptyStateIcon($failed ? 'tabler-plug-connected-x' : 'tabler-users-group')
+            ->emptyStateHeading(trans($failed ? 'game-query::query.table.failed' : 'game-query::query.table.no_players'))
+            ->emptyStateDescription(trans($failed ? 'game-query::query.table.failed_description' : 'game-query::query.table.no_players_description'));
     }
 
     /**

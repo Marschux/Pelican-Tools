@@ -84,7 +84,9 @@ return [
 
     'table' => [
         'no_players' => 'No players found',
-        'no_players_description' => 'Either nobody is online or the query is disabled on this server',
+        'no_players_description' => 'Nobody is connected right now',
+        'failed' => 'Query did not answer',
+        'failed_description' => 'The server is running but did not respond. Check the port offset and the query address in the plugin settings.',
         'server_offline' => 'Server is offline',
     ],
 
