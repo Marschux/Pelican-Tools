@@ -34,6 +34,8 @@ return [
         'icon' => 'Server-Icon',
     ],
 
+    'history' => 'Spielerverlauf',
+
     'player_actions' => 'Spieler-Aktionen',
     'player_actions_hint' => 'Konsolenbefehle, die auf der Spieler-Seite pro Spieler angeboten werden. {player} wird durch den Spielernamen ersetzt. Erfordert die Berechtigung "control.console".',
     'add_action' => 'Aktion hinzufügen',

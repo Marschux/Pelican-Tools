@@ -34,6 +34,8 @@ return [
         'icon' => 'Server Icon',
     ],
 
+    'history' => 'Player History',
+
     'player_actions' => 'Player Actions',
     'player_actions_hint' => 'Console commands offered per player on the players page. {player} is replaced with the player name. Requires the "control.console" permission.',
     'add_action' => 'Add action',
