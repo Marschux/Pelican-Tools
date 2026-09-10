@@ -2,6 +2,7 @@
 
 namespace Marschux\GameQuery\Filament\Admin\Resources\GameQueries;
 
+use App\Enums\CustomizationKey;
 use App\Models\Server;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -31,6 +32,20 @@ class GameQueryResource extends Resource
     protected static ?string $model = GameQuery::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'tabler-device-desktop-search';
+
+    /**
+     * Mirrors what the core resources do, so this lands in the same "Server" group as Eggs,
+     * Nodes and Servers instead of opening a second group with the same label. The topbar
+     * check has to be copied too - in that mode the core entries report no group at all.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        if (user()?->getCustomization(CustomizationKey::TopNavigation) === 'topbar') {
+            return null;
+        }
+
+        return trans('admin/dashboard.server');
+    }
 
     public static function getNavigationLabel(): string
     {
