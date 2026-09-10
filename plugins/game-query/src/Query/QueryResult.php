@@ -14,8 +14,10 @@ readonly class QueryResult
      * @param  ?QueryPlayer[]  $playerList  null when the protocol has no player list at all
      * @param  ?array<string, string>  $rules  server cvars / plugin list, only fetched on demand
      */
+    public string $hostname;
+
     public function __construct(
-        public string $hostname,
+        string $hostname,
         public int $players,
         public int $maxPlayers,
         public ?string $map = null,
@@ -29,7 +31,25 @@ readonly class QueryResult
         public ?string $seed = null,
         public ?array $playerList = null,
         public ?array $rules = null,
-    ) {}
+    ) {
+        $this->hostname = self::plain($hostname);
+    }
+
+    /**
+     * Strips the markup games put in their server name.
+     *
+     * Valheim wraps the name in unity rich text ("<color=lime>Name</color>" - the egg builds
+     * that from its COLOR variable), Minecraft uses section colour codes. Neither renders
+     * anywhere in the panel, so both would just show up as literal noise.
+     */
+    public static function plain(string $value): string
+    {
+        $value = preg_replace('/<\/?(?:color|b|i|u|s|size|material|quad|align|alpha|cspace|font|indent|line-height|lowercase|uppercase|smallcaps|margin|mark|mspace|noparse|nobr|page|pos|space|sprite|strikethrough|style|sub|sup|underline|voffset|width)(?:=[^>]*)?>/i', '', $value) ?? $value;
+        // minecraft section colour codes, written as a codepoint so the source stays ascii
+        $value = preg_replace('/\x{00a7}./u', '', $value) ?? $value;
+
+        return trim($value);
+    }
 
     /** Every field the ui can show, in display order. Drives the admin checkbox list. */
     public const FIELDS = [
@@ -42,7 +62,6 @@ readonly class QueryResult
         'passworded',
         'secure',
         'os',
-        'icon',
         'seed',
     ];
 

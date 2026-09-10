@@ -39,6 +39,17 @@ assert(FwlSeedParser::parse(pack('V', 0) . pack('V', 35) . chr(200) . str_repeat
 // and that must read as "cannot tell" rather than as a seed
 assert(FwlSeedParser::parse(pack('V', 0) . pack('V', 35) . chr(4) . 'name' . chr(5) . chr(0) . chr(1) . chr(2) . chr(3) . chr(4)) === null, 'binary where the seed should be');
 
+// server names carry markup the panel cannot render, and it must not leak into the ui
+assert((new QueryResult(hostname: '<color=lime>Tormax</color>', players: 0, maxPlayers: 10))->hostname === 'Tormax');
+assert(QueryResult::plain('<color=#ff0000>Rot</color> Server') === 'Rot Server');
+assert(QueryResult::plain('<b>Fett</b> und <i>kursiv</i>') === 'Fett und kursiv');
+assert(QueryResult::plain("\u{00a7}aGruen\u{00a7}r Server") === 'Gruen Server', 'minecraft colour codes');
+assert(QueryResult::plain('Ganz normal') === 'Ganz normal', 'untouched when there is no markup');
+assert(QueryResult::plain('A <bogus>tag</bogus> stays') === 'A <bogus>tag</bogus> stays', 'only known tags are stripped');
+
+// the icon is not offered as a toggle: nothing renders a data uri in a stat block
+assert(!in_array('icon', QueryResult::FIELDS, true));
+
 // a CS2 server whose 12/12 are mostly bots
 $cs2 = new QueryResult(
     hostname: 'Test Server',
