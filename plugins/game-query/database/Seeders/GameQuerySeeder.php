@@ -22,31 +22,50 @@ class GameQuerySeeder extends Seeder
     ];
 
     /**
-     * Offsets are the difference between the game port and the A2S query port. Games that
-     * query on the game port itself use no offset.
+     * Matched by egg name, because none of the eggs in this repo carry tags.
+     *
+     * "offset" is the difference between the allocation port and the A2S query port; games
+     * that answer on the game port itself use none. Where an egg already exposes the query
+     * port as a startup variable, that variable wins - it survives the user changing it.
      */
     public const MAPPINGS = [
-        ['tag' => 'minecraft', 'query_type' => 'minecraft_java', 'actions' => self::MINECRAFT_ACTIONS],
-        ['tag' => 'source', 'query_type' => 'source', 'actions' => [self::KICK, self::BAN]],
-
-        ['names' => ['Counter-Strike 1.6', 'Counter-Strike: Condition Zero', 'Half-Life Deathmatch'], 'query_type' => 'goldsrc', 'actions' => [self::KICK, self::BAN]],
-
-        ['names' => 'Valheim', 'query_type' => 'source', 'offset' => 1],
-        ['names' => ['The Forest', 'The Forrest'], 'query_type' => 'source', 'offset' => 1],
-        ['names' => ['Sons Of The Forest', 'Sons of the Forest'], 'query_type' => 'source', 'offset' => 1],
-        ['names' => ['Arma 3', 'Arma3'], 'query_type' => 'source', 'offset' => 1],
-        ['names' => 'Conan Exiles', 'query_type' => 'source', 'offset' => 1],
-        ['names' => 'Enshrouded', 'query_type' => 'source', 'offset' => 1],
-        ['names' => ['LOTR: Return to Moria', 'Return to Moria'], 'query_type' => 'source', 'offset' => 1],
-        ['names' => 'DayZ', 'query_type' => 'source', 'offset' => 27016],
-        ['names' => 'Rust', 'query_type' => 'source', 'actions' => [self::KICK, self::BAN]],
+        [
+            'names' => ['Vanilla Minecraft', 'Minecraft Paper', 'Minecraft Forge', 'Minecraft Fabric', 'Hexxit', 'Tekkit'],
+            'query_type' => 'minecraft_java',
+            'actions' => self::MINECRAFT_ACTIONS,
+        ],
+        [
+            'names' => ['Counter-Strike 1.6', 'Counter-Strike: Condition Zero', 'Half-Life Deathmatch'],
+            'query_type' => 'goldsrc',
+            'actions' => [self::KICK, self::BAN],
+        ],
+        [
+            // these answer A2S on the allocation port itself
+            'names' => ['Counter-Strike 2', 'Counter-Strike: Global Offensive', 'Counter-Strike: Source', 'Team Fortress 2', "Garry's Mod", 'Left 4 Dead', 'Left 4 Dead 2', 'Quake Live'],
+            'query_type' => 'source',
+            'actions' => [self::KICK, self::BAN],
+        ],
+        [
+            'names' => ['Rust', 'Conan Exiles'],
+            'query_type' => 'source',
+            'variable' => 'QUERY_PORT',
+            'actions' => [self::KICK, self::BAN],
+        ],
+        [
+            // survival games that traditionally put the query port right after the game port
+            'names' => ['Valheim Server', 'Valheim Plus Mod', 'The Forest', 'Sons of the Forest', 'Arma 3', 'Enshrouded', 'The Lord of the Rings: Return to Moria'],
+            'query_type' => 'source',
+            'offset' => 1,
+        ],
     ];
 
     public function run(): void
     {
+        $created = 0;
+
         foreach (Egg::all() as $egg) {
             foreach (self::MAPPINGS as $mapping) {
-                if (!$this->matches($egg, $mapping)) {
+                if (!in_array($egg->name, $mapping['names'], true)) {
                     continue;
                 }
 
@@ -54,28 +73,19 @@ class GameQuerySeeder extends Seeder
                     $query = GameQuery::firstOrCreate([
                         'query_type' => $mapping['query_type'],
                         'query_port_offset' => $mapping['offset'] ?? null,
-                        'query_port_variable' => null,
+                        'query_port_variable' => $mapping['variable'] ?? null,
                     ], [
                         'player_actions' => $mapping['actions'] ?? [],
                     ]);
 
                     EggGameQuery::firstOrCreate(['egg_id' => $egg->id], ['game_query_id' => $query->id]);
+                    $created++;
                 } catch (Throwable) {
-                    // an egg that already has a query is fine - unique key does its job
+                    // egg already has a query - the unique key doing its job
                 }
             }
         }
 
-        $this->command?->info('Created game queries for existing eggs');
-    }
-
-    /** @param array<string, mixed> $mapping */
-    private function matches(Egg $egg, array $mapping): bool
-    {
-        if (isset($mapping['names'])) {
-            return in_array($egg->name, (array) $mapping['names'], true);
-        }
-
-        return isset($mapping['tag']) && in_array($mapping['tag'], $egg->tags ?? [], true);
+        $this->command?->info("Linked $created eggs to a game query");
     }
 }

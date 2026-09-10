@@ -34,6 +34,21 @@ return [
         'icon' => 'Server-Icon',
     ],
 
+    'player_actions' => 'Spieler-Aktionen',
+    'player_actions_hint' => 'Konsolenbefehle, die auf der Spieler-Seite pro Spieler angeboten werden. {player} wird durch den Spielernamen ersetzt. Erfordert die Berechtigung "control.console".',
+    'add_action' => 'Aktion hinzufügen',
+    'action_label' => 'Bezeichnung',
+    'action_command' => 'Befehl',
+    'action_command_hint' => '{player} als Platzhalter verwenden',
+    'action_icon' => 'Icon',
+    'action_confirm' => 'Bestätigen?',
+
+    'player' => [
+        'name' => 'Name',
+        'score' => 'Punkte',
+        'playtime' => 'Spielzeit',
+    ],
+
     'players_with_bots' => ':players / :max (+:bots Bots)',
 
     'fetch_rules' => 'Server-Regeln abfragen?',

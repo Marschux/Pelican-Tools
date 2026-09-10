@@ -34,6 +34,21 @@ return [
         'icon' => 'Server Icon',
     ],
 
+    'player_actions' => 'Player Actions',
+    'player_actions_hint' => 'Console commands offered per player on the players page. {player} is replaced with the player name. Requires the "control.console" permission.',
+    'add_action' => 'Add action',
+    'action_label' => 'Label',
+    'action_command' => 'Command',
+    'action_command_hint' => 'Use {player} as placeholder',
+    'action_icon' => 'Icon',
+    'action_confirm' => 'Confirm?',
+
+    'player' => [
+        'name' => 'Name',
+        'score' => 'Score',
+        'playtime' => 'Playtime',
+    ],
+
     'players_with_bots' => ':players / :max (+:bots bots)',
 
     'fetch_rules' => 'Fetch server rules?',

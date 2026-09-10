@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -190,6 +191,32 @@ class GameQueryResource extends Resource
                             ->hintIconTooltip(trans('game-query::query.track_history_hint'))
                             ->inline(false),
                     ]),
+                Repeater::make('player_actions')
+                    ->label(trans('game-query::query.player_actions'))
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('game-query::query.player_actions_hint'))
+                    ->addActionLabel(trans('game-query::query.add_action'))
+                    ->itemLabel(fn (array $state) => $state['label'] ?? null)
+                    ->collapsed()
+                    ->defaultItems(0)
+                    ->columnSpanFull()
+                    ->schema([
+                        TextInput::make('label')
+                            ->label(trans('game-query::query.action_label'))
+                            ->required(),
+                        TextInput::make('command')
+                            ->label(trans('game-query::query.action_command'))
+                            ->placeholder('kick "{player}"')
+                            ->helperText(trans('game-query::query.action_command_hint'))
+                            ->required(),
+                        TextInput::make('icon')
+                            ->label(trans('game-query::query.action_icon'))
+                            ->placeholder('tabler-user-x'),
+                        Toggle::make('confirm')
+                            ->label(trans('game-query::query.action_confirm'))
+                            ->inline(false),
+                    ])
+                    ->columns(4),
                 Select::make('eggs')
                     ->label(trans('game-query::query.eggs'))
                     ->relationship('eggs', 'name')
