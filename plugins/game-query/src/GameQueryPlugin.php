@@ -42,7 +42,11 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
         // Discovering a widget only makes it known to the panel - the console page renders a
         // fixed list plus whatever was registered at one of its named positions, so without
         // this the widgets exist but appear nowhere.
-        Console::registerCustomWidgets(ConsoleWidgetPosition::Bottom, [ServerInfoWidget::class, PlayerHistoryChart::class]);
+        // page order is: Top, overview, AboveConsole, console, BelowConsole, charts, Bottom.
+        // The stat blocks belong right after the core overview; the chart belongs with the
+        // other charts at the end, where Bottom puts it.
+        Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
+        Console::registerCustomWidgets(ConsoleWidgetPosition::Bottom, [PlayerHistoryChart::class]);
     }
 
     public function getSettingsFormData(): array
