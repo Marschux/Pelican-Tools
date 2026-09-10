@@ -1,0 +1,82 @@
+<?php
+
+namespace Marschux\GameQuery\Filament\Server\Widgets;
+
+use App\Filament\Server\Components\SmallStatBlock;
+use App\Models\Server;
+use Filament\Facades\Filament;
+use Filament\Widgets\StatsOverviewWidget;
+use Marschux\GameQuery\Models\GameQuery;
+use Marschux\GameQuery\Query\QueryResult;
+
+class ServerInfoWidget extends StatsOverviewWidget
+{
+    protected ?string $pollingInterval = '30s';
+
+    public static function canView(): bool
+    {
+        /** @var Server $server */
+        $server = Filament::getTenant();
+
+        if ($server->isInConflictState() || !GameQuery::canRunQuery($server->allocation)) {
+            return false;
+        }
+
+        if (!$server->egg->gameQuery) { // @phpstan-ignore property.notFound
+            return false;
+        }
+
+        return !$server->retrieveStatus()->isOffline();
+    }
+
+    protected function getStats(): array
+    {
+        /** @var Server $server */
+        $server = Filament::getTenant();
+
+        /** @var ?GameQuery $gameQuery */
+        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+
+        $result = $gameQuery?->runQuery($server);
+
+        if (!$result) {
+            return [];
+        }
+
+        $stats = [];
+
+        foreach ($gameQuery->visibleFields() as $field) {
+            $value = $this->format($field, $result);
+
+            // null means the protocol cannot report this field - show nothing rather than
+            // a row of "unknown" for every field the game does not support
+            if ($value !== null) {
+                $stats[] = SmallStatBlock::make(trans("game-query::query.field.$field"), $value);
+            }
+        }
+
+        return $stats;
+    }
+
+    private function format(string $field, QueryResult $result): ?string
+    {
+        return match ($field) {
+            'players' => $result->bots
+                ? trans('game-query::query.players_with_bots', [
+                    'players' => $result->humanPlayers(),
+                    'max' => $result->maxPlayers,
+                    'bots' => $result->bots,
+                ])
+                : $result->players . ' / ' . $result->maxPlayers,
+            'bots' => $result->bots === null ? null : (string) $result->bots,
+            'passworded', 'secure' => match ($result->get($field)) {
+                true => trans('game-query::query.yes'),
+                false => trans('game-query::query.no'),
+                default => null,
+            },
+            // the icon is a data: uri and belongs in an <img>, not in a stat block
+            'icon' => null,
+            default => ($v = $result->get($field)) === null || $v === '' ? null : (string) $v,
+        };
+    }
+}
