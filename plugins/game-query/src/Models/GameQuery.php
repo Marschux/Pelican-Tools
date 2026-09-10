@@ -14,6 +14,7 @@ use Marschux\GameQuery\Query\QueryTypeService;
 
 /**
  * @property int $id
+ * @property ?string $name
  * @property string $query_type
  * @property ?int $query_port_offset
  * @property ?string $query_port_variable
@@ -27,6 +28,7 @@ use Marschux\GameQuery\Query\QueryTypeService;
 class GameQuery extends Model
 {
     protected $fillable = [
+        'name',
         'query_type',
         'query_port_offset',
         'query_port_variable',

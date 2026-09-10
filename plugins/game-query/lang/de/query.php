@@ -3,6 +3,9 @@
 return [
     'query' => 'Game Query|Game Queries',
     'no_queries' => 'Keine Game Queries',
+    'name' => 'Beschriftung',
+    'no_name' => 'Ohne Beschriftung',
+    'name_hint' => 'Optional. Dient nur dazu, die Einträge in dieser Liste auseinanderzuhalten.',
     'type' => 'Typ',
     'test' => 'Testen',
     'options' => 'Optionen',

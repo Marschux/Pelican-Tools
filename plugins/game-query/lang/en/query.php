@@ -3,6 +3,9 @@
 return [
     'query' => 'Game Query|Game Queries',
     'no_queries' => 'No Game Queries',
+    'name' => 'Label',
+    'no_name' => 'Unnamed',
+    'name_hint' => 'Optional. Only used to tell the entries in this list apart.',
     'type' => 'Type',
     'test' => 'Test',
     'options' => 'Options',

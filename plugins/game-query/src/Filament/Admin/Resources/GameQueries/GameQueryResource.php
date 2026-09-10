@@ -71,6 +71,12 @@ class GameQueryResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('name')
+                    ->label(trans('game-query::query.name'))
+                    // without a label the type is the only thing identifying a row
+                    ->placeholder(trans('game-query::query.no_name'))
+                    ->weight('bold')
+                    ->searchable(),
                 TextColumn::make('query_type')
                     ->label(trans('game-query::query.type'))
                     ->badge()
@@ -159,6 +165,14 @@ class GameQueryResource extends Resource
     {
         return $schema
             ->components([
+                TextInput::make('name')
+                    ->label(trans('game-query::query.name'))
+                    ->placeholder(trans('game-query::query.no_name'))
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('game-query::query.name_hint'))
+                    ->maxLength(191)
+                    ->nullable()
+                    ->columnSpanFull(),
                 Select::make('query_type')
                     ->label(trans('game-query::query.type'))
                     ->required()
@@ -246,6 +260,9 @@ class GameQueryResource extends Resource
     {
         return $schema
             ->components([
+                TextEntry::make('name')
+                    ->label(trans('game-query::query.name'))
+                    ->placeholder(trans('game-query::query.no_name')),
                 TextEntry::make('query_type')
                     ->label(trans('game-query::query.type')),
                 TextEntry::make('query_port_offset')
