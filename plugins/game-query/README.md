@@ -62,6 +62,12 @@ require the `control.console` permission and are sent through the daemon.
 
 ## Notes
 
+The server console page renders a fixed core widget list plus whatever was registered through
+`Console::registerCustomWidgets()` at one of its positions (`Top`, `AboveConsole`,
+`BelowConsole`, `Bottom`). Discovering a widget through `discoverWidgets()` alone makes it known
+to the panel but places it nowhere, so both widgets are registered explicitly in the plugin's
+`boot()`.
+
 The players page is a Filament custom-data table: `records()` returns plain arrays, columns
 resolve by array key, and actions receive the row as `array $record`. Sorting and searching
 would have to be handled inside the `records()` closure, so they are deliberately not offered

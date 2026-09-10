@@ -3,6 +3,8 @@
 namespace Marschux\GameQuery;
 
 use App\Contracts\Plugins\HasPluginSettings;
+use App\Enums\ConsoleWidgetPosition;
+use App\Filament\Server\Pages\Console;
 use App\Traits\EnvironmentWriterTrait;
 use Filament\Contracts\Plugin;
 use Filament\Forms\Components\Select;
@@ -10,6 +12,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Panel;
+use Marschux\GameQuery\Filament\Server\Widgets\PlayerHistoryChart;
+use Marschux\GameQuery\Filament\Server\Widgets\ServerInfoWidget;
 
 class GameQueryPlugin implements HasPluginSettings, Plugin
 {
@@ -29,7 +33,18 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
         $panel->discoverWidgets(plugin_path($this->getId(), "src/Filament/$id/Widgets"), "Marschux\\GameQuery\\Filament\\$id\\Widgets");
     }
 
-    public function boot(Panel $panel): void {}
+    public function boot(Panel $panel): void
+    {
+        if ($panel->getId() !== 'server') {
+            return;
+        }
+
+        // Discovering a widget only makes it known to the panel - the console page renders a
+        // fixed list plus whatever was registered at one of its named positions, so without
+        // this the widgets exist but appear nowhere.
+        Console::registerCustomWidgets(ConsoleWidgetPosition::Top, [ServerInfoWidget::class]);
+        Console::registerCustomWidgets(ConsoleWidgetPosition::BelowConsole, [PlayerHistoryChart::class]);
+    }
 
     public function getSettingsFormData(): array
     {
