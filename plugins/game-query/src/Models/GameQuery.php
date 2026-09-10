@@ -5,6 +5,7 @@ namespace Marschux\GameQuery\Models;
 use App\Models\Allocation;
 use App\Models\Egg;
 use App\Models\Server;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -48,7 +49,6 @@ class GameQuery extends Model
     protected function casts(): array
     {
         return [
-            'visible_fields' => 'array',
             'player_actions' => 'array',
             'fetch_rules' => 'bool',
             'track_history' => 'bool',
@@ -60,15 +60,29 @@ class GameQuery extends Model
         return $this->belongsToMany(Egg::class);
     }
 
-    /** Fields to show, defaulting to everything when nothing was configured yet. */
-    public function visibleFields(): array
+    /**
+     * Fields to show, defaulting to everything when nothing was configured.
+     *
+     * Filtered against the current field list on both read and write: a field that gets
+     * removed from the code would otherwise linger in old rows and fail the form's validation
+     * with "the selected visible fields is invalid", locking the record out of editing.
+     */
+    protected function visibleFields(): Attribute
     {
-        return $this->visible_fields ?: QueryResult::FIELDS;
+        return Attribute::make(
+            get: function (?string $value): array {
+                $stored = json_decode($value ?? '[]', true);
+                $valid = array_values(array_intersect(is_array($stored) ? $stored : [], QueryResult::FIELDS));
+
+                return $valid ?: QueryResult::FIELDS;
+            },
+            set: fn (mixed $value): string => json_encode(array_values(array_intersect((array) $value, QueryResult::FIELDS))),
+        );
     }
 
     public function shows(string $field): bool
     {
-        return in_array($field, $this->visibleFields(), true);
+        return in_array($field, $this->visible_fields, true);
     }
 
     /**

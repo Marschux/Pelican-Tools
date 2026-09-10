@@ -45,7 +45,7 @@ class ServerInfoWidget extends StatsOverviewWidget
 
         $stats = [];
 
-        foreach ($gameQuery->visibleFields() as $field) {
+        foreach ($gameQuery->visible_fields as $field) {
             $value = $this->format($field, $result);
 
             // null means the protocol cannot report this field - show nothing rather than
@@ -74,8 +74,6 @@ class ServerInfoWidget extends StatsOverviewWidget
                 false => trans('game-query::query.no'),
                 default => null,
             },
-            // the icon is a data: uri and belongs in an <img>, not in a stat block
-            'icon' => null,
             default => ($v = $result->get($field)) === null || $v === '' ? null : (string) $v,
         };
     }
