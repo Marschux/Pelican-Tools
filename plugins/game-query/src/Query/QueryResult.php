@@ -26,6 +26,7 @@ readonly class QueryResult
         public ?bool $secure = null,
         public ?string $os = null,
         public ?string $icon = null,
+        public ?string $seed = null,
         public ?array $playerList = null,
         public ?array $rules = null,
     ) {}
@@ -42,6 +43,7 @@ readonly class QueryResult
         'secure',
         'os',
         'icon',
+        'seed',
     ];
 
     /** Human players, i.e. without the bots the server counts towards its player number. */
@@ -60,6 +62,27 @@ readonly class QueryResult
         return property_exists($this, $field) ? $this->$field : null;
     }
 
+    /** Copy with the seed filled in - readonly properties cannot be set on a clone. */
+    public function withSeed(?string $seed): self
+    {
+        return new self(
+            hostname: $this->hostname,
+            players: $this->players,
+            maxPlayers: $this->maxPlayers,
+            map: $this->map,
+            bots: $this->bots,
+            version: $this->version,
+            gameMode: $this->gameMode,
+            passworded: $this->passworded,
+            secure: $this->secure,
+            os: $this->os,
+            icon: $this->icon,
+            seed: $seed,
+            playerList: $this->playerList,
+            rules: $this->rules,
+        );
+    }
+
     /** @return array<string, mixed> */
     public function toArray(): array
     {
@@ -75,6 +98,7 @@ readonly class QueryResult
             'secure' => $this->secure,
             'os' => $this->os,
             'icon' => $this->icon,
+            'seed' => $this->seed,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,
                 'score' => $p->score,

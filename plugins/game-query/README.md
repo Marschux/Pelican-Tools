@@ -33,6 +33,19 @@ or its alias in the plugin settings if you need to.
 | `source` | CS2, CS:GO, CS:S, TF2, Garry's Mod, L4D 1/2, Rust, Valheim, Arma 3, Conan Exiles, Enshrouded, The Forest, Sons of the Forest, Return to Moria |
 | `goldsrc` | CS 1.6, Condition Zero, Half-Life Deathmatch |
 | `minecraft_java` | Minecraft (query, falling back to ping) |
+| `valheim` | Valheim - the A2S query plus the world seed |
+
+### Valheim world seed
+
+Valheim can neither report its seed over the network nor accept one on the command line - it
+only exists inside the world metadata file. The `valheim` type therefore reads it through the
+daemon file api, from `savegames/worlds_local`, using the `WORLD` startup variable to find the
+world. Both layouts are handled: the pre-1.0 `<world>.fwl` and the 1.0 `<world>/_main.N.fwl2`
+folder.
+
+The 1.0 header layout is not documented anywhere, so the parser validates what it reads and
+returns nothing when the bytes do not look like a seed. An empty seed field means "could not
+read it", never a wrong value.
 
 For Minecraft, set `enable-query=true` and `query-port` to the server port in
 `server.properties` - the ping fallback works without it but reports no map and only samples up

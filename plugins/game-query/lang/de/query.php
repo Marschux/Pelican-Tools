@@ -31,6 +31,7 @@ return [
         'passworded' => 'Passwort',
         'secure' => 'VAC',
         'os' => 'Betriebssystem',
+        'seed' => 'Welt-Seed',
         'icon' => 'Server-Icon',
     ],
 

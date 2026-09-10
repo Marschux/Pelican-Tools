@@ -10,9 +10,34 @@
 
 require __DIR__ . '/src/Query/QueryPlayer.php';
 require __DIR__ . '/src/Query/QueryResult.php';
+require __DIR__ . '/src/Query/FwlSeedParser.php';
 
+use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryPlayer;
 use Marschux\GameQuery\Query\QueryResult;
+
+/** Builds a valheim world metadata file: two int32 headers, then two length-prefixed strings. */
+function fwl(string $name, string $seed): string
+{
+    return pack('V', 0) . pack('V', 35)
+        . chr(strlen($name)) . $name
+        . chr(strlen($seed)) . $seed
+        . pack('V', 123456) . pack('P', 42) . pack('V', 2);
+}
+
+assert(FwlSeedParser::parse(fwl('Dedicated', 'HHcLC5acQt')) === 'HHcLC5acQt');
+assert(FwlSeedParser::parse(fwl('a', 'x')) === 'x', 'shortest possible name and seed');
+assert(FwlSeedParser::parse(fwl(str_repeat('w', 64), 'seed1')) === 'seed1', 'name at the limit');
+
+// truncated, empty and nonsense input must yield null, never a garbage seed
+assert(FwlSeedParser::parse('') === null);
+assert(FwlSeedParser::parse(substr(fwl('Dedicated', 'HHcLC5acQt'), 0, 11)) === null, 'cut off before the seed');
+assert(FwlSeedParser::parse(pack('V', 0) . pack('V', 35) . chr(0) . 'xx') === null, 'zero-length name');
+assert(FwlSeedParser::parse(pack('V', 0) . pack('V', 35) . chr(200) . str_repeat('x', 300)) === null, 'name length beyond the cap');
+
+// a changed 1.0 header shifts everything: the bytes at the seed offset are not printable,
+// and that must read as "cannot tell" rather than as a seed
+assert(FwlSeedParser::parse(pack('V', 0) . pack('V', 35) . chr(4) . 'name' . chr(5) . chr(0) . chr(1) . chr(2) . chr(3) . chr(4)) === null, 'binary where the seed should be');
 
 // a CS2 server whose 12/12 are mostly bots
 $cs2 = new QueryResult(

@@ -53,8 +53,14 @@ class GameQuerySeeder extends Seeder
         ],
         [
             // survival games that traditionally put the query port right after the game port
-            'names' => ['Valheim Server', 'Valheim Plus Mod', 'The Forest', 'Sons of the Forest', 'Arma 3', 'Enshrouded', 'The Lord of the Rings: Return to Moria'],
+            'names' => ['The Forest', 'Sons of the Forest', 'Arma 3', 'Enshrouded', 'The Lord of the Rings: Return to Moria'],
             'query_type' => 'source',
+            'offset' => 1,
+        ],
+        [
+            // same A2S query, plus the world seed read from the save file
+            'names' => ['Valheim Server', 'Valheim Plus Mod'],
+            'query_type' => 'valheim',
             'offset' => 1,
         ],
     ];

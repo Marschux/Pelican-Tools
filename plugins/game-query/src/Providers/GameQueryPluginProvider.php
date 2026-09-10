@@ -17,6 +17,7 @@ use Marschux\GameQuery\Query\QueryTypeService;
 use Marschux\GameQuery\Query\Schemas\GoldSourceSchema;
 use Marschux\GameQuery\Query\Schemas\MinecraftJavaSchema;
 use Marschux\GameQuery\Query\Schemas\SourceSchema;
+use Marschux\GameQuery\Query\Schemas\ValheimSchema;
 
 class GameQueryPluginProvider extends ServiceProvider
 {
@@ -30,6 +31,7 @@ class GameQueryPluginProvider extends ServiceProvider
             $service->register(new SourceSchema());
             $service->register(new GoldSourceSchema());
             $service->register(new MinecraftJavaSchema());
+            $service->register(new ValheimSchema());
 
             return $service;
         });
