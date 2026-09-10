@@ -23,8 +23,7 @@ class ServerPlayersColumn
             // the parameter has to be named $record - that is the name filament injects the
             // row under; any other name falls through to container resolution
             ->state(function (Server $record) {
-                /** @var ?GameQuery $gameQuery */
-                $gameQuery = $record->egg->gameQuery; // @phpstan-ignore property.notFound
+                $gameQuery = GameQuery::forServer($record);
 
                 if (!$gameQuery || !GameQuery::canRunQuery($record->allocation)) {
                     return null;

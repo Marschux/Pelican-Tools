@@ -22,7 +22,7 @@ class ServerInfoWidget extends StatsOverviewWidget
             return false;
         }
 
-        if (!$server->egg->gameQuery) { // @phpstan-ignore property.notFound
+        if (!GameQuery::forServer($server)) {
             return false;
         }
 
@@ -33,14 +33,20 @@ class ServerInfoWidget extends StatsOverviewWidget
     {
         /** @var Server $server */
         $server = Filament::getTenant();
+        $gameQuery = GameQuery::forServer($server);
 
-        /** @var ?GameQuery $gameQuery */
-        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+        if (!$gameQuery) {
+            // canView already ruled this out, so it can only mean the query was deleted
+            // between the two calls
+            return [SmallStatBlock::make(trans('game-query::query.query_label'), trans('game-query::query.no_query'))];
+        }
 
-        $result = $gameQuery?->runQuery($server);
+        $result = $gameQuery->runQuery($server);
 
         if (!$result) {
-            return [];
+            // silently rendering nothing here is what makes a misconfigured port or an
+            // unreachable address look like "the plugin is not installed"
+            return [SmallStatBlock::make(trans('game-query::query.query_label'), trans('game-query::query.query_failed'))];
         }
 
         $stats = [];

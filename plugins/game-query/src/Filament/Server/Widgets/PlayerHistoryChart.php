@@ -23,9 +23,7 @@ class PlayerHistoryChart extends ChartWidget
     {
         /** @var Server $server */
         $server = Filament::getTenant();
-
-        /** @var ?GameQuery $gameQuery */
-        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+        $gameQuery = GameQuery::forServer($server);
 
         if (!$gameQuery?->track_history) {
             return false;

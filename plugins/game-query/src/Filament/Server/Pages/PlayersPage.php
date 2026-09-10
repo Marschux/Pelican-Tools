@@ -40,9 +40,7 @@ class PlayersPage extends Page implements HasTable
         if (!GameQuery::canRunQuery($server->allocation)) {
             return false;
         }
-
-        /** @var ?GameQuery $gameQuery */
-        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+        $gameQuery = GameQuery::forServer($server);
 
         if (!$gameQuery || !$gameQuery->shows('players')) {
             return false;
@@ -71,7 +69,7 @@ class PlayersPage extends Page implements HasTable
 
     private function result(): ?QueryResult
     {
-        return $this->server()->egg->gameQuery?->runQuery($this->server()); // @phpstan-ignore property.notFound
+        return GameQuery::forServer($this->server())?->runQuery($this->server());
     }
 
     /**
@@ -124,9 +122,7 @@ class PlayersPage extends Page implements HasTable
     private function playerActions(): array
     {
         $server = $this->server();
-
-        /** @var ?GameQuery $gameQuery */
-        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+        $gameQuery = GameQuery::forServer($server);
 
         // sending a console command is exactly what control.console grants - no own permission
         if (!$gameQuery || !auth()->user()?->can('control.console', $server)) {

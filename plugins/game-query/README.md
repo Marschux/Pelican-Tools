@@ -62,6 +62,11 @@ require the `control.console` permission and are sent through the daemon.
 
 ## Notes
 
+The query for a server is looked up with `GameQuery::forServer()`, a plain join over the pivot.
+Registering a relation on the core `Egg` model at boot was the alternative, but when such a
+registration does not take effect everything silently behaves as if no query were configured -
+which is indistinguishable from the plugin not being installed.
+
 The server console page renders a fixed core widget list plus whatever was registered through
 `Console::registerCustomWidgets()` at one of its positions (`Top`, `AboveConsole`,
 `BelowConsole`, `Bottom`). Discovering a widget through `discoverWidgets()` alone makes it known

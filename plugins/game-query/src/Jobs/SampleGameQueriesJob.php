@@ -49,9 +49,7 @@ class SampleGameQueriesJob implements ShouldQueue
             if ($server->isInConflictState() || $server->retrieveStatus()->isOffline()) {
                 return;
             }
-
-            /** @var ?GameQuery $gameQuery */
-            $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+            $gameQuery = GameQuery::forServer($server);
 
             $result = $gameQuery?->runQuery($server);
 

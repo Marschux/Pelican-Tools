@@ -59,9 +59,7 @@ class GameQueryController extends ClientApiController
         if (!GameQuery::canRunQuery($server->allocation)) {
             abort(Response::HTTP_NOT_ACCEPTABLE, 'Server has invalid allocation');
         }
-
-        /** @var ?GameQuery $gameQuery */
-        $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+        $gameQuery = GameQuery::forServer($server);
 
         if (!$gameQuery) {
             abort(Response::HTTP_NOT_ACCEPTABLE, 'Server has no query');

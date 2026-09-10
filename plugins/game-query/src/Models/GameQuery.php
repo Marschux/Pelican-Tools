@@ -60,6 +60,29 @@ class GameQuery extends Model
         return $this->belongsToMany(Egg::class);
     }
 
+    /** @var array<int, ?self> memo per egg - several widgets ask for the same query per render */
+    private static array $forEgg = [];
+
+    /**
+     * The query configured for this server's egg, or null.
+     *
+     * A plain join rather than a relation on Egg: adding one would mean registering a dynamic
+     * relation on a core model at boot, and when that does not take effect everything silently
+     * behaves as if no query were configured.
+     */
+    public static function forServer(Server $server): ?self
+    {
+        if (!array_key_exists($server->egg_id, static::$forEgg)) {
+            static::$forEgg[$server->egg_id] = static::query()
+                ->join('egg_game_query', 'egg_game_query.game_query_id', '=', 'game_queries.id')
+                ->where('egg_game_query.egg_id', $server->egg_id)
+                ->select('game_queries.*')
+                ->first();
+        }
+
+        return static::$forEgg[$server->egg_id];
+    }
+
     /**
      * Fields to show, defaulting to everything when nothing was configured.
      *
