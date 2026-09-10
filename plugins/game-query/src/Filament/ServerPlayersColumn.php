@@ -20,15 +20,17 @@ class ServerPlayersColumn
             ->label(trans('game-query::query.field.players'))
             ->placeholder('-')
             ->badge()
-            ->state(function (Server $server) {
+            // the parameter has to be named $record - that is the name filament injects the
+            // row under; any other name falls through to container resolution
+            ->state(function (Server $record) {
                 /** @var ?GameQuery $gameQuery */
-                $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
+                $gameQuery = $record->egg->gameQuery; // @phpstan-ignore property.notFound
 
-                if (!$gameQuery || !GameQuery::canRunQuery($server->allocation)) {
+                if (!$gameQuery || !GameQuery::canRunQuery($record->allocation)) {
                     return null;
                 }
 
-                $result = $gameQuery->runQuery($server);
+                $result = $gameQuery->runQuery($record);
 
                 if (!$result) {
                     return null;

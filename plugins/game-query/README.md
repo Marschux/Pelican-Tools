@@ -47,6 +47,13 @@ Kick, ban, whitelist and op are command templates on the game query, not built-i
 `{player}` is replaced with the player name, so any console command works for any game. They
 require the `control.console` permission and are sent through the daemon.
 
+## Notes
+
+The players page is a Filament custom-data table: `records()` returns plain arrays, columns
+resolve by array key, and actions receive the row as `array $record`. Sorting and searching
+would have to be handled inside the `records()` closure, so they are deliberately not offered
+rather than shipped as controls that do nothing.
+
 ## Tests
 
 ```bash

@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Query\QueryPlayer;
 use Marschux\GameQuery\Query\QueryResult;
@@ -43,7 +44,6 @@ class PlayersPage extends Page implements HasTable
         /** @var ?GameQuery $gameQuery */
         $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
 
-        // no point in a players page for a protocol that never returns a player list
         if (!$gameQuery || !$gameQuery->shows('players')) {
             return false;
         }
@@ -61,18 +61,39 @@ class PlayersPage extends Page implements HasTable
         return static::getNavigationLabel();
     }
 
-    private function result(): ?QueryResult
+    private function server(): Server
     {
         /** @var Server $server */
         $server = Filament::getTenant();
 
-        return $server->egg->gameQuery?->runQuery($server); // @phpstan-ignore property.notFound
+        return $server;
+    }
+
+    private function result(): ?QueryResult
+    {
+        return $this->server()->egg->gameQuery?->runQuery($this->server()); // @phpstan-ignore property.notFound
+    }
+
+    /**
+     * A table fed by records() works on plain arrays, not objects: columns resolve by array
+     * key and actions receive the array as $record. So the DTOs are flattened here.
+     *
+     * @return Collection<int, array{name: string, score: ?int, playtime: ?int}>
+     */
+    private function players(): Collection
+    {
+        return collect($this->result()?->playerList ?? [])
+            ->map(fn (QueryPlayer $player) => [
+                'name' => $player->name,
+                'score' => $player->score,
+                'playtime' => $player->playtime,
+            ])
+            ->values();
     }
 
     public function table(Table $table): Table
     {
-        $result = $this->result();
-        $players = collect($result?->playerList ?? []);
+        $players = $this->players();
 
         return $table
             ->records(fn () => $players)
@@ -81,11 +102,11 @@ class PlayersPage extends Page implements HasTable
                     ->label(trans('game-query::query.player.name')),
                 TextColumn::make('score')
                     ->label(trans('game-query::query.player.score'))
-                    // only shown when the protocol actually reports it - minecraft does not
-                    ->visible(fn () => $players->contains(fn (QueryPlayer $p) => $p->score !== null)),
+                    // hidden for protocols that do not report it - minecraft, for one
+                    ->visible(fn () => $players->contains(fn (array $player) => $player['score'] !== null)),
                 TextColumn::make('playtime')
                     ->label(trans('game-query::query.player.playtime'))
-                    ->visible(fn () => $players->contains(fn (QueryPlayer $p) => $p->playtime !== null))
+                    ->visible(fn () => $players->contains(fn (array $player) => $player['playtime'] !== null))
                     ->formatStateUsing(fn ($state) => $state === null ? null : gmdate($state >= 3600 ? 'H:i:s' : 'i:s', (int) $state)),
             ])
             ->recordActions($this->playerActions())
@@ -102,8 +123,7 @@ class PlayersPage extends Page implements HasTable
      */
     private function playerActions(): array
     {
-        /** @var Server $server */
-        $server = Filament::getTenant();
+        $server = $this->server();
 
         /** @var ?GameQuery $gameQuery */
         $gameQuery = $server->egg->gameQuery; // @phpstan-ignore property.notFound
@@ -119,7 +139,7 @@ class PlayersPage extends Page implements HasTable
                 ->label($action['label'])
                 ->icon($action['icon'] ?? null)
                 ->requiresConfirmation((bool) ($action['confirm'] ?? false))
-                ->action(fn ($record) => $this->send($server, $action['command'], $record->name)))
+                ->action(fn (array $record) => $this->send($server, $action['command'], $record['name'])))
             ->values()
             ->all();
     }

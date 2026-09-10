@@ -80,10 +80,8 @@ class GameQueryPluginProvider extends ServiceProvider
     private function addServerListColumn(): void
     {
         Table::configureUsing(function (Table $table) {
-            // non-eloquent tables (our own players page for one) have no model and throw here
-            $model = rescue(fn () => $table->getModel(), null, false);
-
-            if ($model === Server::class) {
+            // non-eloquent tables (our own players page for one) simply report no model
+            if ($table->getModel() === Server::class) {
                 $table->pushColumns([ServerPlayersColumn::make()]);
             }
         });
