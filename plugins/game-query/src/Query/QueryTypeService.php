@@ -9,9 +9,10 @@ class QueryTypeService
     /** @var QueryTypeSchemaInterface[] */
     private array $schemas = [];
 
-    public function get(string $id): ?QueryTypeSchemaInterface
+    /** $id is nullable because the admin form calls this before a type has been picked yet. */
+    public function get(?string $id): ?QueryTypeSchemaInterface
     {
-        return $this->schemas[$id] ?? null;
+        return $id === null ? null : ($this->schemas[$id] ?? null);
     }
 
     public function register(QueryTypeSchemaInterface $schema): void

@@ -18,6 +18,7 @@ require __DIR__ . '/src/Query/Schemas/SourceSchema.php';
 require __DIR__ . '/src/Query/Schemas/GoldSourceSchema.php';
 require __DIR__ . '/src/Query/Schemas/MinecraftJavaSchema.php';
 require __DIR__ . '/src/Query/Schemas/ValheimSchema.php';
+require __DIR__ . '/src/Query/QueryTypeService.php';
 
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryPlayer;
@@ -26,6 +27,7 @@ use Marschux\GameQuery\Query\Schemas\GoldSourceSchema;
 use Marschux\GameQuery\Query\Schemas\MinecraftJavaSchema;
 use Marschux\GameQuery\Query\Schemas\SourceSchema;
 use Marschux\GameQuery\Query\Schemas\ValheimSchema;
+use Marschux\GameQuery\Query\QueryTypeService;
 use Marschux\GameQuery\Query\ValheimLogParser;
 
 /** Builds a valheim world metadata file: two int32 headers, then two length-prefixed strings. */
@@ -99,6 +101,15 @@ foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(),
 foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(), new ValheimSchema()] as $schema) {
     assert(!in_array('password', $schema->supportedFields(), true), get_class($schema) . ' must not claim password support itself');
 }
+
+// regression: the admin's create form asks for a schema before any type is chosen yet, so
+// get(null) must return null quietly - a non-nullable parameter here previously turned into a
+// fatal TypeError the instant the "new game query" form opened
+$service = new QueryTypeService();
+$service->register(new SourceSchema());
+assert($service->get(null) === null);
+assert($service->get('source') !== null);
+assert($service->get('does-not-exist') === null);
 
 // with()/withSeed()/withJoinCode()/withPassword() must produce independent copies rather than
 // mutating the original - these are readonly objects shared through the cache, so a copy that
