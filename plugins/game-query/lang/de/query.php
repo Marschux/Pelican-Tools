@@ -36,7 +36,6 @@ return [
         'passworded' => 'Passwortschutz',
         'password' => 'Passwort',
         'secure' => 'VAC',
-        'joinCode' => 'Beitrittscode',
         'seed' => 'Welt-Seed',
         'icon' => 'Server-Icon',
     ],

@@ -4,7 +4,6 @@ namespace Marschux\GameQuery\Query\Schemas;
 
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
-use Illuminate\Support\Facades\Cache;
 use Marschux\GameQuery\Query\ConsoleLog;
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryResult;
@@ -45,13 +44,7 @@ class ValheimSchema extends SourceSchema
             return null;
         }
 
-        // the crossplay join code lives only in valheim's own log, never in an A2S answer -
-        // fetched regardless of whether A2S itself succeeded, since a working A2S query does
-        // not mean crossplay is off. That was the bug: the code only appeared when A2S failed
-        // entirely, even though a joinable crossplay session existed either way.
-        return $result
-            ->withSeed($this->seed($server))
-            ->withJoinCode($this->joinCode($server, $lines));
+        return $result->withSeed($this->seed($server));
     }
 
     /**
@@ -61,30 +54,7 @@ class ValheimSchema extends SourceSchema
      */
     public function supportedFields(): array
     {
-        return ['hostname', 'players', 'passworded', 'seed', 'joinCode'];
-    }
-
-    /**
-     * Valheim only logs its PlayFab session line around connect/reconnect time, and on a busy
-     * server that line scrolls out of Wings' 100-line tail within minutes - long before the
-     * code itself changes, since that only happens on a server restart. So the last code seen
-     * is remembered rather than re-derived from the tail on every single query: a fresh sighting
-     * always overwrites it, an empty tail falls back to whatever was last remembered.
-     *
-     * @param  string[]  $lines
-     */
-    private function joinCode(Server $server, array $lines): ?string
-    {
-        $key = "game-query.valheim-join-code.$server->uuid";
-        $found = ValheimLogParser::joinCode($lines);
-
-        if ($found !== null) {
-            Cache::put($key, $found, now()->addWeek());
-
-            return $found;
-        }
-
-        return Cache::get($key);
+        return ['hostname', 'players', 'passworded', 'seed'];
     }
 
     /**

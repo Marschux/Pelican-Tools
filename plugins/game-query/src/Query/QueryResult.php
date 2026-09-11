@@ -25,7 +25,6 @@ readonly class QueryResult
         public ?bool $secure = null,
         public ?string $icon = null,
         public ?string $seed = null,
-        public ?string $joinCode = null,
         public ?string $password = null,
         public ?array $playerList = null,
     ) {
@@ -59,7 +58,6 @@ readonly class QueryResult
         'passworded',
         'secure',
         'seed',
-        'joinCode',
         'password',
     ];
 
@@ -94,11 +92,6 @@ readonly class QueryResult
         return $this->with(['seed' => $seed]);
     }
 
-    public function withJoinCode(?string $joinCode): self
-    {
-        return $this->with(['joinCode' => $joinCode]);
-    }
-
     /** password is attached by GameQuery, not by a schema - no protocol ever reports it. */
     public function withPassword(?string $password): self
     {
@@ -120,7 +113,6 @@ readonly class QueryResult
             'secure' => $this->secure,
             'icon' => $this->icon,
             'seed' => $this->seed,
-            'join_code' => $this->joinCode,
             'password' => $this->password,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,

@@ -44,22 +44,4 @@ class ValheimLogParser
 
         return null;
     }
-
-    /**
-     * The crossplay join code players need instead of an ip.
-     *
-     * @param  string[]  $lines
-     */
-    public static function joinCode(array $lines): ?string
-    {
-        foreach ([self::SESSION, self::REGISTERED] as $pattern) {
-            $match = ConsoleLog::lastMatch($lines, $pattern);
-
-            if ($match !== null) {
-                return $match['code'];
-            }
-        }
-
-        return null;
-    }
 }

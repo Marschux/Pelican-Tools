@@ -85,7 +85,7 @@ $valheimFields = (new ValheimSchema())->supportedFields();
 foreach (['map', 'bots', 'version', 'secure', 'gameMode', 'os'] as $wrong) {
     assert(!in_array($wrong, $valheimFields, true), "valheim must not offer $wrong");
 }
-assert(in_array('seed', $valheimFields, true) && in_array('joinCode', $valheimFields, true));
+assert(in_array('seed', $valheimFields, true));
 
 // every field a schema claims to support must be a real QueryResult field, and every schema
 // must be resolvable through get() - otherwise the admin could offer a checkbox that always
@@ -112,20 +112,16 @@ assert($service->get(null) === null);
 assert($service->get('source') !== null);
 assert($service->get('does-not-exist') === null);
 
-// with()/withSeed()/withJoinCode()/withPassword() must produce independent copies rather than
-// mutating the original - these are readonly objects shared through the cache, so a copy that
-// leaked back into the original would corrupt every other reader of that cache entry
+// with()/withSeed()/withPassword() must produce independent copies rather than mutating the
+// original - these are readonly objects shared through the cache, so a copy that leaked back
+// into the original would corrupt every other reader of that cache entry
 $base = new QueryResult(hostname: 'X', players: 1, maxPlayers: 2);
 $withSeed = $base->withSeed('abc');
 assert($base->seed === null && $withSeed->seed === 'abc');
 
-$withBoth = $withSeed->withJoinCode('123456');
-assert($withSeed->joinCode === null, 'the earlier copy must stay untouched');
-assert($withBoth->seed === 'abc' && $withBoth->joinCode === '123456', 'earlier overrides must survive a later one');
-
-$withPassword = $withBoth->withPassword('secret');
-assert($withBoth->password === null);
-assert($withPassword->seed === 'abc' && $withPassword->joinCode === '123456' && $withPassword->password === 'secret');
+$withPassword = $withSeed->withPassword('secret');
+assert($withSeed->password === null, 'the earlier copy must stay untouched');
+assert($withPassword->seed === 'abc' && $withPassword->password === 'secret', 'earlier overrides must survive a later one');
 
 // re-running the constructor through with() must not double-mangle an already-clean hostname
 assert((new QueryResult(hostname: '<color=lime>Already</color>', players: 0, maxPlayers: 0))->withSeed('x')->hostname === 'Already');
@@ -140,13 +136,11 @@ $log = [
 
 assert(ValheimLogParser::players($log) === 2, 'the newest count wins, not the first');
 assert(ValheimLogParser::hostname($log) === 'Tormax', 'markup is stripped here too');
-assert(ValheimLogParser::joinCode($log) === '688911');
 assert(ValheimLogParser::players([]) === null, 'empty log is not zero players');
 assert(ValheimLogParser::players(['nothing to see here']) === null);
 
-// only the registration line present: no count yet, but name and code are already known
+// only the registration line present: no count yet
 assert(ValheimLogParser::players([$log[0]]) === null);
-assert(ValheimLogParser::joinCode([$log[0]]) === '001340');
 
 // a CS2 server whose 12/12 are mostly bots
 $cs2 = new QueryResult(
