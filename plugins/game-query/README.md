@@ -69,12 +69,19 @@ to 12 players.
 
 ## Connect password
 
-Point a game query's **Password Variable** at the startup variable holding the plaintext
-connect password (e.g. `PASSWORD` for Valheim), and a "Password" field becomes available under
-Visible Fields. It shows the real value, masked until clicked, rather than the generic
+"Password" is always offered under Visible Fields and needs no configuration: GameQuery checks
+a fixed, ordered list of startup variable names (`PASSWORD`, `SERVER_PASSWORD`,
+`SRV_PASSWORD`, `SV_PASS` - see `GameQuery::PASSWORD_VARIABLES`) and uses the first one that
+exists on the egg. It shows the real value, masked until clicked, rather than the generic
 yes/no "Password Protected" indicator any A2S game already reports.
 
-This bypasses no permission: it reads the same `user_viewable` flag the core Startup tab
+That list is deliberately exact rather than a fuzzy "contains PASS" match - several eggs also
+expose `RCON_PASSWORD`, `TV_PASSWORD` or `password_rcon`, which are real variables but not the
+connect password, and confidently showing the wrong secret under this label would be worse than
+showing nothing. A game whose password variable is named something else entirely (rare among
+the eggs in this repo) just won't show one - add its name to the list rather than guessing.
+
+Showing it bypasses no permission: it reads the same `user_viewable` flag the core Startup tab
 already respects, and additionally requires the viewer to hold the `startup.read` permission -
 exactly the two checks the Startup tab itself makes before showing any variable. A variable an
 admin has hidden from subusers there stays hidden here too.

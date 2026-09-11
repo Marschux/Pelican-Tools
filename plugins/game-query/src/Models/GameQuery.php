@@ -19,7 +19,6 @@ use Marschux\GameQuery\Query\QueryTypeService;
  * @property string $query_type
  * @property ?int $query_port_offset
  * @property ?string $query_port_variable
- * @property ?string $password_variable
  * @property string[] $visible_fields
  * @property Collection|Egg[] $eggs
  * @property int|null $eggs_count
@@ -31,14 +30,12 @@ class GameQuery extends Model
         'query_type',
         'query_port_offset',
         'query_port_variable',
-        'password_variable',
         'visible_fields',
     ];
 
     protected $attributes = [
         'query_port_offset' => null,
         'query_port_variable' => null,
-        'password_variable' => null,
     ];
 
     public function eggs(): BelongsToMany
@@ -71,9 +68,9 @@ class GameQuery extends Model
 
     /**
      * The fields this query's protocol can actually report - e.g. Valheim has no map or VAC
-     * status, no matter what is checked in the admin form - plus "password" once an admin has
-     * pointed it at a startup variable. The password is never something a protocol reports, so
-     * it is added here rather than in any schema's own supportedFields().
+     * status, no matter what is checked in the admin form - plus "password", which is always
+     * offered: whether it actually shows anything depends on plainPassword() finding a usable
+     * startup variable at read time, not on any admin configuration.
      */
     public function supportedFields(): array
     {
@@ -81,10 +78,7 @@ class GameQuery extends Model
         $service = app(QueryTypeService::class);
 
         $fields = $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
-
-        if ($this->password_variable) {
-            $fields[] = 'password';
-        }
+        $fields[] = 'password';
 
         return $fields;
     }
@@ -165,6 +159,16 @@ class GameQuery extends Model
     }
 
     /**
+     * Every egg names its connect-password variable differently (Valheim: PASSWORD, Conan
+     * Exiles: SERVER_PASSWORD, CS2: SRV_PASSWORD, CS:GO: SV_PASS) - checked in this order, the
+     * first one that exists on the egg wins. Deliberately an exact list rather than a fuzzy
+     * "contains PASS" match: several eggs also expose RCON_PASSWORD, TV_PASSWORD or
+     * password_rcon, which are real variables but not the connect password, and confidently
+     * showing the wrong secret under this label would be worse than showing nothing.
+     */
+    private const PASSWORD_VARIABLES = ['PASSWORD', 'SERVER_PASSWORD', 'SRV_PASSWORD', 'SV_PASS'];
+
+    /**
      * The literal connect password, read from a startup variable rather than the protocol -
      * no query answers with the actual password, only whether one is required at all.
      *
@@ -176,17 +180,17 @@ class GameQuery extends Model
      */
     public function plainPassword(Server $server): ?string
     {
-        if (!$this->password_variable) {
-            return null;
+        $variables = $server->variables()->whereIn('env_variable', self::PASSWORD_VARIABLES)->get()->keyBy('env_variable');
+
+        foreach (self::PASSWORD_VARIABLES as $name) {
+            $variable = $variables->get($name);
+
+            if ($variable && $variable->user_viewable && $variable->server_value) {
+                return $variable->server_value;
+            }
         }
 
-        $variable = $server->variables()->where('env_variable', $this->password_variable)->first();
-
-        if (!$variable || !$variable->user_viewable || !$variable->server_value) {
-            return null;
-        }
-
-        return $variable->server_value;
+        return null;
     }
 
     private function resolvePort(Server $server): int

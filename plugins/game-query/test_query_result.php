@@ -96,8 +96,9 @@ foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(),
     }
 }
 
-// "password" is never reported by any protocol - GameQuery adds it on top once an admin
-// points it at a startup variable, so no schema should claim to support it on its own
+// "password" is never reported by any protocol - GameQuery adds it on top unconditionally
+// (auto-detected from a fixed list of startup variable names), so no schema should claim to
+// support it on its own
 foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(), new ValheimSchema()] as $schema) {
     assert(!in_array('password', $schema->supportedFields(), true), get_class($schema) . ' must not claim password support itself');
 }
