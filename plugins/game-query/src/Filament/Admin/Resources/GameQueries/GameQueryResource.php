@@ -10,16 +10,14 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -102,9 +100,6 @@ class GameQueryResource extends Resource
                     ->label(trans('game-query::query.port_variable'))
                     ->placeholder(trans('game-query::query.no_variable'))
                     ->badge(),
-                IconColumn::make('track_history')
-                    ->label(trans('game-query::query.track_history'))
-                    ->boolean(),
                 TextColumn::make('eggs.name')
                     ->label(trans('game-query::query.eggs'))
                     ->placeholder(trans('game-query::query.no_eggs'))
@@ -194,6 +189,15 @@ class GameQueryResource extends Resource
                     ->selectablePlaceholder(false)
                     ->preload()
                     ->searchable()
+                    ->live()
+                    // switching the type can make some checked fields invalid for it - e.g.
+                    // valheim has no map or VAC, so a leftover checkmark from "Source" would
+                    // silently persist without ever being able to show anything again
+                    ->afterStateUpdated(function (Set $set, Get $get, QueryTypeService $service) {
+                        $allowed = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
+
+                        $set('visible_fields', array_values(array_intersect((array) $get('visible_fields'), $allowed)));
+                    })
                     ->columnSpanFull(),
                 TextInput::make('query_port_offset')
                     ->label(trans('game-query::query.port_offset'))
@@ -214,52 +218,16 @@ class GameQueryResource extends Resource
                     ->label(trans('game-query::query.visible_fields'))
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.visible_fields_hint'))
-                    ->options(collect(QueryResult::FIELDS)->mapWithKeys(fn ($field) => [$field => trans("game-query::query.field.$field")])->all())
-                    ->default(QueryResult::FIELDS)
+                    // only fields the selected protocol can actually report are offered -
+                    // showing a "VAC" checkbox for valheim would just be a checkbox that lies
+                    ->options(function (Get $get, QueryTypeService $service) {
+                        $fields = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
+
+                        return collect($fields)->mapWithKeys(fn ($field) => [$field => trans("game-query::query.field.$field")])->all();
+                    })
                     ->bulkToggleable()
                     ->columns(3)
                     ->columnSpanFull(),
-                Fieldset::make(trans('game-query::query.options'))
-                    ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([
-                        Toggle::make('fetch_rules')
-                            ->label(trans('game-query::query.fetch_rules'))
-                            ->hintIcon('tabler-question-mark')
-                            ->hintIconTooltip(trans('game-query::query.fetch_rules_hint'))
-                            ->inline(false),
-                        Toggle::make('track_history')
-                            ->label(trans('game-query::query.track_history'))
-                            ->hintIcon('tabler-question-mark')
-                            ->hintIconTooltip(trans('game-query::query.track_history_hint'))
-                            ->inline(false),
-                    ]),
-                Repeater::make('player_actions')
-                    ->label(trans('game-query::query.player_actions'))
-                    ->hintIcon('tabler-question-mark')
-                    ->hintIconTooltip(trans('game-query::query.player_actions_hint'))
-                    ->addActionLabel(trans('game-query::query.add_action'))
-                    ->itemLabel(fn (array $state) => $state['label'] ?? null)
-                    ->collapsed()
-                    ->defaultItems(0)
-                    ->columnSpanFull()
-                    ->schema([
-                        TextInput::make('label')
-                            ->label(trans('game-query::query.action_label'))
-                            ->required(),
-                        TextInput::make('command')
-                            ->label(trans('game-query::query.action_command'))
-                            ->placeholder('kick "{player}"')
-                            ->helperText(trans('game-query::query.action_command_hint'))
-                            ->required(),
-                        TextInput::make('icon')
-                            ->label(trans('game-query::query.action_icon'))
-                            ->placeholder('tabler-user-x'),
-                        Toggle::make('confirm')
-                            ->label(trans('game-query::query.action_confirm'))
-                            ->inline(false),
-                    ])
-                    ->columns(4),
                 Select::make('eggs')
                     ->label(trans('game-query::query.eggs'))
                     ->relationship('eggs', 'name')

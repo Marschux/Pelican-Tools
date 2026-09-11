@@ -14,9 +14,6 @@ return new class extends Migration
             $table->integer('query_port_offset')->nullable();
             $table->string('query_port_variable')->nullable();
             $table->json('visible_fields')->nullable();
-            $table->json('player_actions')->nullable();
-            $table->boolean('fetch_rules')->default(false);
-            $table->boolean('track_history')->default(false);
             $table->timestamps();
         });
     }

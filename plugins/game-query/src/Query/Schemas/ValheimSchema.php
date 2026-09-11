@@ -33,12 +33,22 @@ class ValheimSchema extends SourceSchema
         return 'Valheim';
     }
 
-    public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult
+    public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        $result = $this->run($ip, $port, SourceQuery::SOURCE, $withRules)
+        $result = $this->run($ip, $port, SourceQuery::SOURCE)
             ?? $this->fromConsole($server);
 
         return $result?->withSeed($this->seed($server));
+    }
+
+    /**
+     * A2S technically answers for Valheim, but several of its fields are meaningless or wrong
+     * here: there is no map, no bots, no VAC, no real game mode, and the reported "version" is
+     * an internal network/build stamp rather than anything a player would recognise.
+     */
+    public function supportedFields(): array
+    {
+        return ['hostname', 'players', 'passworded', 'seed', 'joinCode'];
     }
 
     /**

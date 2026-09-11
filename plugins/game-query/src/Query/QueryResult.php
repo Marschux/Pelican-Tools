@@ -10,10 +10,7 @@ namespace Marschux\GameQuery\Query;
  */
 readonly class QueryResult
 {
-    /**
-     * @param  ?QueryPlayer[]  $playerList  null when the protocol has no player list at all
-     * @param  ?array<string, string>  $rules  server cvars / plugin list, only fetched on demand
-     */
+    /** @param ?QueryPlayer[] $playerList null when the protocol has no player list at all */
     public string $hostname;
 
     public function __construct(
@@ -26,12 +23,10 @@ readonly class QueryResult
         public ?string $gameMode = null,
         public ?bool $passworded = null,
         public ?bool $secure = null,
-        public ?string $os = null,
         public ?string $icon = null,
         public ?string $seed = null,
         public ?string $joinCode = null,
         public ?array $playerList = null,
-        public ?array $rules = null,
     ) {
         $this->hostname = self::plain($hostname);
     }
@@ -62,7 +57,6 @@ readonly class QueryResult
         'gameMode',
         'passworded',
         'secure',
-        'os',
         'seed',
         'joinCode',
     ];
@@ -96,12 +90,10 @@ readonly class QueryResult
             gameMode: $this->gameMode,
             passworded: $this->passworded,
             secure: $this->secure,
-            os: $this->os,
             icon: $this->icon,
             seed: $seed,
             joinCode: $this->joinCode,
             playerList: $this->playerList,
-            rules: $this->rules,
         );
     }
 
@@ -118,7 +110,6 @@ readonly class QueryResult
             'game_mode' => $this->gameMode,
             'passworded' => $this->passworded,
             'secure' => $this->secure,
-            'os' => $this->os,
             'icon' => $this->icon,
             'seed' => $this->seed,
             'join_code' => $this->joinCode,
@@ -128,7 +119,6 @@ readonly class QueryResult
                 'playtime' => $p->playtime,
                 'id' => $p->id,
             ], $this->playerList),
-            'rules' => $this->rules,
         ];
     }
 }

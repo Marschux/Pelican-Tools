@@ -12,7 +12,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Panel;
-use Marschux\GameQuery\Filament\Server\Widgets\PlayerHistoryChart;
 use Marschux\GameQuery\Filament\Server\Widgets\ServerInfoWidget;
 
 class GameQueryPlugin implements HasPluginSettings, Plugin
@@ -41,12 +40,9 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
 
         // Discovering a widget only makes it known to the panel - the console page renders a
         // fixed list plus whatever was registered at one of its named positions, so without
-        // this the widgets exist but appear nowhere.
-        // page order is: Top, overview, AboveConsole, console, BelowConsole, charts, Bottom.
-        // The stat blocks belong right after the core overview; the chart belongs with the
-        // other charts at the end, where Bottom puts it.
+        // this the widget exists but appears nowhere. AboveConsole puts it right after the
+        // core overview blocks.
         Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
-        Console::registerCustomWidgets(ConsoleWidgetPosition::Bottom, [PlayerHistoryChart::class]);
     }
 
     public function getSettingsFormData(): array
@@ -86,24 +82,6 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
                 ->maxValue(600)
                 ->suffix('s')
                 ->default(fn () => config('game-query.cache_ttl')),
-            TextInput::make('history_interval')
-                ->label(trans('game-query::query.history_interval'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.history_interval_hint'))
-                ->numeric()
-                ->minValue(1)
-                ->maxValue(60)
-                ->suffix('min')
-                ->default(fn () => config('game-query.history_interval')),
-            TextInput::make('history_retention_days')
-                ->label(trans('game-query::query.history_retention'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.history_retention_hint'))
-                ->numeric()
-                ->minValue(1)
-                ->maxValue(3650)
-                ->suffix('d')
-                ->default(fn () => config('game-query.history_retention_days')),
             Toggle::make('debug')
                 ->label(trans('game-query::query.debug'))
                 ->hintIcon('tabler-question-mark')
@@ -119,8 +97,6 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
             'GAME_QUERY_ADDRESS_SOURCE' => $data['address_source'],
             'GAME_QUERY_TIMEOUT' => $data['timeout'],
             'GAME_QUERY_CACHE_TTL' => $data['cache_ttl'],
-            'GAME_QUERY_HISTORY_INTERVAL' => $data['history_interval'],
-            'GAME_QUERY_HISTORY_RETENTION_DAYS' => $data['history_retention_days'],
             'GAME_QUERY_DEBUG' => $data['debug'],
         ]);
 

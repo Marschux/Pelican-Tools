@@ -19,8 +19,8 @@ class GoldSourceSchema extends SourceSchema
         return 'GoldSrc (A2S)';
     }
 
-    public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult
+    public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        return $this->run($ip, $port, SourceQuery::GOLDSOURCE, $withRules);
+        return $this->run($ip, $port, SourceQuery::GOLDSOURCE);
     }
 }

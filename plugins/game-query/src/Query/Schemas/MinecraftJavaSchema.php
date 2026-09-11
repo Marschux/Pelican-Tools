@@ -28,12 +28,19 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
      * and is the only one of the two that reports the world name and the full player list;
      * the ping always works but only samples up to 12 players.
      */
-    public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult
+    public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        return $this->tryQuery($ip, $port, $withRules) ?? $this->tryPing($ip, $port);
+        return $this->tryQuery($ip, $port) ?? $this->tryPing($ip, $port);
     }
 
-    protected function tryQuery(string $ip, int $port, bool $withRules): ?QueryResult
+    public function supportedFields(): array
+    {
+        // map and gameMode only come from the query variant, not the ping fallback - still
+        // offered here since "supported" means the protocol as a whole, not every path
+        return ['hostname', 'players', 'map', 'version', 'gameMode'];
+    }
+
+    protected function tryQuery(string $ip, int $port): ?QueryResult
     {
         $query = new MinecraftQuery();
 
@@ -58,7 +65,6 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
                 playerList: is_array($players)
                     ? array_map(fn ($name) => new QueryPlayer(name: (string) $name), $players)
                     : null,
-                rules: $withRules ? $this->plugins($info) : null,
             );
         } catch (Throwable $exception) {
             QueryTypeService::reportFailure($exception);
@@ -129,22 +135,5 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
             name: (string) ($player['name'] ?? ''),
             id: $player['id'] ?? null,
         ), $sample);
-    }
-
-    /**
-     * @param  array<string, mixed>  $info
-     * @return ?array<string, string>
-     */
-    protected function plugins(array $info): ?array
-    {
-        $plugins = $info['Plugins'] ?? null;
-
-        if (empty($plugins)) {
-            return null;
-        }
-
-        return is_array($plugins)
-            ? array_map(fn ($plugin) => (string) $plugin, $plugins)
-            : ['Plugins' => (string) $plugins];
     }
 }

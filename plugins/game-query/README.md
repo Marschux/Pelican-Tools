@@ -17,7 +17,9 @@ systemctl reload php8.3-fpm
 
 `optimize:clear` is not optional after an update: newly added config keys read as `null` while
 a cached config is in place, and new Filament fields and actions stay invisible until the
-component cache is rebuilt.
+component cache is rebuilt. If FPM keeps serving the old code even after that, the OPcache is
+the next thing to clear - restart php-fpm, not just reload it, since reload keeps existing
+workers (and their OPcache) running.
 
 ## Query address
 
@@ -30,10 +32,17 @@ or its alias in the plugin settings if you need to.
 
 | Type | Games |
 |---|---|
-| `source` | CS2, CS:GO, CS:S, TF2, Garry's Mod, L4D 1/2, Rust, Valheim, Arma 3, Conan Exiles, Enshrouded, The Forest, Sons of the Forest, Return to Moria |
+| `source` | CS2, CS:GO, CS:S, TF2, Garry's Mod, L4D 1/2, Rust, Arma 3, Conan Exiles, Enshrouded, The Forest, Sons of the Forest, Return to Moria |
 | `goldsrc` | CS 1.6, Condition Zero, Half-Life Deathmatch |
 | `minecraft_java` | Minecraft (query, falling back to ping) |
 | `valheim` | Valheim - the A2S query plus the world seed |
+
+Which fields are offered for a query depend on its type: each schema declares
+`supportedFields()`, and the admin's field list only shows what that protocol can actually
+report. Valheim for one has no map, no bots, no VAC and no meaningful "version" - A2S answers
+for it, but those particular fields are either always empty or actively misleading, so they are
+not offered at all rather than being checkable and useless. Of what is offered, a field only
+appears on the server page once the protocol has actually reported it in a given query.
 
 ### Valheim world seed
 
@@ -58,15 +67,6 @@ For Minecraft, set `enable-query=true` and `query-port` to the server port in
 `server.properties` - the ping fallback works without it but reports no map and only samples up
 to 12 players.
 
-Which fields appear per game is configured per query under **Visible Fields**. A field shows up
-only if it is enabled and the protocol actually reported it, so nothing ever reads "unknown".
-
-## Player actions
-
-Kick, ban, whitelist and op are command templates on the game query, not built-in features.
-`{player}` is replaced with the player name, so any console command works for any game. They
-require the `control.console` permission and are sent through the daemon.
-
 ## Notes
 
 The query for a server is looked up with `GameQuery::forServer()`, a plain join over the pivot.
@@ -77,13 +77,8 @@ which is indistinguishable from the plugin not being installed.
 The server console page renders a fixed core widget list plus whatever was registered through
 `Console::registerCustomWidgets()` at one of its positions (`Top`, `AboveConsole`,
 `BelowConsole`, `Bottom`). Discovering a widget through `discoverWidgets()` alone makes it known
-to the panel but places it nowhere, so both widgets are registered explicitly in the plugin's
-`boot()`.
-
-The players page is a Filament custom-data table: `records()` returns plain arrays, columns
-resolve by array key, and actions receive the row as `array $record`. Sorting and searching
-would have to be handled inside the `records()` closure, so they are deliberately not offered
-rather than shipped as controls that do nothing.
+to the panel but places it nowhere, so the widget is registered explicitly in the plugin's
+`boot()`, at `AboveConsole` - right after the core overview blocks.
 
 ## Tests
 
@@ -91,5 +86,6 @@ rather than shipped as controls that do nothing.
 php test_query_result.php
 ```
 
-Checks the result mapping: bot subtraction, "not reported" versus zero, and that every field
-offered in the admin is resolvable. The socket layer needs a real server and is not covered.
+Checks the result mapping: bot subtraction, "not reported" versus zero, name markup stripping,
+the seed file parser (including the malformed and truncated cases) and the Valheim console log
+parser. The socket layer needs a real server and is not covered.

@@ -22,12 +22,17 @@ class SourceSchema implements QueryTypeSchemaInterface
         return 'Source (A2S)';
     }
 
-    public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult
+    public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        return $this->run($ip, $port, SourceQuery::SOURCE, $withRules);
+        return $this->run($ip, $port, SourceQuery::SOURCE);
     }
 
-    protected function run(string $ip, int $port, int $engine, bool $withRules): ?QueryResult
+    public function supportedFields(): array
+    {
+        return ['hostname', 'players', 'map', 'bots', 'version', 'gameMode', 'passworded', 'secure'];
+    }
+
+    protected function run(string $ip, int $port, int $engine): ?QueryResult
     {
         $query = new SourceQuery();
 
@@ -46,9 +51,7 @@ class SourceSchema implements QueryTypeSchemaInterface
                 gameMode: $this->gameMode($info),
                 passworded: isset($info['Password']) ? (bool) $info['Password'] : null,
                 secure: isset($info['Secure']) ? (bool) $info['Secure'] : null,
-                os: $this->os($info['Os'] ?? null),
                 playerList: $this->players($query),
-                rules: $withRules ? $this->rules($query) : null,
             );
         } catch (Throwable $exception) {
             QueryTypeService::reportFailure($exception);
@@ -73,16 +76,6 @@ class SourceSchema implements QueryTypeSchemaInterface
         return null;
     }
 
-    protected function os(mixed $os): ?string
-    {
-        return match ($os) {
-            'l' => 'Linux',
-            'w' => 'Windows',
-            'm', 'o' => 'macOS',
-            default => null,
-        };
-    }
-
     /** @return ?QueryPlayer[] */
     protected function players(SourceQuery $query): ?array
     {
@@ -100,17 +93,5 @@ class SourceSchema implements QueryTypeSchemaInterface
             score: isset($player['Frags']) ? (int) $player['Frags'] : null,
             playtime: isset($player['Time']) ? (int) $player['Time'] : null,
         ), $players);
-    }
-
-    /** @return ?array<string, string> */
-    protected function rules(SourceQuery $query): ?array
-    {
-        try {
-            return array_map(fn ($value) => (string) $value, $query->GetRules());
-        } catch (Throwable $exception) {
-            QueryTypeService::reportFailure($exception);
-
-            return null;
-        }
     }
 }

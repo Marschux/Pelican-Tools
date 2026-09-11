@@ -20,9 +20,6 @@ use Marschux\GameQuery\Query\QueryTypeService;
  * @property ?int $query_port_offset
  * @property ?string $query_port_variable
  * @property string[] $visible_fields
- * @property array<array{label: string, command: string, icon: ?string, confirm: bool}> $player_actions
- * @property bool $fetch_rules
- * @property bool $track_history
  * @property Collection|Egg[] $eggs
  * @property int|null $eggs_count
  */
@@ -34,26 +31,12 @@ class GameQuery extends Model
         'query_port_offset',
         'query_port_variable',
         'visible_fields',
-        'player_actions',
-        'fetch_rules',
-        'track_history',
     ];
 
     protected $attributes = [
         'query_port_offset' => null,
         'query_port_variable' => null,
-        'fetch_rules' => false,
-        'track_history' => false,
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'player_actions' => 'array',
-            'fetch_rules' => 'bool',
-            'track_history' => 'bool',
-        ];
-    }
 
     public function eggs(): BelongsToMany
     {
@@ -84,22 +67,37 @@ class GameQuery extends Model
     }
 
     /**
-     * Fields to show, defaulting to everything when nothing was configured.
+     * The fields this query's protocol can actually report - e.g. Valheim has no map or VAC
+     * status, no matter what is checked in the admin form.
+     */
+    public function supportedFields(): array
+    {
+        /** @var QueryTypeService $service */
+        $service = app(QueryTypeService::class);
+
+        return $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
+    }
+
+    /**
+     * Fields to show, defaulting to everything the protocol supports when nothing was
+     * configured.
      *
-     * Filtered against the current field list on both read and write: a field that gets
-     * removed from the code would otherwise linger in old rows and fail the form's validation
-     * with "the selected visible fields is invalid", locking the record out of editing.
+     * Filtered on read against supportedFields() rather than in a setter: a setter would run
+     * during mass assignment before query_type is necessarily set yet, and a field going away
+     * from a protocol (or the protocol changing) would otherwise leave old rows with a stored
+     * selection that no longer makes sense - reading it fresh here means that can't happen.
      */
     protected function visibleFields(): Attribute
     {
         return Attribute::make(
             get: function (?string $value): array {
                 $stored = json_decode($value ?? '[]', true);
-                $valid = array_values(array_intersect(is_array($stored) ? $stored : [], QueryResult::FIELDS));
+                $allowed = $this->supportedFields();
+                $valid = array_values(array_intersect(is_array($stored) ? $stored : [], $allowed));
 
-                return $valid ?: QueryResult::FIELDS;
+                return $valid ?: $allowed;
             },
-            set: fn (mixed $value): string => json_encode(array_values(array_intersect((array) $value, QueryResult::FIELDS))),
+            set: fn (mixed $value): string => json_encode(array_values((array) $value)),
         );
     }
 
@@ -144,7 +142,7 @@ class GameQuery extends Model
         /** @var QueryTypeService $service */
         $service = app(QueryTypeService::class);
 
-        return $service->get($this->query_type)?->process($server, $ip, $this->resolvePort($server), $this->fetch_rules);
+        return $service->get($this->query_type)?->process($server, $ip, $this->resolvePort($server));
     }
 
     private function resolvePort(Server $server): int

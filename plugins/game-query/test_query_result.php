@@ -13,11 +13,20 @@ require __DIR__ . '/src/Query/QueryResult.php';
 require __DIR__ . '/src/Query/FwlSeedParser.php';
 require __DIR__ . '/src/Query/ConsoleLog.php';
 require __DIR__ . '/src/Query/ValheimLogParser.php';
+require __DIR__ . '/src/Query/QueryTypeSchemaInterface.php';
+require __DIR__ . '/src/Query/Schemas/SourceSchema.php';
+require __DIR__ . '/src/Query/Schemas/GoldSourceSchema.php';
+require __DIR__ . '/src/Query/Schemas/MinecraftJavaSchema.php';
+require __DIR__ . '/src/Query/Schemas/ValheimSchema.php';
 
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\QueryPlayer;
-use Marschux\GameQuery\Query\ValheimLogParser;
 use Marschux\GameQuery\Query\QueryResult;
+use Marschux\GameQuery\Query\Schemas\GoldSourceSchema;
+use Marschux\GameQuery\Query\Schemas\MinecraftJavaSchema;
+use Marschux\GameQuery\Query\Schemas\SourceSchema;
+use Marschux\GameQuery\Query\Schemas\ValheimSchema;
+use Marschux\GameQuery\Query\ValheimLogParser;
 
 /** Builds a valheim world metadata file: two int32 headers, then two length-prefixed strings. */
 function fwl(string $name, string $seed): string
@@ -52,6 +61,38 @@ assert(QueryResult::plain('A <bogus>tag</bogus> stays') === 'A <bogus>tag</bogus
 
 // the icon is not offered as a toggle: nothing renders a data uri in a stat block
 assert(!in_array('icon', QueryResult::FIELDS, true));
+
+// os was dropped entirely - not read from A2S, not offered, not in the api output
+assert(!in_array('os', QueryResult::FIELDS, true));
+
+// a schema only offers fields its protocol can actually report - the admin field list is
+// built from this, and a checkbox for something a game can never show is worse than none
+$sourceFields = (new SourceSchema())->supportedFields();
+assert(in_array('map', $sourceFields, true) && in_array('secure', $sourceFields, true));
+assert(!in_array('seed', $sourceFields, true), 'seed only exists for valheim');
+
+// goldsrc inherits source's field list rather than redeclaring it
+assert((new GoldSourceSchema())->supportedFields() === $sourceFields);
+
+$mcFields = (new MinecraftJavaSchema())->supportedFields();
+assert(in_array('map', $mcFields, true) && !in_array('bots', $mcFields, true), 'minecraft has no bot concept');
+
+// valheim answers A2S, but several of the fields that come back are meaningless or wrong for
+// it - these must never be offered, no matter what the underlying protocol technically returns
+$valheimFields = (new ValheimSchema())->supportedFields();
+foreach (['map', 'bots', 'version', 'secure', 'gameMode', 'os'] as $wrong) {
+    assert(!in_array($wrong, $valheimFields, true), "valheim must not offer $wrong");
+}
+assert(in_array('seed', $valheimFields, true) && in_array('joinCode', $valheimFields, true));
+
+// every field a schema claims to support must be a real QueryResult field, and every schema
+// must be resolvable through get() - otherwise the admin could offer a checkbox that always
+// throws or silently does nothing
+foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(), new ValheimSchema()] as $schema) {
+    foreach ($schema->supportedFields() as $field) {
+        assert(in_array($field, QueryResult::FIELDS, true), get_class($schema) . " supports unknown field $field");
+    }
+}
 
 // crossplay servers never answer A2S, so the player count comes out of their own log
 $log = [

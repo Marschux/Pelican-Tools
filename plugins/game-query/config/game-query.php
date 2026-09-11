@@ -9,7 +9,4 @@ return [
 
     // a failed query is the normal case for an offline server, so it is not logged by default
     'debug' => (bool) env('GAME_QUERY_DEBUG', false),
-
-    'history_interval' => (int) env('GAME_QUERY_HISTORY_INTERVAL', 5),
-    'history_retention_days' => (int) env('GAME_QUERY_HISTORY_RETENTION_DAYS', 30),
 ];

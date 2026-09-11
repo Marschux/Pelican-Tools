@@ -4,11 +4,9 @@ namespace Marschux\GameQuery\Providers;
 
 use App\Models\Server;
 use Filament\Tables\Table;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Marschux\GameQuery\Filament\ServerPlayersColumn;
-use Marschux\GameQuery\Jobs\SampleGameQueriesJob;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Policies\GameQueryPolicy;
 use Marschux\GameQuery\Query\QueryTypeService;
@@ -43,22 +41,6 @@ class GameQueryPluginProvider extends ServiceProvider
         Gate::policy(GameQuery::class, GameQueryPolicy::class);
 
         $this->addServerListColumn();
-        $this->scheduleSampling();
-    }
-
-    /**
-     * The interval is a setting, so it is read here rather than hardcoded in the schedule.
-     * everyMinute() with a modulo filter would be the alternative; cron is simpler and exact.
-     */
-    private function scheduleSampling(): void
-    {
-        $minutes = min(60, max(1, (int) config('game-query.history_interval')));
-
-        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) use ($minutes) {
-            $schedule->job(new SampleGameQueriesJob())
-                ->cron("*/$minutes * * * *")
-                ->withoutOverlapping();
-        });
     }
 
     /**

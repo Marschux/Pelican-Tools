@@ -16,5 +16,8 @@ interface QueryTypeSchemaInterface
      * Returns null when the server did not answer - that is the normal case for a stopped
      * server, not an error, so implementations must not let exceptions escape.
      */
-    public function process(Server $server, string $ip, int $port, bool $withRules = false): ?QueryResult;
+    public function process(Server $server, string $ip, int $port): ?QueryResult;
+
+    /** @return string[] subset of QueryResult::FIELDS this protocol can actually report */
+    public function supportedFields(): array;
 }
