@@ -55,9 +55,14 @@ folder.
 With crossplay enabled Valheim routes everything through the PlayFab relay and never opens the
 udp ports locally, so no A2S query can reach it. In that case the schema falls back to reading
 the server's own console output through the daemon, where Valheim logs its session state -
-player count, server name and the crossplay join code. Wings caps that at the last 100 lines,
-so the count is only available while a session line is still within them, and this route gives
-no player names.
+player count, server name and the crossplay join code. Wings caps that at the last 100 lines, so
+the player count is only available while a session line is still within them, and this route
+gives no player names.
+
+The join code is remembered once seen (cached per server for a week) rather than re-derived on
+every query: Valheim only logs it around connect/reconnect time, and on an active server that
+line scrolls out of the 100-line window within minutes - long before the code itself changes,
+which only happens on a server restart. A fresh sighting always overwrites the cached value.
 
 The 1.0 header layout is not documented anywhere, so the parser validates what it reads and
 returns nothing when the bytes do not look like a seed. An empty seed field means "could not
