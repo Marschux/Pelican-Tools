@@ -37,6 +37,7 @@ class GameQueryPluginProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(plugin_path('game-query', 'database/migrations'));
         $this->loadTranslationsFrom(plugin_path('game-query', 'lang'), 'game-query');
+        $this->loadViewsFrom(plugin_path('game-query', 'resources/views'), 'game-query');
 
         Gate::policy(GameQuery::class, GameQueryPolicy::class);
 

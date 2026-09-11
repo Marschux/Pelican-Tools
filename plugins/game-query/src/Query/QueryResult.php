@@ -26,6 +26,7 @@ readonly class QueryResult
         public ?string $icon = null,
         public ?string $seed = null,
         public ?string $joinCode = null,
+        public ?string $password = null,
         public ?array $playerList = null,
     ) {
         $this->hostname = self::plain($hostname);
@@ -59,6 +60,7 @@ readonly class QueryResult
         'secure',
         'seed',
         'joinCode',
+        'password',
     ];
 
     /** Human players, i.e. without the bots the server counts towards its player number. */
@@ -77,24 +79,30 @@ readonly class QueryResult
         return property_exists($this, $field) ? $this->$field : null;
     }
 
-    /** Copy with the seed filled in - readonly properties cannot be set on a clone. */
+    /**
+     * Returns a copy with the given properties replaced - readonly properties cannot be set
+     * on a clone, and every property here happens to share its name with its constructor
+     * parameter, so the current state doubles as the named-argument list.
+     */
+    private function with(array $overrides): self
+    {
+        return new self(...array_merge(get_object_vars($this), $overrides));
+    }
+
     public function withSeed(?string $seed): self
     {
-        return new self(
-            hostname: $this->hostname,
-            players: $this->players,
-            maxPlayers: $this->maxPlayers,
-            map: $this->map,
-            bots: $this->bots,
-            version: $this->version,
-            gameMode: $this->gameMode,
-            passworded: $this->passworded,
-            secure: $this->secure,
-            icon: $this->icon,
-            seed: $seed,
-            joinCode: $this->joinCode,
-            playerList: $this->playerList,
-        );
+        return $this->with(['seed' => $seed]);
+    }
+
+    public function withJoinCode(?string $joinCode): self
+    {
+        return $this->with(['joinCode' => $joinCode]);
+    }
+
+    /** password is attached by GameQuery, not by a schema - no protocol ever reports it. */
+    public function withPassword(?string $password): self
+    {
+        return $this->with(['password' => $password]);
     }
 
     /** @return array<string, mixed> */
@@ -113,6 +121,7 @@ readonly class QueryResult
             'icon' => $this->icon,
             'seed' => $this->seed,
             'join_code' => $this->joinCode,
+            'password' => $this->password,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,
                 'score' => $p->score,

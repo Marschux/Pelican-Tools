@@ -18,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -100,6 +101,10 @@ class GameQueryResource extends Resource
                     ->label(trans('game-query::query.port_variable'))
                     ->placeholder(trans('game-query::query.no_variable'))
                     ->badge(),
+                IconColumn::make('password_variable')
+                    ->label(trans('game-query::query.password_variable'))
+                    ->boolean()
+                    ->getStateUsing(fn (GameQuery $record) => (bool) $record->password_variable),
                 TextColumn::make('eggs.name')
                     ->label(trans('game-query::query.eggs'))
                     ->placeholder(trans('game-query::query.no_eggs'))
@@ -170,6 +175,30 @@ class GameQueryResource extends Resource
             ->send();
     }
 
+    /**
+     * Fields the current form state can offer: whatever the selected protocol supports, plus
+     * "password" once a startup variable has been named for it. Read from live form state
+     * (Get), not a saved model, since this runs while a query is still being created or edited.
+     */
+    private static function allowedFields(Get $get, QueryTypeService $service): array
+    {
+        $fields = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
+
+        if ($get('password_variable')) {
+            $fields[] = 'password';
+        }
+
+        return $fields;
+    }
+
+    /** Drops any checked field the current type/password-variable combination can no longer show. */
+    private static function pruneVisibleFields(Set $set, Get $get, QueryTypeService $service): void
+    {
+        $allowed = static::allowedFields($get, $service);
+
+        $set('visible_fields', array_values(array_intersect((array) $get('visible_fields'), $allowed)));
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -193,11 +222,7 @@ class GameQueryResource extends Resource
                     // switching the type can make some checked fields invalid for it - e.g.
                     // valheim has no map or VAC, so a leftover checkmark from "Source" would
                     // silently persist without ever being able to show anything again
-                    ->afterStateUpdated(function (Set $set, Get $get, QueryTypeService $service) {
-                        $allowed = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
-
-                        $set('visible_fields', array_values(array_intersect((array) $get('visible_fields'), $allowed)));
-                    })
+                    ->afterStateUpdated(fn (Set $set, Get $get, QueryTypeService $service) => static::pruneVisibleFields($set, $get, $service))
                     ->columnSpanFull(),
                 TextInput::make('query_port_offset')
                     ->label(trans('game-query::query.port_offset'))
@@ -214,17 +239,26 @@ class GameQueryResource extends Resource
                     ->nullable()
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.port_variable_hint')),
+                TextInput::make('password_variable')
+                    ->label(trans('game-query::query.password_variable'))
+                    ->placeholder(trans('game-query::query.no_variable'))
+                    ->nullable()
+                    ->live(onBlur: true)
+                    // once a variable is named, "Password" becomes a checkable field - see
+                    // GameQuery::supportedFields(). Clearing it again should drop the checkbox
+                    // the same way changing the type drops fields the new type can't show
+                    ->afterStateUpdated(fn (Set $set, Get $get, QueryTypeService $service) => static::pruneVisibleFields($set, $get, $service))
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('game-query::query.password_variable_hint')),
                 CheckboxList::make('visible_fields')
                     ->label(trans('game-query::query.visible_fields'))
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.visible_fields_hint'))
                     // only fields the selected protocol can actually report are offered -
                     // showing a "VAC" checkbox for valheim would just be a checkbox that lies
-                    ->options(function (Get $get, QueryTypeService $service) {
-                        $fields = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
-
-                        return collect($fields)->mapWithKeys(fn ($field) => [$field => trans("game-query::query.field.$field")])->all();
-                    })
+                    ->options(fn (Get $get, QueryTypeService $service) => collect(static::allowedFields($get, $service))
+                        ->mapWithKeys(fn ($field) => [$field => trans("game-query::query.field.$field")])
+                        ->all())
                     ->bulkToggleable()
                     ->columns(3)
                     ->columnSpanFull(),

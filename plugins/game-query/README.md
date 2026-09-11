@@ -67,6 +67,18 @@ For Minecraft, set `enable-query=true` and `query-port` to the server port in
 `server.properties` - the ping fallback works without it but reports no map and only samples up
 to 12 players.
 
+## Connect password
+
+Point a game query's **Password Variable** at the startup variable holding the plaintext
+connect password (e.g. `PASSWORD` for Valheim), and a "Password" field becomes available under
+Visible Fields. It shows the real value, masked until clicked, rather than the generic
+yes/no "Password Protected" indicator any A2S game already reports.
+
+This bypasses no permission: it reads the same `user_viewable` flag the core Startup tab
+already respects, and additionally requires the viewer to hold the `startup.read` permission -
+exactly the two checks the Startup tab itself makes before showing any variable. A variable an
+admin has hidden from subusers there stays hidden here too.
+
 ## Notes
 
 The query for a server is looked up with `GameQuery::forServer()`, a plain join over the pivot.

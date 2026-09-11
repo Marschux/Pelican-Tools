@@ -19,6 +19,7 @@ use Marschux\GameQuery\Query\QueryTypeService;
  * @property string $query_type
  * @property ?int $query_port_offset
  * @property ?string $query_port_variable
+ * @property ?string $password_variable
  * @property string[] $visible_fields
  * @property Collection|Egg[] $eggs
  * @property int|null $eggs_count
@@ -30,12 +31,14 @@ class GameQuery extends Model
         'query_type',
         'query_port_offset',
         'query_port_variable',
+        'password_variable',
         'visible_fields',
     ];
 
     protected $attributes = [
         'query_port_offset' => null,
         'query_port_variable' => null,
+        'password_variable' => null,
     ];
 
     public function eggs(): BelongsToMany
@@ -68,14 +71,22 @@ class GameQuery extends Model
 
     /**
      * The fields this query's protocol can actually report - e.g. Valheim has no map or VAC
-     * status, no matter what is checked in the admin form.
+     * status, no matter what is checked in the admin form - plus "password" once an admin has
+     * pointed it at a startup variable. The password is never something a protocol reports, so
+     * it is added here rather than in any schema's own supportedFields().
      */
     public function supportedFields(): array
     {
         /** @var QueryTypeService $service */
         $service = app(QueryTypeService::class);
 
-        return $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
+        $fields = $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
+
+        if ($this->password_variable) {
+            $fields[] = 'password';
+        }
+
+        return $fields;
     }
 
     /**
@@ -142,7 +153,40 @@ class GameQuery extends Model
         /** @var QueryTypeService $service */
         $service = app(QueryTypeService::class);
 
-        return $service->get($this->query_type)?->process($server, $ip, $this->resolvePort($server));
+        $result = $service->get($this->query_type)?->process($server, $ip, $this->resolvePort($server));
+
+        if ($result === null) {
+            return null;
+        }
+
+        // a nullsafe call here would still evaluate plainPassword()'s db lookup even when
+        // $result is null, since php evaluates arguments before the ?-> short-circuit
+        return $result->withPassword($this->plainPassword($server));
+    }
+
+    /**
+     * The literal connect password, read from a startup variable rather than the protocol -
+     * no query answers with the actual password, only whether one is required at all.
+     *
+     * Mirrors the core Startup page's own rule exactly: a variable not flagged user-viewable
+     * must not leak through here either, regardless of who else can already see this widget.
+     * Whether the *current viewer* additionally holds the startup.read permission is checked
+     * where this value is displayed, not here - this result is cached and shared across
+     * viewers, so a per-viewer permission must never be baked into it.
+     */
+    public function plainPassword(Server $server): ?string
+    {
+        if (!$this->password_variable) {
+            return null;
+        }
+
+        $variable = $server->variables()->where('env_variable', $this->password_variable)->first();
+
+        if (!$variable || !$variable->user_viewable || !$variable->server_value) {
+            return null;
+        }
+
+        return $variable->server_value;
     }
 
     private function resolvePort(Server $server): int

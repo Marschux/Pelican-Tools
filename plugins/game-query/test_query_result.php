@@ -94,6 +94,30 @@ foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(),
     }
 }
 
+// "password" is never reported by any protocol - GameQuery adds it on top once an admin
+// points it at a startup variable, so no schema should claim to support it on its own
+foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(), new ValheimSchema()] as $schema) {
+    assert(!in_array('password', $schema->supportedFields(), true), get_class($schema) . ' must not claim password support itself');
+}
+
+// with()/withSeed()/withJoinCode()/withPassword() must produce independent copies rather than
+// mutating the original - these are readonly objects shared through the cache, so a copy that
+// leaked back into the original would corrupt every other reader of that cache entry
+$base = new QueryResult(hostname: 'X', players: 1, maxPlayers: 2);
+$withSeed = $base->withSeed('abc');
+assert($base->seed === null && $withSeed->seed === 'abc');
+
+$withBoth = $withSeed->withJoinCode('123456');
+assert($withSeed->joinCode === null, 'the earlier copy must stay untouched');
+assert($withBoth->seed === 'abc' && $withBoth->joinCode === '123456', 'earlier overrides must survive a later one');
+
+$withPassword = $withBoth->withPassword('secret');
+assert($withBoth->password === null);
+assert($withPassword->seed === 'abc' && $withPassword->joinCode === '123456' && $withPassword->password === 'secret');
+
+// re-running the constructor through with() must not double-mangle an already-clean hostname
+assert((new QueryResult(hostname: '<color=lime>Already</color>', players: 0, maxPlayers: 0))->withSeed('x')->hostname === 'Already');
+
 // crossplay servers never answer A2S, so the player count comes out of their own log
 $log = [
     '09/10/2026 22:35:40: Session \"<color=lime>Tormax</color>\" registered with join code 001340',

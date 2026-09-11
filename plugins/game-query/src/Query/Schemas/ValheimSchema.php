@@ -35,10 +35,22 @@ class ValheimSchema extends SourceSchema
 
     public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        $result = $this->run($ip, $port, SourceQuery::SOURCE)
-            ?? $this->fromConsole($server);
+        $lines = ConsoleLog::tail($server);
 
-        return $result?->withSeed($this->seed($server));
+        $result = $this->run($ip, $port, SourceQuery::SOURCE)
+            ?? $this->fromConsole($lines);
+
+        if ($result === null) {
+            return null;
+        }
+
+        // the crossplay join code lives only in valheim's own log, never in an A2S answer -
+        // fetched regardless of whether A2S itself succeeded, since a working A2S query does
+        // not mean crossplay is off. That was the bug: the code only appeared when A2S failed
+        // entirely, even though a joinable crossplay session existed either way.
+        return $result
+            ->withSeed($this->seed($server))
+            ->withJoinCode(ValheimLogParser::joinCode($lines));
     }
 
     /**
@@ -55,11 +67,11 @@ class ValheimSchema extends SourceSchema
      * With crossplay on, Valheim routes through the PlayFab relay and never opens the udp
      * ports locally, so no A2S query can reach it. It does log its session state though, and
      * that is the only place a player count exists in that mode.
+     *
+     * @param  string[]  $lines
      */
-    private function fromConsole(Server $server): ?QueryResult
+    private function fromConsole(array $lines): ?QueryResult
     {
-        $lines = ConsoleLog::tail($server);
-
         $players = ValheimLogParser::players($lines);
 
         if ($players === null) {
@@ -71,7 +83,6 @@ class ValheimSchema extends SourceSchema
             players: $players,
             // valheim's own hard limit; the log does not carry it
             maxPlayers: 10,
-            joinCode: ValheimLogParser::joinCode($lines),
         );
     }
 

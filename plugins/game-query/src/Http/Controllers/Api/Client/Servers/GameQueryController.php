@@ -28,6 +28,13 @@ class GameQueryController extends ClientApiController
 
         unset($data['players_list']);
 
+        // mirrors the widget: the password only ever came from a startup variable, never from
+        // the protocol, and "startup.read" is the same permission the core Startup page itself
+        // requires before showing any variable at all
+        if (!auth()->user()?->can('startup.read', $server)) {
+            unset($data['password']);
+        }
+
         return response()->json($data);
     }
 

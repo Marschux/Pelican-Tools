@@ -22,6 +22,8 @@ return [
     'port_variable' => 'Query Port Variable',
     'no_variable' => 'Keine Variable',
     'port_variable_hint' => 'Der Env Name der Startup Variable, die für den Query Port verwendet werden soll, z.B. "QUERY_PORT". Wenn ein Wert gesetzt wurde wird der Query Port Offset ignoriert!',
+    'password_variable' => 'Passwort-Variable',
+    'password_variable_hint' => 'Env Name der Startup-Variable mit dem Verbindungspasswort, z.B. "PASSWORD". Sobald gesetzt, wird unten "Passwort" wählbar und zeigt den tatsächlichen Wert (bis zum Anklicken verborgen) statt nur ob eins nötig ist. Es gilt dieselbe Sichtbarkeit wie im Reiter Startdaten - eine dort nicht sichtbare Variable bleibt auch hier verborgen.',
 
     'visible_fields' => 'Sichtbare Felder',
     'visible_fields_hint' => 'Welche Felder die Server-Seite anzeigt. Angeboten werden nur Felder, die der gewählte Typ überhaupt liefern kann, und ein Feld erscheint erst, wenn das Protokoll es tatsächlich gemeldet hat.',
@@ -33,12 +35,15 @@ return [
         'bots' => 'Bots',
         'version' => 'Version',
         'gameMode' => 'Spielmodus',
-        'passworded' => 'Passwort',
+        'passworded' => 'Passwortschutz',
+        'password' => 'Passwort',
         'secure' => 'VAC',
         'joinCode' => 'Beitrittscode',
         'seed' => 'Welt-Seed',
         'icon' => 'Server-Icon',
     ],
+
+    'click_to_reveal' => 'Zum Anzeigen klicken',
 
     'players_with_bots' => ':players / :max (+:bots Bots)',
 

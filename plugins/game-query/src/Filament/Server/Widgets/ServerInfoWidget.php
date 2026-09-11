@@ -6,6 +6,7 @@ use App\Filament\Server\Components\SmallStatBlock;
 use App\Models\Server;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget;
+use Marschux\GameQuery\Filament\Server\Components\MaskedStatBlock;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Query\QueryResult;
 
@@ -52,6 +53,14 @@ class ServerInfoWidget extends StatsOverviewWidget
         $stats = [];
 
         foreach ($gameQuery->visible_fields as $field) {
+            if ($field === 'password') {
+                if ($stat = $this->passwordStat($server, $result)) {
+                    $stats[] = $stat;
+                }
+
+                continue;
+            }
+
             $value = $this->format($field, $result);
 
             // null means the protocol cannot report this field - show nothing rather than
@@ -62,6 +71,23 @@ class ServerInfoWidget extends StatsOverviewWidget
         }
 
         return $stats;
+    }
+
+    /**
+     * The password is read from a startup variable rather than the protocol, so it needs its
+     * own permission gate: GameQuery::plainPassword() already refused to attach a value that
+     * is not flagged user-viewable, but that check is not specific to whoever is looking right
+     * now. "startup.read" is the same permission the core Startup page itself requires before
+     * showing any variable at all - a viewer without it must not see this either, even though
+     * the value technically already made it into the (shared, cached) query result.
+     */
+    private function passwordStat(Server $server, QueryResult $result): ?MaskedStatBlock
+    {
+        if ($result->password === null || !auth()->user()?->can('startup.read', $server)) {
+            return null;
+        }
+
+        return MaskedStatBlock::make(trans('game-query::query.field.password'), $result->password);
     }
 
     private function format(string $field, QueryResult $result): ?string
