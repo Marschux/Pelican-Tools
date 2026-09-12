@@ -226,6 +226,12 @@ class GameQueryResource extends Resource
                         if ($state === 'valheim' && !$get('query_port_offset')) {
                             $set('query_port_offset', 1);
                         }
+
+                        // teamspeak queries a dedicated WebQuery port, not the allocation port -
+                        // this is the variable name the Teamspeak 6 egg exposes it under
+                        if ($state === 'teamspeak' && !$get('query_port_variable')) {
+                            $set('query_port_variable', 'TSSERVER_QUERY_HTTP_PORT');
+                        }
                     })
                     ->columnSpanFull(),
                 TextInput::make('query_port_offset')

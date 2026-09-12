@@ -26,6 +26,7 @@ readonly class QueryResult
         public ?string $icon = null,
         public ?string $seed = null,
         public ?string $password = null,
+        public ?int $reservedSlots = null,
         public ?array $playerList = null,
     ) {
         $this->hostname = self::plain($hostname);
@@ -58,6 +59,7 @@ readonly class QueryResult
         'secure',
         'seed',
         'password',
+        'reservedSlots',
     ];
 
     /** Human players, i.e. without the bots the server counts towards its player number. */
@@ -113,6 +115,7 @@ readonly class QueryResult
             'icon' => $this->icon,
             'seed' => $this->seed,
             'password' => $this->password,
+            'reserved_slots' => $this->reservedSlots,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,
                 'score' => $p->score,

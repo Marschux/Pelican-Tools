@@ -37,6 +37,7 @@ return [
         'secure' => 'VAC',
         'seed' => 'World Seed',
         'icon' => 'Server Icon',
+        'reservedSlots' => 'Reserved Slots',
     ],
 
     'click_to_reveal' => 'Click to reveal',

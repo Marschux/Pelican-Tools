@@ -139,6 +139,19 @@
                 "integer",
                 "between:1025,65535"
             ]
+        },
+        {
+            "sort": 9,
+            "name": "Query API Key",
+            "description": "Optional. Only needed for the Game Query plugin's player-count display.\nConnect once via ServerQuery/SSH (port \"Query SSH Port\") and run \"apikeyadd scope=read lifetime=0\", then paste the returned key here.",
+            "env_variable": "QUERY_API_KEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string"
+            ]
         }
     ]
 }
