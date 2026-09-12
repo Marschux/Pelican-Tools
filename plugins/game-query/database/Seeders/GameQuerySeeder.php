@@ -13,41 +13,14 @@ class GameQuerySeeder extends Seeder
     /**
      * Matched by egg name, because none of the eggs in this repo carry tags.
      *
-     * "offset" is the difference between the allocation port and the A2S query port; games
-     * that answer on the game port itself use none. Where an egg already exposes the query
-     * port as a startup variable, that variable wins - it survives the user changing it.
+     * Only Valheim is listed - it's the only game actually run on this panel. A broader default
+     * set for every A2S/GoldSrc/Minecraft egg used to live here, but firstOrCreate() recreates a
+     * deleted row on every re-run as long as the egg exists, so a mapping for a game nobody
+     * runs just keeps coming back. Add an egg's name here when you actually need its query.
      */
     public const MAPPINGS = [
         [
-            'names' => ['Vanilla Minecraft', 'Minecraft Paper', 'Minecraft Forge', 'Minecraft Fabric', 'Hexxit', 'Tekkit'],
-            'query_type' => 'minecraft_java',
-            'name' => 'Minecraft (Java)',
-        ],
-        [
-            'names' => ['Counter-Strike 1.6', 'Counter-Strike: Condition Zero', 'Half-Life Deathmatch'],
-            'query_type' => 'goldsrc',
-            'name' => 'GoldSrc',
-        ],
-        [
-            // these answer A2S on the allocation port itself
-            'names' => ['Counter-Strike 2', 'Counter-Strike: Global Offensive', 'Counter-Strike: Source', 'Team Fortress 2', "Garry's Mod", 'Left 4 Dead', 'Left 4 Dead 2', 'Quake Live'],
-            'query_type' => 'source',
-            'name' => 'Source (Standardport)',
-        ],
-        [
-            'names' => ['Rust', 'Conan Exiles'],
-            'query_type' => 'source',
-            'name' => 'Source (QUERY_PORT)',
-            'variable' => 'QUERY_PORT',
-        ],
-        [
-            // survival games that traditionally put the query port right after the game port
-            'names' => ['The Forest', 'Sons of the Forest', 'Arma 3', 'Enshrouded', 'The Lord of the Rings: Return to Moria'],
-            'query_type' => 'source',
-            'name' => 'Source (Port +1)',
-        ],
-        [
-            // same A2S query, plus the world seed read from the save file
+            // same A2S query as any source game, plus the world seed read from the save file
             'names' => ['Valheim Server', 'Valheim Plus Mod'],
             'query_type' => 'valheim',
             'name' => 'Valheim',

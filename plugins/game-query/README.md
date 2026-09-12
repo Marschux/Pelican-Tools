@@ -9,7 +9,7 @@ Copy this folder to `/var/www/pelican/plugins/game-query/`, then:
 ```bash
 cd /var/www/pelican
 php artisan migrate --force
-php artisan db:seed --class=Database\Seeders\GameQuerySeeder   # optional, links known eggs
+php artisan db:seed --class=Database\Seeders\GameQuerySeeder   # optional, links the Valheim egg
 php artisan optimize:clear
 php artisan filament:cache-components
 systemctl reload php8.3-fpm
