@@ -55,7 +55,6 @@ readonly class QueryResult
         'bots',
         'version',
         'gameMode',
-        'passworded',
         'secure',
         'seed',
         'password',
