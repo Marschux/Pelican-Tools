@@ -36,7 +36,7 @@
     },
     "variables": [
         {
-            "sort": 4,
+            "sort": 5,
             "name": "Query SSH Enabled",
             "description": "Whether the SSH ServerQuery interface is enabled.",
             "env_variable": "TSSERVER_QUERY_SSH_ENABLED",
@@ -49,7 +49,7 @@
             ]
         },
         {
-            "sort": 6,
+            "sort": 7,
             "name": "Query HTTP Enabled",
             "description": "Whether the HTTP ServerQuery interface is enabled.",
             "env_variable": "TSSERVER_QUERY_HTTP_ENABLED",
@@ -72,7 +72,7 @@
             "rules": []
         },
         {
-            "sort": 7,
+            "sort": 3,
             "name": "Tsserver Default Port",
             "description": "The server default port",
             "env_variable": "TSSERVER_DEFAULT_PORT",
@@ -86,7 +86,7 @@
             ]
         },
         {
-            "sort": 2,
+            "sort": 4,
             "name": "Tsserver File Transfer Port",
             "description": "The Teamspeak file transfer port",
             "env_variable": "TSSERVER_FILE_TRANSFER_PORT",
@@ -100,7 +100,7 @@
             ]
         },
         {
-            "sort": 8,
+            "sort": 2,
             "name": "Tsserver License Accepted",
             "description": "If you accept the license or want to view it.\n(Values: accept, view)",
             "env_variable": "TSSERVER_LICENSE_ACCEPTED",
@@ -113,7 +113,7 @@
             ]
         },
         {
-            "sort": 5,
+            "sort": 8,
             "name": "Tsserver Query HTTP Port",
             "description": "TCP Port opened for ServerQuery connections using http",
             "env_variable": "TSSERVER_QUERY_HTTP_PORT",
@@ -127,7 +127,7 @@
             ]
         },
         {
-            "sort": 3,
+            "sort": 6,
             "name": "Tsserver Query SSH Port",
             "description": "TCP Port opened for ServerQuery connections using SSH",
             "env_variable": "TSSERVER_QUERY_SSH_PORT",
