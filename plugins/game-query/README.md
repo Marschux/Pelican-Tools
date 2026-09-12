@@ -9,17 +9,17 @@ Copy this folder to `/var/www/pelican/plugins/game-query/`, then:
 ```bash
 cd /var/www/pelican
 php artisan migrate --force
-php artisan db:seed --class=Database\Seeders\GameQuerySeeder   # optional, links the Valheim egg
 php artisan optimize:clear
 php artisan filament:cache-components
-systemctl reload php8.3-fpm
+systemctl restart php8.3-fpm   # match your installed php version; restart, not reload
 ```
+
+There is no seeder - link an egg to a game query by hand under **Game Queries** in the admin
+panel.
 
 `optimize:clear` is not optional after an update: newly added config keys read as `null` while
 a cached config is in place, and new Filament fields and actions stay invisible until the
-component cache is rebuilt. If FPM keeps serving the old code even after that, the OPcache is
-the next thing to clear - restart php-fpm, not just reload it, since reload keeps existing
-workers (and their OPcache) running.
+component cache is rebuilt.
 
 ## Query address
 
