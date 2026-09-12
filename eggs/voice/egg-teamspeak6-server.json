@@ -88,7 +88,7 @@
         {
             "sort": 4,
             "name": "Tsserver File Transfer Port",
-            "description": "The Teamspeak file transfer port",
+            "description": "The Teamspeak file transfer port.\nOptional: only needed if you plan to use file transfers.",
             "env_variable": "TSSERVER_FILE_TRANSFER_PORT",
             "default_value": "30033",
             "user_viewable": true,
@@ -115,7 +115,7 @@
         {
             "sort": 8,
             "name": "Tsserver Query HTTP Port",
-            "description": "TCP Port opened for ServerQuery connections using http",
+            "description": "TCP Port opened for ServerQuery connections using http.\nOptional: only used while \"Query HTTP Enabled\" is on.",
             "env_variable": "TSSERVER_QUERY_HTTP_PORT",
             "default_value": "10080",
             "user_viewable": true,
@@ -129,7 +129,7 @@
         {
             "sort": 6,
             "name": "Tsserver Query SSH Port",
-            "description": "TCP Port opened for ServerQuery connections using SSH",
+            "description": "TCP Port opened for ServerQuery connections using SSH.\nOptional: only used while \"Query SSH Enabled\" is on.",
             "env_variable": "TSSERVER_QUERY_SSH_PORT",
             "default_value": "10022",
             "user_viewable": true,
