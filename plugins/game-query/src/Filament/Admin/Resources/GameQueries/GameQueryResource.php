@@ -215,7 +215,15 @@ class GameQueryResource extends Resource
                     // switching the type can make some checked fields invalid for it - e.g.
                     // valheim has no map or VAC, so a leftover checkmark from "Source" would
                     // silently persist without ever being able to show anything again
-                    ->afterStateUpdated(fn (Set $set, Get $get, QueryTypeService $service) => static::pruneVisibleFields($set, $get, $service))
+                    ->afterStateUpdated(function (Set $set, Get $get, QueryTypeService $service) {
+                        static::pruneVisibleFields($set, $get, $service);
+
+                        // valheim always queries one port above the allocation port - filling
+                        // this in when nothing has been typed yet saves the most common lookup
+                        if ($get('query_type') === 'valheim' && !$get('query_port_offset')) {
+                            $set('query_port_offset', 1);
+                        }
+                    })
                     ->columnSpanFull(),
                 TextInput::make('query_port_offset')
                     ->label(trans('game-query::query.port_offset'))
