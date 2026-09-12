@@ -19,7 +19,7 @@ class SourceSchema implements QueryTypeSchemaInterface
 
     public function getName(): string
     {
-        return 'Source (A2S)';
+        return 'Source Engine (A2S) - CS2, CS:S, TF2, GMod, L4D';
     }
 
     public function process(Server $server, string $ip, int $port): ?QueryResult

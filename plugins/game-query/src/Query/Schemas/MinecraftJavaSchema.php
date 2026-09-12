@@ -20,7 +20,7 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
 
     public function getName(): string
     {
-        return 'Minecraft (Java)';
+        return 'Minecraft: Java Edition';
     }
 
     /**

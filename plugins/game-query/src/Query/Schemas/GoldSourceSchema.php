@@ -16,7 +16,7 @@ class GoldSourceSchema extends SourceSchema
 
     public function getName(): string
     {
-        return 'GoldSrc (A2S)';
+        return 'GoldSrc Engine (A2S) - CS 1.6, Condition Zero, HLDM';
     }
 
     public function process(Server $server, string $ip, int $port): ?QueryResult
