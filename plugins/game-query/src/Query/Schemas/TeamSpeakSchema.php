@@ -13,6 +13,13 @@ use Throwable;
 
 class TeamSpeakSchema implements QueryTypeSchemaInterface
 {
+    /**
+     * The bootstrap gets a far more generous timeout than the query itself: it runs once per
+     * server and is then cached, and a pure-php key exchange needs seconds where the udp game
+     * queries that the configurable timeout was sized for are done in milliseconds.
+     */
+    private const SSH_TIMEOUT = 15;
+
     public function getId(): string
     {
         return 'teamspeak';
@@ -87,20 +94,20 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
             return null;
         }
 
-        $timeout = QueryTypeService::timeout();
-        $ssh = new SSH2($ip, (int) $sshPort, $timeout);
-        $ssh->setTimeout($timeout);
+        $ssh = new SSH2($ip, (int) $sshPort, self::SSH_TIMEOUT);
+        $ssh->setTimeout(self::SSH_TIMEOUT);
 
         try {
             if (!$ssh->login('serveradmin', $server->uuid)) {
                 return null;
             }
 
-            $ssh->read('/error id=/', SSH2::READ_REGEX); // flush the welcome banner + login result
             $ssh->write("apikeyadd scope=read lifetime=0\n");
-            $response = $ssh->read('/error id=/', SSH2::READ_REGEX);
+            // reading up to the digits rather than to "error id=" is what makes the check below
+            // possible at all - stopping at the latter cuts the response off before its code
+            $response = $ssh->read('/error id=\d+/', SSH2::READ_REGEX);
 
-            if (!preg_match('/error id=0 /', $response) || !preg_match('/apikey=(\S+)/', $response, $match)) {
+            if (!preg_match('/error id=0\b/', $response) || !preg_match('/apikey=(\S+)/', $response, $match)) {
                 return null;
             }
 
