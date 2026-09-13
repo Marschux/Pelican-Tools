@@ -33,6 +33,7 @@ return [
         'bots' => 'Bots',
         'version' => 'Version',
         'gameMode' => 'Spielmodus',
+        'passworded' => 'Passwortschutz',
         'password' => 'Passwort',
         'secure' => 'VAC',
         'seed' => 'Welt-Seed',

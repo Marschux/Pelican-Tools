@@ -101,7 +101,7 @@ class ServerInfoWidget extends StatsOverviewWidget
                 ])
                 : $result->players . ' / ' . $result->maxPlayers,
             'bots' => $result->bots === null ? null : (string) $result->bots,
-            'secure' => match ($result->get($field)) {
+            'passworded', 'secure' => match ($result->get($field)) {
                 true => trans('game-query::query.yes'),
                 false => trans('game-query::query.no'),
                 default => null,
