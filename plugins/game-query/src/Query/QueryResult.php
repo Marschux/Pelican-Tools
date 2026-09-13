@@ -60,7 +60,6 @@ readonly class QueryResult
         'secure',
         'seed',
         'password',
-        'reservedSlots',
     ];
 
     /** Human players, i.e. without the bots the server counts towards its player number. */

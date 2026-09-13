@@ -90,16 +90,28 @@ class ServerInfoWidget extends StatsOverviewWidget
         return MaskedStatBlock::make(trans('game-query::query.field.password'), $result->password);
     }
 
+    /**
+     * "3 / 32", widened by the bots a game counts towards that number and by the slots a server
+     * keeps reserved - each only when the protocol reports it. Reserved slots share this tile
+     * instead of getting their own: on their own they are a number without a reference point.
+     */
+    private function playerCount(QueryResult $result): string
+    {
+        $count = $result->bots
+            ? trans('game-query::query.players_with_bots', [
+                'players' => $result->humanPlayers(),
+                'max' => $result->maxPlayers,
+                'bots' => $result->bots,
+            ])
+            : $result->players . ' / ' . $result->maxPlayers;
+
+        return $result->reservedSlots === null ? $count : $count . ' (' . $result->reservedSlots . ')';
+    }
+
     private function format(string $field, QueryResult $result): ?string
     {
         return match ($field) {
-            'players' => $result->bots
-                ? trans('game-query::query.players_with_bots', [
-                    'players' => $result->humanPlayers(),
-                    'max' => $result->maxPlayers,
-                    'bots' => $result->bots,
-                ])
-                : $result->players . ' / ' . $result->maxPlayers,
+            'players' => $this->playerCount($result),
             'bots' => $result->bots === null ? null : (string) $result->bots,
             'passworded', 'secure' => match ($result->get($field)) {
                 true => trans('game-query::query.yes'),

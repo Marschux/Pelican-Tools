@@ -87,8 +87,9 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
     {
         // "passworded" and not "password": no startup variable carries a TeamSpeak server
         // password, so the yes/no tile is the only thing that can say anything here - unlike
-        // Source/Valheim, where the masked real password makes it redundant
-        return ['hostname', 'players', 'version', 'reservedSlots', 'passworded'];
+        // Source/Valheim, where the masked real password makes it redundant. The order is the
+        // display order; reserved slots ride along inside the player count rather than as a tile
+        return ['hostname', 'version', 'passworded', 'players'];
     }
 
     private function bootstrapApiKey(Server $server, string $ip): ?string
