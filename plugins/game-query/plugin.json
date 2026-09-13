@@ -2,7 +2,7 @@
     "id": "game-query",
     "name": "Game Query",
     "author": "Marschux",
-    "version": "1.8.0",
+    "version": "1.9.0",
     "description": "Query game servers for players, map and server info",
     "category": "plugin",
     "url": null,
@@ -16,6 +16,7 @@
     "panel_version": null,
     "composer_packages": {
         "xpaw/php-minecraft-query": "^5.0.0",
-        "xpaw/php-source-query-class": "^6.0.0"
+        "xpaw/php-source-query-class": "^6.0.0",
+        "phpseclib/phpseclib": "^3.0"
     }
 }

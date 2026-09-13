@@ -19,7 +19,7 @@
     },
     "file_denylist": [],
     "startup_commands": {
-        "Default": "./tsserver --filetransfer-port {{TSSERVER_FILE_TRANSFER_PORT}} --query-http-port {{TSSERVER_QUERY_HTTP_PORT}} --query-ssh-port {{TSSERVER_QUERY_SSH_PORT}} --default-voice-port {{SERVER_PORT}}"
+        "Default": "./tsserver --filetransfer-port {{TSSERVER_FILE_TRANSFER_PORT}} --query-http-port {{TSSERVER_QUERY_HTTP_PORT}} --query-ssh-port {{TSSERVER_QUERY_SSH_PORT}} --query-admin-password {{P_SERVER_UUID}} --default-voice-port {{SERVER_PORT}}"
     },
     "config": {
         "files": "{}",
@@ -38,7 +38,7 @@
         {
             "sort": 5,
             "name": "Query SSH Enabled",
-            "description": "Whether the SSH ServerQuery interface is enabled.",
+            "description": "Whether the SSH ServerQuery interface is enabled.\nRequired for the Game Query plugin - it logs in as \"serveradmin\" once to generate its own WebQuery API key.",
             "env_variable": "TSSERVER_QUERY_SSH_ENABLED",
             "default_value": "1",
             "user_viewable": true,
@@ -129,7 +129,7 @@
         {
             "sort": 6,
             "name": "Tsserver Query SSH Port",
-            "description": "TCP Port opened for ServerQuery connections using SSH.\nOptional: only used while \"Query SSH Enabled\" is on.",
+            "description": "TCP Port opened for ServerQuery connections using SSH.\nOnly used while \"Query SSH Enabled\" is on - which the Game Query plugin needs, see there.",
             "env_variable": "TSSERVER_QUERY_SSH_PORT",
             "default_value": "10022",
             "user_viewable": true,
@@ -138,19 +138,6 @@
                 "required",
                 "integer",
                 "between:1025,65535"
-            ]
-        },
-        {
-            "sort": 9,
-            "name": "Query API Key",
-            "description": "Optional. Only needed for the Game Query plugin's player-count display.\nConnect once via ServerQuery/SSH (port \"Query SSH Port\") and run \"apikeyadd scope=read lifetime=0\", then paste the returned key here.",
-            "env_variable": "QUERY_API_KEY",
-            "default_value": "",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": [
-                "nullable",
-                "string"
             ]
         }
     ]
