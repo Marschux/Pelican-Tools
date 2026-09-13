@@ -73,7 +73,9 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
 
         return new QueryResult(
             hostname: (string) ($info['virtualserver_name'] ?? ''),
-            players: (int) ($info['virtualserver_clientsonline'] ?? 0),
+            // clientsonline counts query connections as clients, and this very request is one of
+            // them - reporting it raw would show an empty server as permanently having one user
+            players: max(0, (int) ($info['virtualserver_clientsonline'] ?? 0) - (int) ($info['virtualserver_queryclientsonline'] ?? 0)),
             maxPlayers: (int) ($info['virtualserver_maxclients'] ?? 0),
             version: $info['virtualserver_version'] ?? null,
             passworded: isset($info['virtualserver_flag_password']) ? (bool) $info['virtualserver_flag_password'] : null,
@@ -102,7 +104,9 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
                 return null;
             }
 
-            $ssh->write("apikeyadd scope=read lifetime=0\n");
+            // "manage" and not the far narrower "read": TeamSpeak does not count serverinfo as a
+            // read command, and both read and write keys get "out of scope" back from it
+            $ssh->write("apikeyadd scope=manage lifetime=0\n");
             // reading up to the digits rather than to "error id=" is what makes the check below
             // possible at all - stopping at the latter cuts the response off before its code
             $response = $ssh->read('/error id=\d+/', SSH2::READ_REGEX);
