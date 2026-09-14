@@ -23,6 +23,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
+use Marschux\AccessLists\Lists\Presets;
 use Marschux\AccessLists\Models\AccessList;
 use Throwable;
 
@@ -61,8 +62,8 @@ class AccessListsPage extends Page implements HasForms
         $server = Filament::getTenant();
 
         return parent::canAccess()
-            && AccessList::definitionsFor($server) !== []
-            && user()?->can(SubuserPermission::FileReadContent, $server);
+            && user()?->can(SubuserPermission::FileReadContent, $server)
+            && (Presets::forServer($server) !== [] || AccessList::definitionsFor($server) !== []);
     }
 
     public static function getNavigationLabel(): string
@@ -118,6 +119,9 @@ class AccessListsPage extends Page implements HasForms
 
     public function reload(): void
     {
+        // a file created since the page loaded should show up, and detection is cached
+        Presets::forget($this->server());
+
         $this->read();
 
         Notification::make()->title(trans('access-lists::lists.messages.reloaded'))->success()->send();
@@ -159,6 +163,11 @@ class AccessListsPage extends Page implements HasForms
         }
 
         Activity::event('server:file.write')->property('file', $definition->path)->log();
+
+        if (!$this->fileExisted) {
+            // it exists now, so the preset for it should be offered from here on
+            Presets::forget($server);
+        }
 
         Notification::make()->title(trans('access-lists::lists.messages.saved'))->success()->send();
 
@@ -286,10 +295,27 @@ class AccessListsPage extends Page implements HasForms
         return $this->definitions()[$this->data['file'] ?? ''] ?? null;
     }
 
-    /** @return array<string, ListDefinition> */
+    /**
+     * The presets this server has, plus whatever was configured in the admin panel. A configured
+     * list wins over a preset for the same file - overriding one is the reason to add it.
+     *
+     * @return array<string, ListDefinition>
+     */
     private function definitions(): array
     {
-        return AccessList::definitionsFor($this->server());
+        $definitions = Presets::forServer($this->server());
+
+        foreach (AccessList::definitionsFor($this->server()) as $configured) {
+            foreach ($definitions as $key => $preset) {
+                if ($preset->path === $configured->path) {
+                    unset($definitions[$key]);
+                }
+            }
+
+            $definitions[$configured->key] = $configured;
+        }
+
+        return $definitions;
     }
 
     private function server(): Server

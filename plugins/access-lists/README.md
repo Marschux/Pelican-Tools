@@ -17,6 +17,22 @@ systemctl restart php8.4-fpm   # match your installed php version
 There is no seeder - create the lists by hand under **Access Lists** in the admin panel and link
 them to eggs.
 
+## Built in, no setup
+
+Minecraft and Valheim work out of the box:
+
+| Game | Files |
+|---|---|
+| Minecraft | `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json` |
+| Valheim | `savegames/adminlist.txt`, `savegames/bannedlist.txt`, `savegames/permittedlist.txt` |
+
+Which of them a server gets is decided by the files it actually has, not by its egg name - eggs
+get renamed and copied, while a Minecraft server without a `whitelist.json` has no whitelist to
+edit either. One directory listing answers that, cached for five minutes; "Reload" on the page
+checks again immediately.
+
+Everything below is only needed for a game that is not built in, or to override a preset.
+
 ## Configuring a list
 
 One entry per game, holding all of that game's files - Minecraft alone has four, and linking

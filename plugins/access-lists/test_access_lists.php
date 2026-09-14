@@ -8,12 +8,49 @@
  */
 
 require __DIR__ . '/src/Lists/ListDefinition.php';
+require __DIR__ . '/src/Lists/Presets.php';
 require __DIR__ . '/src/Lists/ListFile.php';
 require __DIR__ . '/src/Lists/MinecraftUuid.php';
 
 use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
+use Marschux\AccessLists\Lists\Presets;
+
+// --- the presets that ship with the plugin -------------------------------------------------------
+
+$presets = Presets::all();
+
+assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3);
+
+foreach ($presets as $game => $preset) {
+    assert($preset['dir'] !== '', "$game: a preset needs a directory to look in");
+
+    foreach ($preset['files'] as $index => $file) {
+        $definition = ListDefinition::fromArray("preset:$game:$index", $file);
+
+        assert($definition !== null, "$game/$index: every shipped preset has to build");
+        assert($definition->label !== $definition->path, "$game/$index: a preset without a real label would show its path");
+        assert(str_starts_with($file['path'], $preset['dir'] === '/' ? '' : $preset['dir']), "$game/$index: the file has to live in the directory detection looks at");
+
+        if (!$definition->isJson()) {
+            continue;
+        }
+
+        assert($definition->keyField !== null && $definition->displayField !== null, "$game/$index: a json list needs both fields");
+        assert(is_array(json_decode((string) $definition->template, true)), "$game/$index: the template has to be valid json");
+        assert(array_key_exists($definition->displayField, $definition->templateArray()), "$game/$index: the template must fill the field the editor types into");
+    }
+}
+
+// a whitelist entry has to end up with a real uuid, not the placeholder
+$whitelistPreset = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);
+assert($whitelistPreset->needsUuid());
+assert(ListFile::fillTemplate($whitelistPreset->templateArray(), ['{uuid}' => 'u', '{name}' => 'Notch']) === ['uuid' => 'u', 'name' => 'Notch']);
+
+// the ip ban list must not ask for a uuid - there is no player behind an address
+$ipPreset = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
+assert(!$ipPreset->needsUuid() && $ipPreset->valueField() === 'ip');
 
 // --- what the admin form produces ---------------------------------------------------------------
 
