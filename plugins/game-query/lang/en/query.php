@@ -48,6 +48,56 @@ return [
         'spectator' => 'Spectator',
     ],
 
+    'players' => [
+        'navigation' => 'Players',
+        'tabs' => [
+            'online' => 'Online',
+            'admins' => 'Admins',
+            'bans' => 'Ban list',
+            'ip_bans' => 'IP ban list',
+            'whitelist' => 'Whitelist',
+        ],
+        'columns' => [
+            'name' => 'Name',
+            'id' => 'ID',
+            'uuid' => 'UUID',
+            'reason' => 'Reason',
+        ],
+        'actions' => [
+            'add' => 'Add',
+            'remove' => 'Remove',
+            'unban' => 'Unban',
+            'kick' => 'Kick',
+            'ban' => 'Ban',
+        ],
+        'form' => [
+            'name' => 'Player name',
+            'ip' => 'IP address',
+            'id' => 'Player ID',
+            'id_hint' => 'Format platform_id, e.g. Steam_76561197984483021',
+        ],
+        'messages' => [
+            'sent' => 'Command sent',
+            'saved' => 'Saved',
+            'failed' => 'Action failed',
+            'unsupported' => 'This game does not support that',
+            'server_offline' => 'Server not reachable',
+            'invalid_name' => 'Invalid player name',
+            'invalid_ip' => 'Invalid IP address',
+            'invalid_id' => 'Invalid player ID',
+            'unknown_player' => 'Player not found at Mojang',
+            'mojang_unreachable' => 'Mojang is not reachable',
+            'already_listed' => 'Already on the list',
+            'unreadable' => 'File could not be read',
+            'no_list' => 'This query reports no player names',
+            'teamspeak_error' => 'TeamSpeak: :message',
+        ],
+        'table' => [
+            'empty' => 'No entries',
+            'failed' => 'List unavailable',
+        ],
+    ],
+
     'click_to_reveal' => 'Click to reveal',
 
     'players_with_bots' => ':players / :max (+:bots bots)',

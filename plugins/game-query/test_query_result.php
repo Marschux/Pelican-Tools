@@ -26,6 +26,19 @@ require __DIR__ . '/src/Query/Schemas/MinecraftJavaSchema.php';
 require __DIR__ . '/src/Query/Schemas/ValheimSchema.php';
 require __DIR__ . '/src/Query/Schemas/TeamSpeakSchema.php';
 require __DIR__ . '/src/Query/QueryTypeService.php';
+require __DIR__ . '/src/Query/TeamSpeakWebQuery.php';
+require __DIR__ . '/src/Players/PlayerActionException.php';
+require __DIR__ . '/src/Players/PlayerManager.php';
+require __DIR__ . '/src/Players/MinecraftPlayers.php';
+require __DIR__ . '/src/Players/ValheimPlayers.php';
+
+// the player classes translate their error messages; outside the panel the key is answer enough
+if (!function_exists('trans')) {
+    function trans(string $key, array $replace = []): string
+    {
+        return $key;
+    }
+}
 
 use Marschux\GameQuery\Query\FwlSeedParser;
 use Marschux\GameQuery\Query\NbtReader;
@@ -262,5 +275,79 @@ assert($bedrockish->humanPlayers() === 3);
 foreach (QueryResult::FIELDS as $field) {
     assert($cs2->get($field) !== false, "field $field is not resolvable");
 }
+
+// ---------------------------------------------------------------------------------------------
+// player management: everything that ends up in a console command, a list file or a url
+// ---------------------------------------------------------------------------------------------
+
+$mc = Marschux\GameQuery\Players\MinecraftPlayers::class;
+$valheim = Marschux\GameQuery\Players\ValheimPlayers::class;
+$webQuery = Marschux\GameQuery\Query\TeamSpeakWebQuery::class;
+
+// a name is put into a console command, so anything that could carry a second command must fail
+assert($mc::validName('Notch') && $mc::validName('a_b') && $mc::validName('Ab1_xyzXYZ012345'));
+assert(!$mc::validName('ab'), 'shorter than three characters');
+assert(!$mc::validName(str_repeat('a', 17)), 'longer than sixteen characters');
+assert(!$mc::validName('Notch op evil'), 'no spaces, they would become a second argument');
+assert(!$mc::validName("Notch\nop evil"), 'a newline would be a second command');
+assert(!$mc::validName('Nö') && !$mc::validName(''));
+
+assert($mc::validIp('1.2.3.4') && $mc::validIp('2001:db8::1'));
+assert(!$mc::validIp('1.2.3') && !$mc::validIp('1.2.3.4; rm -rf /') && !$mc::validIp(''));
+
+// what an offline-mode server computes for a name - a wrong uuid here bans or whitelists nobody
+assert($mc::offlineUuid('Notch') === 'b50ad385-829d-3141-a216-7e7d7539ba7f');
+assert($mc::dashed('069a79f444e94726a5befca90e38aaf5') === '069a79f4-44e9-4726-a5be-fca90e38aaf5');
+
+$dashedRejected = false;
+
+try {
+    $mc::dashed('nope');
+} catch (Marschux\GameQuery\Players\PlayerActionException) {
+    $dashedRejected = true;
+}
+
+assert($dashedRejected, 'a uuid that is not 32 hex characters must not be passed through');
+
+// list files carry fields this code does not know about (and future minecraft versions will add
+// more) - editing one entry must never drop them from the others
+$ops = [
+    ['uuid' => '069a79f4-44e9-4726-a5be-fca90e38aaf5', 'name' => 'Notch', 'level' => 4, 'bypassesPlayerLimit' => false, 'futureField' => 'keep me'],
+    ['uuid' => 'b50ad385-829d-3141-a216-7e7d7539ba7f', 'name' => 'Offline', 'level' => 2],
+];
+
+$added = $mc::withEntry($ops, ['uuid' => 'c0ffee00-0000-3000-8000-000000000000', 'name' => 'Third'], 'uuid');
+assert(count($added) === 3 && $added[0]['futureField'] === 'keep me');
+assert($mc::withEntry($ops, ['uuid' => '069A79F4-44E9-4726-A5BE-FCA90E38AAF5', 'name' => 'Notch'], 'uuid') === $ops, 'same uuid in different case is still the same entry');
+
+$removed = $mc::withoutEntry($ops, 'uuid', 'b50ad385-829d-3141-a216-7e7d7539ba7f');
+assert(count($removed) === 1 && $removed[0]['name'] === 'Notch');
+assert(json_encode($mc::withoutEntry($ops, 'uuid', '069a79f4-44e9-4726-a5be-fca90e38aaf5'))[0] === '[', 'must stay a json array, minecraft refuses an object');
+assert($mc::withoutEntry([], 'uuid', 'x') === []);
+
+// valheim: one platform id per line, with the comment header the server writes
+$adminlist = "// List admin players ID  ONE per line\r\nSteam_123\n\n  Steam_456 \n";
+assert($valheim::ids($adminlist) === ['Steam_123', 'Steam_456'], 'comments, blank lines and stray spaces are not ids');
+
+$withId = $valheim::withId($adminlist, 'Steam_789');
+assert(str_starts_with($withId, '// List admin players ID'), 'the header must survive');
+assert($valheim::ids($withId) === ['Steam_123', 'Steam_456', 'Steam_789']);
+assert($valheim::withId($withId, 'Steam_789') === $withId, 'adding a listed id changes nothing');
+
+$withoutId = $valheim::withoutId($withId, 'Steam_123');
+assert($valheim::ids($withoutId) === ['Steam_456', 'Steam_789']);
+assert(str_starts_with($withoutId, '// List admin players ID'));
+assert($valheim::ids($valheim::withoutId("Steam_123\nSteam_1234\n", 'Steam_123')) === ['Steam_1234'], 'only the exact line goes');
+
+assert($valheim::normaliseId('  Steam_76561197984483021 ') === 'Steam_76561197984483021', 'surrounding space is trimmed');
+assert($valheim::normaliseId('Xbox_abc123') === 'Xbox_abc123', 'other platforms pass too');
+assert($valheim::normaliseId("Steam_1\nSteam_2") === null, 'a newline would smuggle a second entry into the file');
+assert($valheim::normaliseId('Steam_') === null && $valheim::normaliseId('76561197984483021') === null, 'the platform prefix is mandatory');
+assert($valheim::normaliseId('../../etc/passwd') === null && $valheim::normaliseId('') === null);
+
+// teamspeak: parameters are the only part carrying input, so they go through http_build_query
+assert($webQuery::url('1.2.3.4', 10080, 'clientlist') === 'http://1.2.3.4:10080/1/clientlist', 'no parameters, no question mark');
+assert($webQuery::url('1.2.3.4', 10080, 'clientkick', ['clid' => 5, 'reasonid' => 5]) === 'http://1.2.3.4:10080/1/clientkick?clid=5&reasonid=5');
+assert($webQuery::url('1.2.3.4', 10080, 'bandel', ['banid' => '1 &clid=2']) === 'http://1.2.3.4:10080/1/bandel?banid=1+%26clid%3D2', 'parameters are encoded, not glued in');
 
 echo "ok\n";

@@ -148,6 +148,17 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
             return [];
         }
 
+        return self::parseProperties($content);
+    }
+
+    /**
+     * Public and static so the player management can read the same file without going through a
+     * query: it needs level-name and online-mode from it.
+     *
+     * @return array<string, string>
+     */
+    public static function parseProperties(string $content): array
+    {
         $properties = [];
 
         foreach (preg_split('/\R/', $content) as $line) {
