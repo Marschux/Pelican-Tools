@@ -36,7 +36,7 @@
     },
     "variables": [
         {
-            "sort": 5,
+            "sort": 4,
             "name": "Query SSH Enabled",
             "description": "Whether the SSH ServerQuery interface is enabled.\nRequired for the Game Query plugin - it logs in as \"serveradmin\" once to generate its own WebQuery API key.",
             "env_variable": "TSSERVER_QUERY_SSH_ENABLED",
@@ -49,7 +49,7 @@
             ]
         },
         {
-            "sort": 7,
+            "sort": 6,
             "name": "Query HTTP Enabled",
             "description": "Whether the HTTP ServerQuery interface is enabled.",
             "env_variable": "TSSERVER_QUERY_HTTP_ENABLED",
@@ -73,20 +73,6 @@
         },
         {
             "sort": 3,
-            "name": "Tsserver Default Port",
-            "description": "The server default port",
-            "env_variable": "TSSERVER_DEFAULT_PORT",
-            "default_value": "9987",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": [
-                "required",
-                "integer",
-                "between:1024,65535"
-            ]
-        },
-        {
-            "sort": 4,
             "name": "Tsserver File Transfer Port",
             "description": "The Teamspeak file transfer port.\nOptional: only needed if you plan to use file transfers.",
             "env_variable": "TSSERVER_FILE_TRANSFER_PORT",
@@ -113,7 +99,7 @@
             ]
         },
         {
-            "sort": 8,
+            "sort": 7,
             "name": "Tsserver Query HTTP Port",
             "description": "TCP Port opened for ServerQuery connections using http.\nOptional: only used while \"Query HTTP Enabled\" is on.",
             "env_variable": "TSSERVER_QUERY_HTTP_PORT",
@@ -127,7 +113,7 @@
             ]
         },
         {
-            "sort": 6,
+            "sort": 5,
             "name": "Tsserver Query SSH Port",
             "description": "TCP Port opened for ServerQuery connections using SSH.\nOnly used while \"Query SSH Enabled\" is on - which the Game Query plugin needs, see there.",
             "env_variable": "TSSERVER_QUERY_SSH_PORT",
