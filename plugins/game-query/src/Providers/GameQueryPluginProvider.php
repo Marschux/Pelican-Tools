@@ -2,8 +2,8 @@
 
 namespace Marschux\GameQuery\Providers;
 
-use App\Models\Server;
-use Filament\Tables\Table;
+use App\Filament\Admin\Resources\Servers\Pages\ListServers as AdminListServers;
+use App\Filament\App\Resources\Servers\Pages\ListServers as AppListServers;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Marschux\GameQuery\Filament\ServerPlayersColumn;
@@ -15,6 +15,8 @@ use Marschux\GameQuery\Query\Schemas\MinecraftJavaSchema;
 use Marschux\GameQuery\Query\Schemas\SourceSchema;
 use Marschux\GameQuery\Query\Schemas\TeamSpeakSchema;
 use Marschux\GameQuery\Query\Schemas\ValheimSchema;
+
+use function Livewire\on;
 
 class GameQueryPluginProvider extends ServiceProvider
 {
@@ -47,16 +49,29 @@ class GameQueryPluginProvider extends ServiceProvider
     }
 
     /**
-     * Appends the player count to every server table - the admin list and the client
-     * dashboard - without touching or overriding the core resources.
+     * Appends the player count to the admin server list and the client dashboard.
+     *
+     * Not Table::configureUsing(): that runs while the table object is being created, and both
+     * list pages then call columns([...]), which throws away every column pushed before it - the
+     * column never showed up anywhere. Livewire's render event fires after a page has built its
+     * table but before the view renders it, so a column pushed there is one that survives.
      */
     private function addServerListColumn(): void
     {
-        Table::configureUsing(function (Table $table) {
-            // non-eloquent tables (our own players page for one) simply report no model
-            if ($table->getModel() === Server::class) {
-                $table->pushColumns([ServerPlayersColumn::make()]);
+        on('render', function ($component) {
+            if (!$component instanceof AdminListServers && !$component instanceof AppListServers) {
+                return;
             }
+
+            $table = $component->getTable();
+
+            // the dashboard's grid layout is one stacked card per server, a loose column has no
+            // place in it
+            if ($table->hasColumnsLayout() || $table->getColumn('players')) {
+                return;
+            }
+
+            $table->pushColumns([ServerPlayersColumn::make()]);
         });
     }
 }

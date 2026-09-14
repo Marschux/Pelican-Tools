@@ -25,7 +25,9 @@ class ServerPlayersColumn
             ->state(function (Server $record) {
                 $gameQuery = GameQuery::forServer($record);
 
-                if (!$gameQuery || !GameQuery::canRunQuery($record->allocation)) {
+                // the offline check matters here more than anywhere else: the dashboard polls every
+                // 15s, and a stopped server would otherwise cost a full query timeout per row
+                if (!$gameQuery || !GameQuery::canRunQuery($record->allocation) || $record->retrieveStatus()->isOffline()) {
                     return null;
                 }
 
