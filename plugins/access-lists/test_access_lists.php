@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * Self-check for the list file handling. Run with: php test_access_lists.php
+ *
+ * Covers the part where a mistake silently corrupts somebody's ban list: parsing, rebuilding and
+ * the uuid derivation. The daemon and the panel are not involved.
+ */
+
+require __DIR__ . '/src/Lists/ListFile.php';
+require __DIR__ . '/src/Lists/MinecraftUuid.php';
+
+use Marschux\AccessLists\Lists\ListFile;
+use Marschux\AccessLists\Lists\MinecraftUuid;
+
+// --- line lists (valheim and anything else one-per-line) ---------------------------------------
+
+$adminlist = "// List admin players ID  ONE per line\r\nSteam_123\n\n  Steam_456 \n";
+
+assert(ListFile::lineEntries($adminlist) === ['Steam_123', 'Steam_456'], 'comments, blank lines and stray spaces are not entries');
+assert(ListFile::lineEntries('') === []);
+assert(ListFile::lineEntries("# hash comments too\nabc") === ['abc']);
+
+$rebuilt = ListFile::buildLines($adminlist, ['Steam_123', 'Steam_789']);
+assert(str_starts_with($rebuilt, '// List admin players ID'), 'the header the game wrote must survive');
+assert(ListFile::lineEntries($rebuilt) === ['Steam_123', 'Steam_789'], 'removed entry is gone, new one is there');
+assert(str_ends_with($rebuilt, "\n"), 'files end with a newline');
+assert(ListFile::buildLines('', []) === '', 'an empty list writes an empty file, not a stray newline');
+assert(ListFile::lineEntries(ListFile::buildLines($adminlist, ['Steam_1', 'Steam_1'])) === ['Steam_1'], 'a duplicate is written once');
+
+// --- json lists (minecraft) ---------------------------------------------------------------------
+
+$whitelist = '[{"uuid":"069a79f4-44e9-4726-a5be-fca90e38aaf5","name":"Notch","futureField":"keep me"}]';
+$entries = ListFile::jsonEntries($whitelist);
+
+assert(is_array($entries) && count($entries) === 1);
+assert(ListFile::displayValues($entries, 'name') === ['Notch']);
+assert(ListFile::jsonEntries('') === [], 'an empty file is an empty list, not an error');
+assert(ListFile::jsonEntries('not json') === null, 'unreadable must be distinguishable from empty');
+assert(ListFile::jsonEntries('{"a":1}') === null, 'an object is not a list of entries');
+assert(ListFile::jsonEntries('[1,2]') === null, 'entries have to be objects');
+
+$made = 0;
+$make = function (string $value) use (&$made): array {
+    $made++;
+
+    return ['uuid' => 'new-uuid', 'name' => $value];
+};
+
+$built = ListFile::buildJson($entries, ['Notch', 'Second'], 'name', $make);
+assert($made === 1, 'only the genuinely new value is built from the template');
+assert($built[0]['futureField'] === 'keep me', 'an entry that stays keeps fields this plugin knows nothing about');
+assert($built[1]['name'] === 'Second');
+assert(ListFile::buildJson($entries, [], 'name', $make) === [], 'removing everything leaves an empty list');
+assert(ListFile::encodeJson(ListFile::buildJson($entries, [], 'name', $make))[0] === '[', 'must stay a json array, the games refuse an object');
+
+$kept = ListFile::buildJson($entries, ['notch'], 'name', $make);
+assert(count($kept) === 1 && $kept[0]['futureField'] === 'keep me', 'matching ignores case, or an entry would be rebuilt and lose its fields');
+
+// --- entry templates ---------------------------------------------------------------------------
+
+$template = ['uuid' => '{uuid}', 'name' => '{name}', 'level' => 4, 'nested' => ['created' => '{now}']];
+$filled = ListFile::fillTemplate($template, ['{uuid}' => 'u', '{name}' => 'n', '{now}' => 't']);
+
+assert($filled === ['uuid' => 'u', 'name' => 'n', 'level' => 4, 'nested' => ['created' => 't']], 'non-strings stay untouched, nested objects are filled too');
+assert(ListFile::fillTemplate(['x' => '{unknown}'], []) === ['x' => '{unknown}'], 'an unknown placeholder is left alone rather than emptied');
+
+// --- uuids ---------------------------------------------------------------------------------------
+
+assert(MinecraftUuid::offline('Notch') === 'b50ad385-829d-3141-a216-7e7d7539ba7f', 'what an offline-mode server itself computes');
+assert(MinecraftUuid::dashed('069a79f444e94726a5befca90e38aaf5') === '069a79f4-44e9-4726-a5be-fca90e38aaf5');
+assert(MinecraftUuid::dashed('nope') === null && MinecraftUuid::dashed('') === null);
+
+assert(MinecraftUuid::isOfflineMode("online-mode=false\n") === true);
+assert(MinecraftUuid::isOfflineMode("online-mode=true\n") === false);
+assert(MinecraftUuid::isOfflineMode("motd=A server\n") === false, 'a missing setting means the default, which is online mode');
+assert(MinecraftUuid::isOfflineMode(null) === false, 'no file at all is not an offline server');
+
+echo "ok\n";
