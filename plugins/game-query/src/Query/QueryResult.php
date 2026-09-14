@@ -93,6 +93,11 @@ readonly class QueryResult
         return $this->with(['seed' => $seed]);
     }
 
+    public function withGameMode(?string $gameMode): self
+    {
+        return $this->with(['gameMode' => $gameMode]);
+    }
+
     /** password is attached by GameQuery, not by a schema - no protocol ever reports it. */
     public function withPassword(?string $password): self
     {

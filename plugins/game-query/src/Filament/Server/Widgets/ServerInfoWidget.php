@@ -6,6 +6,7 @@ use App\Filament\Server\Components\SmallStatBlock;
 use App\Models\Server;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget;
+use Illuminate\Support\Facades\Lang;
 use Marschux\GameQuery\Filament\Server\Components\MaskedStatBlock;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Query\QueryResult;
@@ -108,11 +109,28 @@ class ServerInfoWidget extends StatsOverviewWidget
         return $result->reservedSlots === null ? $count : $count . ' (' . $result->reservedSlots . ')';
     }
 
+    /**
+     * Translated here and not in the schema: the query result is cached and shared by every
+     * viewer, so a translated value would come out in whichever language happened to trigger
+     * the query. Anything without a translation - a Source server's own mode name - passes through.
+     */
+    private function gameMode(?string $mode): ?string
+    {
+        if ($mode === null || $mode === '') {
+            return null;
+        }
+
+        $key = 'game-query::query.gamemodes.' . strtolower($mode);
+
+        return Lang::has($key) ? trans($key) : $mode;
+    }
+
     private function format(string $field, QueryResult $result): ?string
     {
         return match ($field) {
             'players' => $this->playerCount($result),
             'bots' => $result->bots === null ? null : (string) $result->bots,
+            'gameMode' => $this->gameMode($result->gameMode),
             'passworded', 'secure' => match ($result->get($field)) {
                 true => trans('game-query::query.yes'),
                 false => trans('game-query::query.no'),

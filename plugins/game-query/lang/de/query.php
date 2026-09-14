@@ -40,6 +40,13 @@ return [
         'icon' => 'Server-Icon',
     ],
 
+    'gamemodes' => [
+        'survival' => 'Überleben',
+        'creative' => 'Kreativ',
+        'adventure' => 'Abenteuer',
+        'spectator' => 'Zuschauer',
+    ],
+
     'click_to_reveal' => 'Zum Anzeigen klicken',
 
     'players_with_bots' => ':players / :max (+:bots Bots)',
