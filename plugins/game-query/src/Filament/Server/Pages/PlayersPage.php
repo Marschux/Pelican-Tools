@@ -74,8 +74,13 @@ class PlayersPage extends Page implements HasTable
         return $schema->components([EmbeddedTable::make()]);
     }
 
-    /** @return Action[] one per readable tab, the current one highlighted */
-    protected function getHeaderActions(): array
+    /**
+     * The tab switches sit above the table, next to "add", rather than in the page header: the
+     * table renders them reliably, and they belong next to the thing they switch anyway.
+     *
+     * @return Action[]
+     */
+    private function tabActions(): array
     {
         $current = $this->tab();
 
@@ -100,6 +105,7 @@ class PlayersPage extends Page implements HasTable
                     ->visible(fn () => $this->anyRowHas('reason')),
             ])
             ->headerActions([
+                ...$this->tabActions(),
                 Action::make('add')
                     ->label(trans('game-query::query.players.actions.add'))
                     ->icon('tabler-plus')

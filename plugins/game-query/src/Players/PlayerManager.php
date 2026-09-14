@@ -186,7 +186,11 @@ abstract class PlayerManager
 
         foreach ($players as $player) {
             /** @var QueryPlayer $player */
-            $rows[$player->name] = ['name' => $player->name];
+            // some protocols answer with nameless slots - valheim does it constantly. A row
+            // without a name says nothing and cannot be acted on either
+            if (trim($player->name) !== '') {
+                $rows[$player->name] = ['name' => $player->name];
+            }
         }
 
         return $rows;
