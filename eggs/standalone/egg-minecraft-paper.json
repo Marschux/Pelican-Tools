@@ -1,19 +1,288 @@
 {
-  "_comment": "Paper Minecraft server egg.",
-  "meta": {"version": "PTDL_v2", "update_url": null},
-  "exported_at": "2026-08-10T00:00:00+02:00",
-  "name": "Minecraft Paper",
-  "author": "GrassNotFound",
-  "description": "High-performance Minecraft Java server based on Paper.",
-  "features": ["eula", "java_version", "pid_limit"],
-  "docker_images": {"Java 25": "ghcr.io/pelican-eggs/yolks:java_25", "Java 21": "ghcr.io/pelican-eggs/yolks:java_21", "Java 17": "ghcr.io/pelican-eggs/yolks:java_17"},
-  "file_denylist": [],
-  "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}",
-  "config": {"files": "{\"server.properties\":{\"parser\":\"properties\",\"find\":{\"server-ip\":\"\",\"server-port\":\"{{server.build.default.port}}\",\"query.port\":\"{{server.build.default.port}}\"}}}", "startup": "{\"done\": \")! For help, type \"}", "logs": "{}", "stop": "stop"},
-  "scripts": {"installation": {"script": "#!/bin/ash\nmkdir -p /mnt/server\ncd /mnt/server\n\nAPI=https://fill.papermc.io/v3/projects/paper\nUA=\"pelican-egg-minecraft-paper\"\n\nif [ -z \"${PAPER_VERSION}\" ] || [ \"${PAPER_VERSION}\" = \"latest\" ]; then\n    # newest first; ids with a dash are pre-releases and release candidates\n    PAPER_VERSION=$(curl -fsSL -A \"$UA\" \"$API/versions\" | jq -r '[.versions[].version.id | select(test(\"-\") | not)][0]')\nfi\n\nBUILD=${BUILD_NUMBER:-latest}\nBUILD_JSON=$(curl -fsSL -A \"$UA\" \"$API/versions/${PAPER_VERSION}/builds/${BUILD}\")\nURL=$(echo \"$BUILD_JSON\" | jq -r '.downloads[\"server:default\"].url // empty')\nSHA=$(echo \"$BUILD_JSON\" | jq -r '.downloads[\"server:default\"].checksums.sha256 // empty')\n\nif [ -z \"$URL\" ] || [ -z \"$SHA\" ]; then\n    echo \"No Paper download found for version ${PAPER_VERSION}, build ${BUILD}\"\n    exit 1\nfi\n\necho \"Downloading Paper ${PAPER_VERSION} build $(echo \"$BUILD_JSON\" | jq -r '.id')\"\ncurl -fsSL -A \"$UA\" -o \"${SERVER_JARFILE}\" \"$URL\" || exit 1\necho \"${SHA}  ${SERVER_JARFILE}\" | sha256sum -c - || exit 1\n\necho 'Install Complete'\n", "container": "ghcr.io/pelican-eggs/installers:alpine", "entrypoint": "ash"}},
-  "variables": [
-    {"name": "Server Jar File", "description": "The jar file to run.", "env_variable": "SERVER_JARFILE", "default_value": "server.jar", "user_viewable": false, "user_editable": false, "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/", "field_type": "text"},
-    {"name": "Paper Version", "description": "Minecraft version, or latest.", "env_variable": "PAPER_VERSION", "default_value": "latest", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"},
-    {"name": "Build Number", "description": "Paper build number, or latest.", "env_variable": "BUILD_NUMBER", "default_value": "latest", "user_viewable": true, "user_editable": true, "rules": "required|string|max:15", "field_type": "text"}
-  ]
+    "_comment": "Paper Minecraft server egg.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-09-14T00:00:00+02:00",
+    "name": "Minecraft Paper",
+    "author": "GrassNotFound",
+    "description": "High-performance Minecraft Java server based on Paper. The settings below are written into server.properties on every start.",
+    "features": [
+        "eula",
+        "java_version",
+        "pid_limit"
+    ],
+    "docker_images": {
+        "Java 25": "ghcr.io/pelican-eggs/yolks:java_25",
+        "Java 21": "ghcr.io/pelican-eggs/yolks:java_21",
+        "Java 17": "ghcr.io/pelican-eggs/yolks:java_17"
+    },
+    "file_denylist": [],
+    "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": "{\"server.properties\": {\"parser\": \"properties\", \"find\": {\"server-ip\": \"\", \"server-port\": \"{{server.build.default.port}}\", \"query.port\": \"{{server.build.default.port}}\", \"enable-query\": \"{{env.ENABLE_QUERY}}\", \"motd\": \"{{env.MOTD}}\", \"max-players\": \"{{env.MAX_PLAYERS}}\", \"difficulty\": \"{{env.DIFFICULTY}}\", \"gamemode\": \"{{env.GAMEMODE}}\", \"force-gamemode\": \"{{env.FORCE_GAMEMODE}}\", \"hardcore\": \"{{env.HARDCORE}}\", \"level-name\": \"{{env.LEVEL_NAME}}\", \"level-seed\": \"{{env.LEVEL_SEED}}\", \"level-type\": \"{{env.LEVEL_TYPE}}\", \"generate-structures\": \"{{env.GENERATE_STRUCTURES}}\", \"white-list\": \"{{env.WHITELIST}}\", \"enforce-whitelist\": \"{{env.ENFORCE_WHITELIST}}\", \"online-mode\": \"{{env.ONLINE_MODE}}\", \"allow-flight\": \"{{env.ALLOW_FLIGHT}}\", \"spawn-protection\": \"{{env.SPAWN_PROTECTION}}\", \"view-distance\": \"{{env.VIEW_DISTANCE}}\", \"simulation-distance\": \"{{env.SIMULATION_DISTANCE}}\", \"pause-when-empty-seconds\": \"{{env.PAUSE_WHEN_EMPTY}}\", \"enable-rcon\": \"{{env.ENABLE_RCON}}\", \"rcon.port\": \"{{env.RCON_PORT}}\", \"rcon.password\": \"{{env.RCON_PASSWORD}}\"}}}",
+        "startup": "{\"done\": \")! For help, type \"}",
+        "logs": "{}",
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/ash\nmkdir -p /mnt/server\ncd /mnt/server\n\nAPI=https://fill.papermc.io/v3/projects/paper\nUA=\"pelican-egg-minecraft-paper\"\n\nif [ -z \"${PAPER_VERSION}\" ] || [ \"${PAPER_VERSION}\" = \"latest\" ]; then\n    # newest first; ids with a dash are pre-releases and release candidates\n    PAPER_VERSION=$(curl -fsSL -A \"$UA\" \"$API/versions\" | jq -r '[.versions[].version.id | select(test(\"-\") | not)][0]')\nfi\n\nBUILD=${BUILD_NUMBER:-latest}\nBUILD_JSON=$(curl -fsSL -A \"$UA\" \"$API/versions/${PAPER_VERSION}/builds/${BUILD}\")\nURL=$(echo \"$BUILD_JSON\" | jq -r '.downloads[\"server:default\"].url // empty')\nSHA=$(echo \"$BUILD_JSON\" | jq -r '.downloads[\"server:default\"].checksums.sha256 // empty')\n\nif [ -z \"$URL\" ] || [ -z \"$SHA\" ]; then\n    echo \"No Paper download found for version ${PAPER_VERSION}, build ${BUILD}\"\n    exit 1\nfi\n\necho \"Downloading Paper ${PAPER_VERSION} build $(echo \"$BUILD_JSON\" | jq -r '.id')\"\ncurl -fsSL -A \"$UA\" -o \"${SERVER_JARFILE}\" \"$URL\" || exit 1\necho \"${SHA}  ${SERVER_JARFILE}\" | sha256sum -c - || exit 1\n\necho 'Install Complete'\n",
+            "container": "ghcr.io/pelican-eggs/installers:alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Jar File",
+            "description": "The jar file to run.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "server.jar",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/",
+            "field_type": "text"
+        },
+        {
+            "name": "Paper Version",
+            "description": "Minecraft version, or latest.",
+            "env_variable": "PAPER_VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:15",
+            "field_type": "text"
+        },
+        {
+            "name": "Build Number",
+            "description": "Paper build number, or latest.",
+            "env_variable": "BUILD_NUMBER",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:15",
+            "field_type": "text"
+        },
+        {
+            "name": "MOTD",
+            "description": "Message shown under the server name in the multiplayer list.",
+            "env_variable": "MOTD",
+            "default_value": "A Minecraft Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:59",
+            "field_type": "text"
+        },
+        {
+            "name": "Max Players",
+            "description": "Maximum number of players online at the same time.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "20",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1,1000",
+            "field_type": "text"
+        },
+        {
+            "name": "Difficulty",
+            "description": "peaceful, easy, normal or hard.",
+            "env_variable": "DIFFICULTY",
+            "default_value": "easy",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:peaceful,easy,normal,hard",
+            "field_type": "text"
+        },
+        {
+            "name": "Gamemode",
+            "description": "Default game mode for new players: survival, creative, adventure or spectator.",
+            "env_variable": "GAMEMODE",
+            "default_value": "survival",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:survival,creative,adventure,spectator",
+            "field_type": "text"
+        },
+        {
+            "name": "Force Gamemode",
+            "description": "Put players back into the default game mode every time they join.",
+            "env_variable": "FORCE_GAMEMODE",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Hardcore",
+            "description": "Difficulty locked to hard, players become spectators when they die. Only applies when the world is created.",
+            "env_variable": "HARDCORE",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Level Name",
+            "description": "Name of the world folder. Changing it loads or creates a different world.",
+            "env_variable": "LEVEL_NAME",
+            "default_value": "world",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:64|regex:/^[\\w.-]+$/",
+            "field_type": "text"
+        },
+        {
+            "name": "Level Seed",
+            "description": "Seed for a new world, empty for a random one. Only applies when the world is created.",
+            "env_variable": "LEVEL_SEED",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        },
+        {
+            "name": "Level Type",
+            "description": "World generator: minecraft:normal, minecraft:flat, minecraft:large_biomes, minecraft:amplified or minecraft:single_biome_surface. Only applies when the world is created.",
+            "env_variable": "LEVEL_TYPE",
+            "default_value": "minecraft:normal",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:minecraft:normal,minecraft:flat,minecraft:large_biomes,minecraft:amplified,minecraft:single_biome_surface",
+            "field_type": "text"
+        },
+        {
+            "name": "Generate Structures",
+            "description": "Generate villages, strongholds and other structures. Only applies to newly generated chunks.",
+            "env_variable": "GENERATE_STRUCTURES",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Whitelist",
+            "description": "Only players on the whitelist can join.",
+            "env_variable": "WHITELIST",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Enforce Whitelist",
+            "description": "Kick online players who are not on the whitelist when it is reloaded.",
+            "env_variable": "ENFORCE_WHITELIST",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Online Mode",
+            "description": "Verify players against Mojang's servers. Only turn this off behind a proxy like Velocity - otherwise anyone can join under any name, including an operator's.",
+            "env_variable": "ONLINE_MODE",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Allow Flight",
+            "description": "Allow flying in survival, e.g. for plugins. When off, players who fly too long get kicked.",
+            "env_variable": "ALLOW_FLIGHT",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Spawn Protection",
+            "description": "Radius around spawn in which only operators can build. 0 disables it.",
+            "env_variable": "SPAWN_PROTECTION",
+            "default_value": "16",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:0,1000",
+            "field_type": "text"
+        },
+        {
+            "name": "View Distance",
+            "description": "How many chunks around a player are sent to the client (3-32).",
+            "env_variable": "VIEW_DISTANCE",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:3,32",
+            "field_type": "text"
+        },
+        {
+            "name": "Simulation Distance",
+            "description": "How many chunks around a player are actively simulated (3-32).",
+            "env_variable": "SIMULATION_DISTANCE",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:3,32",
+            "field_type": "text"
+        },
+        {
+            "name": "Pause When Empty",
+            "description": "Seconds without any player before the server pauses ticking. 0 disables it.",
+            "env_variable": "PAUSE_WHEN_EMPTY",
+            "default_value": "60",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:0,86400",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Query",
+            "description": "Answer status queries over UDP on the game port - no extra allocation needed. Gives the Game Query plugin the full player list.",
+            "env_variable": "ENABLE_QUERY",
+            "default_value": "true",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable RCON",
+            "description": "Remote console access. Only starts when an RCON password is set.",
+            "env_variable": "ENABLE_RCON",
+            "default_value": "false",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:true,false",
+            "field_type": "text"
+        },
+        {
+            "name": "RCON Port",
+            "description": "Port for RCON. Needs its own allocation if RCON should be reachable from outside the server.",
+            "env_variable": "RCON_PORT",
+            "default_value": "25575",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|between:1025,65535",
+            "field_type": "text"
+        },
+        {
+            "name": "RCON Password",
+            "description": "Password for RCON. RCON does not start without one.",
+            "env_variable": "RCON_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:64",
+            "field_type": "text"
+        }
+    ]
 }
