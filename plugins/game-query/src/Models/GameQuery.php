@@ -68,19 +68,15 @@ class GameQuery extends Model
 
     /**
      * The fields this query's protocol can actually report - e.g. Valheim has no map or VAC
-     * status, no matter what is checked in the admin form - plus "password", which is always
-     * offered: whether it actually shows anything depends on plainPassword() finding a usable
-     * startup variable at read time, not on any admin configuration.
+     * status, no matter what is checked in the admin form. That includes "password": only games
+     * with a join password list it, since on Minecraft or TeamSpeak it could never show anything.
      */
     public function supportedFields(): array
     {
         /** @var QueryTypeService $service */
         $service = app(QueryTypeService::class);
 
-        $fields = $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
-        $fields[] = 'password';
-
-        return $fields;
+        return $service->get($this->query_type)?->supportedFields() ?? QueryResult::FIELDS;
     }
 
     /**

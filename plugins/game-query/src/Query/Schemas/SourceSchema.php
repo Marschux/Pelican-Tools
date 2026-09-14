@@ -29,7 +29,7 @@ class SourceSchema implements QueryTypeSchemaInterface
 
     public function supportedFields(): array
     {
-        return ['hostname', 'players', 'map', 'bots', 'version', 'gameMode', 'secure'];
+        return ['hostname', 'players', 'map', 'bots', 'version', 'gameMode', 'secure', 'password'];
     }
 
     protected function run(string $ip, int $port, int $engine): ?QueryResult

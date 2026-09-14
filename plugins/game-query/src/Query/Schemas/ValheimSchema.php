@@ -54,7 +54,7 @@ class ValheimSchema extends SourceSchema
      */
     public function supportedFields(): array
     {
-        return ['hostname', 'players', 'seed'];
+        return ['hostname', 'players', 'seed', 'password'];
     }
 
     /**

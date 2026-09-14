@@ -24,6 +24,7 @@ require __DIR__ . '/src/Query/Schemas/SourceSchema.php';
 require __DIR__ . '/src/Query/Schemas/GoldSourceSchema.php';
 require __DIR__ . '/src/Query/Schemas/MinecraftJavaSchema.php';
 require __DIR__ . '/src/Query/Schemas/ValheimSchema.php';
+require __DIR__ . '/src/Query/Schemas/TeamSpeakSchema.php';
 require __DIR__ . '/src/Query/QueryTypeService.php';
 
 use Marschux\GameQuery\Query\FwlSeedParser;
@@ -33,6 +34,7 @@ use Marschux\GameQuery\Query\QueryResult;
 use Marschux\GameQuery\Query\Schemas\GoldSourceSchema;
 use Marschux\GameQuery\Query\Schemas\MinecraftJavaSchema;
 use Marschux\GameQuery\Query\Schemas\SourceSchema;
+use Marschux\GameQuery\Query\Schemas\TeamSpeakSchema;
 use Marschux\GameQuery\Query\Schemas\ValheimSchema;
 use Marschux\GameQuery\Query\QueryTypeService;
 use Marschux\GameQuery\Query\ValheimLogParser;
@@ -155,11 +157,14 @@ foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(),
     }
 }
 
-// "password" is never reported by any protocol - GameQuery adds it on top unconditionally
-// (auto-detected from a fixed list of startup variable names), so no schema should claim to
-// support it on its own
-foreach ([new SourceSchema(), new GoldSourceSchema(), new MinecraftJavaSchema(), new ValheimSchema()] as $schema) {
-    assert(!in_array('password', $schema->supportedFields(), true), get_class($schema) . ' must not claim password support itself');
+// "password" comes from a startup variable, not the protocol, but it is still the schema that
+// offers it: only games with a join password list it - on Minecraft or TeamSpeak the checkbox
+// could never show anything
+foreach ([new SourceSchema(), new GoldSourceSchema(), new ValheimSchema()] as $schema) {
+    assert(in_array('password', $schema->supportedFields(), true), get_class($schema) . ' has join passwords');
+}
+foreach ([new MinecraftJavaSchema(), new TeamSpeakSchema()] as $schema) {
+    assert(!in_array('password', $schema->supportedFields(), true), get_class($schema) . ' has no join password to show');
 }
 
 // regression: the admin's create form asks for a schema before any type is chosen yet, so

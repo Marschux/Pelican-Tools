@@ -171,17 +171,13 @@ class GameQueryResource extends Resource
     }
 
     /**
-     * Fields the current form state can offer: whatever the selected protocol supports, plus
-     * "password" - always offered, same as GameQuery::supportedFields(). Read from live form
-     * state (Get), not a saved model, since this runs while a query is still being created or
-     * edited.
+     * Fields the current form state can offer: whatever the selected protocol supports, same as
+     * GameQuery::supportedFields(). Read from live form state (Get), not a saved model, since
+     * this runs while a query is still being created or edited.
      */
     private static function allowedFields(Get $get, QueryTypeService $service): array
     {
-        $fields = $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
-        $fields[] = 'password';
-
-        return $fields;
+        return $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
     }
 
     /** Drops any checked field the newly selected type can no longer show. */
