@@ -48,56 +48,6 @@ return [
         'spectator' => 'Zuschauer',
     ],
 
-    'players' => [
-        'navigation' => 'Spieler',
-        'tabs' => [
-            'online' => 'Online',
-            'admins' => 'Admins',
-            'bans' => 'Bannliste',
-            'ip_bans' => 'IP-Bannliste',
-            'whitelist' => 'Whitelist',
-        ],
-        'columns' => [
-            'name' => 'Name',
-            'id' => 'ID',
-            'uuid' => 'UUID',
-            'reason' => 'Grund',
-        ],
-        'actions' => [
-            'add' => 'Hinzufügen',
-            'remove' => 'Entfernen',
-            'unban' => 'Entbannen',
-            'kick' => 'Kicken',
-            'ban' => 'Bannen',
-        ],
-        'form' => [
-            'name' => 'Spielername',
-            'ip' => 'IP-Adresse',
-            'id' => 'Spieler-ID',
-            'id_hint' => 'Format Plattform_ID, z. B. Steam_76561197984483021',
-        ],
-        'messages' => [
-            'sent' => 'Befehl gesendet',
-            'saved' => 'Gespeichert',
-            'failed' => 'Aktion fehlgeschlagen',
-            'unsupported' => 'Das unterstützt dieses Spiel nicht',
-            'server_offline' => 'Server nicht erreichbar',
-            'invalid_name' => 'Ungültiger Spielername',
-            'invalid_ip' => 'Ungültige IP-Adresse',
-            'invalid_id' => 'Ungültige Spieler-ID',
-            'unknown_player' => 'Spieler bei Mojang nicht gefunden',
-            'mojang_unreachable' => 'Mojang ist nicht erreichbar',
-            'already_listed' => 'Steht bereits auf der Liste',
-            'unreadable' => 'Datei konnte nicht gelesen werden',
-            'no_list' => 'Diese Abfrage liefert keine Spielernamen',
-            'teamspeak_error' => 'TeamSpeak: :message',
-        ],
-        'table' => [
-            'empty' => 'Keine Einträge',
-            'failed' => 'Liste nicht verfügbar',
-        ],
-    ],
-
     'click_to_reveal' => 'Zum Anzeigen klicken',
 
     'players_with_bots' => ':players / :max (+:bots Bots)',

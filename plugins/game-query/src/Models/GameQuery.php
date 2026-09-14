@@ -135,38 +135,19 @@ class GameQuery extends Model
         return Cache::remember($key, $ttl, fn () => ['result' => $this->executeQuery($server)])['result'];
     }
 
-    /**
-     * Address and port the panel reaches this server's query on, or null when the allocation
-     * cannot be queried at all. Public because the player management has to reach the same
-     * endpoint as the query itself - resolving it twice would be two ways to get it wrong.
-     *
-     * @return ?array{0: string, 1: int}
-     */
-    public function endpoint(Server $server): ?array
+    private function executeQuery(Server $server): ?QueryResult
     {
         if (!static::canRunQuery($server->allocation)) {
             return null;
         }
 
         $ip = static::resolveAddress($server->allocation);
-
-        return [is_ipv6($ip) ? "[$ip]" : $ip, $this->resolvePort($server)];
-    }
-
-    private function executeQuery(Server $server): ?QueryResult
-    {
-        $endpoint = $this->endpoint($server);
-
-        if ($endpoint === null) {
-            return null;
-        }
-
-        [$ip, $port] = $endpoint;
+        $ip = is_ipv6($ip) ? "[$ip]" : $ip;
 
         /** @var QueryTypeService $service */
         $service = app(QueryTypeService::class);
 
-        $result = $service->get($this->query_type)?->process($server, $ip, $port);
+        $result = $service->get($this->query_type)?->process($server, $ip, $this->resolvePort($server));
 
         if ($result === null) {
             return null;

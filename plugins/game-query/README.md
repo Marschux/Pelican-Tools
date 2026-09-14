@@ -91,37 +91,6 @@ already respects, and additionally requires the viewer to hold the `startup.read
 exactly the two checks the Startup tab itself makes before showing any variable. A variable an
 admin has hidden from subusers there stays hidden here too.
 
-## Players page
-
-A "Players" item appears in a server's navigation whenever its egg has a query of a type that
-supports it. Tabs are plain links (`?activeTab=`), and the value is checked against the tabs the
-viewer may actually read before anything is shown.
-
-| Game | Tabs | Kick / ban |
-|---|---|---|
-| Minecraft | Online, Admins (`ops.json`), Ban list (`banned-players.json`), IP ban list (`banned-ips.json`), Whitelist (`whitelist.json`) | yes |
-| Valheim | Online, Admins, Ban list, Whitelist (`savegames/*.txt`) | no |
-| TeamSpeak | Online, Ban list (WebQuery, no files) | yes |
-
-Minecraft rewrites its list files itself while it runs, so a **running** server is changed
-through console commands (`op`, `ban`, `ban-ip`, `whitelist add`, ...) and left to write the
-files; a **stopped** one is changed by editing the json directly. That needs a uuid: an
-offline-mode server derives it from the name (`OfflinePlayer:<name>`, uuid v3), otherwise Mojang
-is asked. While a server is starting or stopping the lists are read-only - a command might not
-arrive, and a file written now can be overwritten a second later. A list file that cannot be
-parsed is never written back, and unknown fields in entries are preserved.
-
-Valheim has no kick or ban here on purpose: the dedicated server does not read the console at
-all (typing `kick <name>` into the panel console produces not even an error), its own kick and
-ban exist only in an admin's in-game F5 console, and remote access would need a server mod. Its
-lists hold platform ids in the form `Steam_76561197984483021` (`[Platform]_[User ID]`, case
-sensitive), one per line; `//` comment lines are kept when writing.
-
-Permissions: kick and ban require `control.console` (and, for Minecraft, a running server).
-Reading a list requires `file.read-content`, changing one `file.update` (plus `file.create` when
-the file does not exist yet); TeamSpeak's ban list goes through `control.console` instead, since
-it is not a file. Every check is made again inside the action handler, not just on the button.
-
 ## Notes
 
 The query for a server is looked up with `GameQuery::forServer()`, a plain join over the pivot.
