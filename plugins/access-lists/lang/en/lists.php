@@ -6,7 +6,11 @@ return [
 
     'fields' => [
         'name' => 'Label',
-        'name_placeholder' => 'e.g. Admins',
+        'name_placeholder' => 'e.g. Minecraft',
+        'files' => 'Files',
+        'add_file' => 'Add file',
+        'label' => 'File label',
+        'label_placeholder' => 'e.g. Admins',
         'path' => 'File path',
         'path_hint' => 'Path relative to the server directory, e.g. "savegames/adminlist.txt" or "whitelist.json".',
         'format' => 'Format',

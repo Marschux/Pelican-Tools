@@ -11,13 +11,9 @@ return new class extends Migration
         Schema::create('access_lists', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->string('path');
-            $table->string('format')->default('lines');
-            // json lists only: which field identifies an entry, which one is shown, and the
-            // shape a new entry gets
-            $table->string('key_field')->nullable();
-            $table->string('display_field')->nullable();
-            $table->text('entry_template')->nullable();
+            // one entry per game, holding all of its files - minecraft alone has four, and
+            // linking each of them to the egg separately is busywork
+            $table->json('files')->nullable();
             $table->timestamps();
         });
     }

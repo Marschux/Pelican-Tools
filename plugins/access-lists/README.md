@@ -19,18 +19,22 @@ them to eggs.
 
 ## Configuring a list
 
-A list is a file, so what the plugin needs to know is configuration rather than code. A game
-nobody here has heard of is added in the admin panel, not in a class.
+One entry per game, holding all of that game's files - Minecraft alone has four, and linking
+each of them to the egg separately is busywork. What the plugin needs to know is configuration
+rather than code, so a game nobody here has heard of is added in the admin panel, not in a class.
+
+Per entry: a **label** (e.g. "Minecraft"), the **eggs** it belongs to, and its **files**.
+
+Per file:
 
 | Field | Meaning |
 |---|---|
-| Label | What the list is called in the server's editor, e.g. "Admins" |
+| File label | What it is called in the server's editor, e.g. "Admins" |
 | File path | Relative to the server directory, e.g. `savegames/adminlist.txt` |
 | Format | `Text lines` (one entry per line) or `JSON` (a list of objects) |
 | Key field | JSON only: the field that identifies an entry, e.g. `uuid` or `ip` |
 | Display field | JSON only: the field shown and typed in the editor, e.g. `name` |
 | Template | JSON only: the shape a new entry gets |
-| Eggs | Which eggs this list belongs to |
 
 Placeholders in the template: `{name}`, `{uuid}`, `{ip}`, `{now}`. When it contains `{uuid}` the
 panel looks the uuid up at Mojang before writing - or derives it locally

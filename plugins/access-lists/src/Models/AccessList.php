@@ -7,37 +7,30 @@ use App\Models\Server;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Marschux\AccessLists\Lists\ListDefinition;
 
 /**
- * One editable file on a game server - an admin list, a ban list, a whitelist.
+ * A set of editable files for one game - its admin list, ban list and whitelist together.
  *
- * What a list looks like is configuration rather than code: a path, a format, and for json
- * files which field identifies an entry plus the shape a new one gets. That way a game nobody
- * here has heard of can be added in the admin panel instead of in a schema class.
+ * What those files look like is configuration rather than code: a path, a format, and for json
+ * which field identifies an entry plus the shape a new one gets. A game nobody here has heard of
+ * is added in the admin panel instead of in a class.
  *
  * @property int $id
  * @property string $name
- * @property string $path
- * @property string $format
- * @property ?string $key_field
- * @property ?string $display_field
- * @property ?string $entry_template
+ * @property array<int, array<string, mixed>> $files
  * @property Collection|Egg[] $eggs
  * @property int|null $eggs_count
  */
 class AccessList extends Model
 {
-    public const FORMAT_LINES = 'lines';
-
-    public const FORMAT_JSON = 'json';
-
     protected $fillable = [
         'name',
-        'path',
-        'format',
-        'key_field',
-        'display_field',
-        'entry_template',
+        'files',
+    ];
+
+    protected $casts = [
+        'files' => 'array',
     ];
 
     public function eggs(): BelongsToMany
@@ -52,7 +45,7 @@ class AccessList extends Model
      * at boot fails silently when it does not take effect, and then nothing here works while
      * looking exactly like "no lists configured".
      *
-     * @return Collection|static[]
+     * @return Collection<int, static>
      */
     public static function forServer(Server $server): Collection
     {
@@ -64,22 +57,38 @@ class AccessList extends Model
             ->get();
     }
 
-    public function isJson(): bool
+    /**
+     * Every file of every list for this server, keyed by "<list id>:<index>" - what the editor
+     * offers to pick from.
+     *
+     * @return array<string, ListDefinition>
+     */
+    public static function definitionsFor(Server $server): array
     {
-        return $this->format === self::FORMAT_JSON;
+        $definitions = [];
+
+        foreach (static::forServer($server) as $list) {
+            foreach ($list->definitions() as $definition) {
+                $definitions[$definition->key] = $definition;
+            }
+        }
+
+        return $definitions;
     }
 
-    /** @return array<string, mixed> the shape a new entry gets, or an empty array for line lists */
-    public function template(): array
+    /** @return ListDefinition[] */
+    public function definitions(): array
     {
-        $template = json_decode((string) $this->entry_template, true);
+        $definitions = [];
 
-        return is_array($template) ? $template : [];
-    }
+        foreach ($this->files ?? [] as $index => $file) {
+            $definition = is_array($file) ? ListDefinition::fromArray("$this->id:$index", $file) : null;
 
-    /** A template asking for a uuid means the panel has to look one up before writing an entry. */
-    public function needsUuid(): bool
-    {
-        return str_contains((string) $this->entry_template, '{uuid}');
+            if ($definition) {
+                $definitions[] = $definition;
+            }
+        }
+
+        return $definitions;
     }
 }

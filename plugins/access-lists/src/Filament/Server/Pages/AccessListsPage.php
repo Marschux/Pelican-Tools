@@ -20,15 +20,17 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
 use Marschux\AccessLists\Models\AccessList;
 use Throwable;
 
 /**
- * Edits the access lists configured for this server's egg - admin lists, ban lists, whitelists.
+ * Edits the access list files configured for this server's egg - admin lists, ban lists,
+ * whitelists.
  *
- * Only files: no player list, no console commands. A list is picked from a select, its entries
+ * Only files: no player list, no console commands. A file is picked from a select, its entries
  * are edited as tags, and whoever needs the file exactly as it is switches to the text mode.
  */
 class AccessListsPage extends Page implements HasForms
@@ -59,7 +61,7 @@ class AccessListsPage extends Page implements HasForms
         $server = Filament::getTenant();
 
         return parent::canAccess()
-            && AccessList::forServer($server)->isNotEmpty()
+            && AccessList::definitionsFor($server) !== []
             && user()?->can(SubuserPermission::FileReadContent, $server);
     }
 
@@ -77,10 +79,10 @@ class AccessListsPage extends Page implements HasForms
     {
         $this->authorizeAccess();
 
-        $this->form->fill([
-            'list_id' => $this->lists()->first()?->id,
+        $this->data = [
+            'file' => array_key_first($this->definitions()),
             'raw' => false,
-        ]);
+        ];
 
         $this->read();
     }
@@ -90,9 +92,9 @@ class AccessListsPage extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Select::make('list_id')
+                Select::make('file')
                     ->label(trans('access-lists::lists.page.list'))
-                    ->options(fn () => $this->lists()->pluck('name', 'id')->all())
+                    ->options(fn () => array_map(fn (ListDefinition $definition) => $definition->label, $this->definitions()))
                     ->selectablePlaceholder(false)
                     ->live()
                     ->afterStateUpdated(fn () => $this->read()),
@@ -128,9 +130,9 @@ class AccessListsPage extends Page implements HasForms
         abort_unless(user()?->can(SubuserPermission::FileUpdate, $server), 403);
         abort_unless($this->fileExisted || user()?->can(SubuserPermission::FileCreate, $server), 403);
 
-        $list = $this->list();
+        $definition = $this->definition();
 
-        if (!$list) {
+        if (!$definition) {
             return;
         }
 
@@ -138,8 +140,8 @@ class AccessListsPage extends Page implements HasForms
 
         try {
             $content = ($state['raw'] ?? false)
-                ? $this->rawContent($list, (string) ($state['text'] ?? ''))
-                : $this->builtContent($list, array_map(strval(...), $state['entries'] ?? []));
+                ? $this->rawContent($definition, (string) ($state['text'] ?? ''))
+                : $this->builtContent($definition, array_map(strval(...), $state['entries'] ?? []));
         } catch (ListEditException $exception) {
             Notification::make()->title($exception->getMessage())->danger()->send();
 
@@ -147,7 +149,7 @@ class AccessListsPage extends Page implements HasForms
         }
 
         try {
-            $this->files()->putContent($list->path, $content);
+            $this->files()->putContent($definition->path, $content);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -156,7 +158,7 @@ class AccessListsPage extends Page implements HasForms
             return;
         }
 
-        Activity::event('server:file.write')->property('file', $list->path)->log();
+        Activity::event('server:file.write')->property('file', $definition->path)->log();
 
         Notification::make()->title(trans('access-lists::lists.messages.saved'))->success()->send();
 
@@ -169,9 +171,9 @@ class AccessListsPage extends Page implements HasForms
     }
 
     /** Text mode writes the file as typed; json at least has to parse, or the game cannot read it. */
-    private function rawContent(AccessList $list, string $text): string
+    private function rawContent(ListDefinition $definition, string $text): string
     {
-        if ($list->isJson() && ListFile::jsonEntries($text) === null) {
+        if ($definition->isJson() && ListFile::jsonEntries($text) === null) {
             throw new ListEditException(trans('access-lists::lists.messages.invalid_json'));
         }
 
@@ -179,11 +181,11 @@ class AccessListsPage extends Page implements HasForms
     }
 
     /** @param  string[]  $entries */
-    private function builtContent(AccessList $list, array $entries): string
+    private function builtContent(ListDefinition $definition, array $entries): string
     {
-        $current = $this->read(false);
+        $current = $this->readFile($definition->path);
 
-        if (!$list->isJson()) {
+        if (!$definition->isJson()) {
             return ListFile::buildLines($current ?? '', $entries);
         }
 
@@ -194,18 +196,18 @@ class AccessListsPage extends Page implements HasForms
             throw new ListEditException(trans('access-lists::lists.messages.unreadable'));
         }
 
-        $offline = $list->needsUuid() && MinecraftUuid::isOfflineMode($this->read(false, 'server.properties'));
+        $offline = $definition->needsUuid() && MinecraftUuid::isOfflineMode($this->readFile('server.properties'));
 
         return ListFile::encodeJson(ListFile::buildJson(
             $existing,
             $entries,
-            (string) $list->display_field,
-            fn (string $value) => $this->newEntry($list, $value, $offline),
+            $definition->valueField(),
+            fn (string $value) => $this->newEntry($definition, $value, $offline),
         ));
     }
 
     /** @return array<string, mixed> */
-    private function newEntry(AccessList $list, string $value, bool $offline): array
+    private function newEntry(ListDefinition $definition, string $value, bool $offline): array
     {
         $replacements = [
             '{name}' => $value,
@@ -213,13 +215,11 @@ class AccessListsPage extends Page implements HasForms
             '{now}' => date('Y-m-d H:i:s O'),
         ];
 
-        if ($list->needsUuid()) {
-            $replacements['{uuid}'] = $offline
-                ? MinecraftUuid::offline($value)
-                : $this->lookup($value);
+        if ($definition->needsUuid()) {
+            $replacements['{uuid}'] = $offline ? MinecraftUuid::offline($value) : $this->lookup($value);
         }
 
-        return ListFile::fillTemplate($list->template(), $replacements);
+        return ListFile::fillTemplate($definition->templateArray(), $replacements);
     }
 
     private function lookup(string $name): string
@@ -239,68 +239,57 @@ class AccessListsPage extends Page implements HasForms
         return $uuid;
     }
 
-    /**
-     * Reads the current list file. With $fill the form is refilled from it, which is what the
-     * select, the reload button and a successful save all want.
-     */
-    private function read(bool $fill = true, ?string $path = null): ?string
+    /** Reads the selected file and refills the form from it. */
+    private function read(): void
     {
-        $list = $this->list();
+        $definition = $this->definition();
 
-        if (!$list && $path === null) {
-            return null;
+        if (!$definition) {
+            return;
         }
 
+        $content = $this->readFile($definition->path);
+        $this->fileExisted = $content !== null;
+
+        $entries = $definition->isJson()
+            ? ListFile::displayValues(ListFile::jsonEntries($content ?? '') ?? [], $definition->valueField())
+            : ListFile::lineEntries($content ?? '');
+
+        $this->form->fill([
+            'file' => $definition->key,
+            'raw' => (bool) ($this->data['raw'] ?? false),
+            'entries' => $entries,
+            'text' => $content ?? '',
+        ]);
+
+        if (!$this->fileExisted) {
+            Notification::make()->title(trans('access-lists::lists.messages.missing_file'))->warning()->send();
+        }
+    }
+
+    /** Null when the file does not exist yet, which is normal for a list nobody has used. */
+    private function readFile(string $path): ?string
+    {
         try {
-            $content = (string) $this->files()->getContent($path ?? $list->path, self::MAX_FILE_BYTES);
-            $existed = true;
+            return (string) $this->files()->getContent($path, self::MAX_FILE_BYTES);
         } catch (FileNotFoundException) {
-            $content = null;
-            $existed = false;
+            return null;
         } catch (Throwable $exception) {
             report($exception);
 
-            $content = null;
-            $existed = false;
+            return null;
         }
-
-        if ($path !== null) {
-            return $content;
-        }
-
-        $this->fileExisted = $existed;
-
-        if ($fill) {
-            $entries = $list->isJson()
-                ? ListFile::displayValues(ListFile::jsonEntries($content ?? '') ?? [], (string) $list->display_field)
-                : ListFile::lineEntries($content ?? '');
-
-            $this->form->fill([
-                'list_id' => $list->id,
-                'raw' => (bool) ($this->data['raw'] ?? false),
-                'entries' => $entries,
-                'text' => $content ?? '',
-            ]);
-
-            if (!$existed) {
-                Notification::make()->title(trans('access-lists::lists.messages.missing_file'))->warning()->send();
-            }
-        }
-
-        return $content;
     }
 
-    private function list(): ?AccessList
+    private function definition(): ?ListDefinition
     {
-        $id = $this->data['list_id'] ?? null;
-
-        return $id === null ? null : $this->lists()->firstWhere('id', (int) $id);
+        return $this->definitions()[$this->data['file'] ?? ''] ?? null;
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, AccessList> */
-    private function lists()
+    /** @return array<string, ListDefinition> */
+    private function definitions(): array
     {
-        return AccessList::forServer($this->server());
+        return AccessList::definitionsFor($this->server());
     }
 
     private function server(): Server

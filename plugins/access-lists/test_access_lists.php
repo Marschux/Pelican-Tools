@@ -7,11 +7,39 @@
  * the uuid derivation. The daemon and the panel are not involved.
  */
 
+require __DIR__ . '/src/Lists/ListDefinition.php';
 require __DIR__ . '/src/Lists/ListFile.php';
 require __DIR__ . '/src/Lists/MinecraftUuid.php';
 
+use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
+
+// --- what the admin form produces ---------------------------------------------------------------
+
+$json = ListDefinition::fromArray('7:0', [
+    'label' => 'Whitelist',
+    'path' => 'whitelist.json',
+    'format' => 'json',
+    'key_field' => 'uuid',
+    'display_field' => 'name',
+    'entry_template' => '{"uuid": "{uuid}", "name": "{name}"}',
+]);
+
+assert($json !== null && $json->isJson() && $json->needsUuid());
+assert($json->valueField() === 'name');
+assert($json->templateArray() === ['uuid' => '{uuid}', 'name' => '{name}']);
+
+$lines = ListDefinition::fromArray('7:1', ['path' => 'savegames/adminlist.txt']);
+
+assert($lines !== null && !$lines->isJson(), 'text lines are the default format');
+assert($lines->label === 'savegames/adminlist.txt', 'without a label the path has to do');
+assert(!$lines->needsUuid() && $lines->templateArray() === []);
+assert($lines->valueField() === 'name', 'a line list has no fields, but the editor still needs a key');
+
+assert(ListDefinition::fromArray('7:2', ['label' => 'Ohne Pfad']) === null, 'a file without a path is not a list');
+assert(ListDefinition::fromArray('7:3', ['path' => 'x', 'format' => 'nonsense'])->format === 'lines', 'an unknown format falls back rather than blowing up');
+assert(ListDefinition::fromArray('7:4', ['path' => 'x', 'format' => 'json', 'display_field' => ''])->valueField() === 'name', 'empty fields count as unset');
 
 // --- line lists (valheim and anything else one-per-line) ---------------------------------------
 

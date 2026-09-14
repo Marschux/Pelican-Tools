@@ -6,7 +6,11 @@ return [
 
     'fields' => [
         'name' => 'Bezeichnung',
-        'name_placeholder' => 'z. B. Admins',
+        'name_placeholder' => 'z. B. Minecraft',
+        'files' => 'Dateien',
+        'add_file' => 'Datei hinzufügen',
+        'label' => 'Bezeichnung der Datei',
+        'label_placeholder' => 'z. B. Admins',
         'path' => 'Dateipfad',
         'path_hint' => 'Pfad relativ zum Serververzeichnis, z. B. "savegames/adminlist.txt" oder "whitelist.json".',
         'format' => 'Format',
