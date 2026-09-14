@@ -34,6 +34,7 @@ return [
         'version' => 'Version',
         'gameMode' => 'Spielmodus',
         'passworded' => 'Passwortschutz',
+        'whitelist' => 'Whitelist',
         'password' => 'Passwort',
         'secure' => 'VAC',
         'seed' => 'Welt-Seed',

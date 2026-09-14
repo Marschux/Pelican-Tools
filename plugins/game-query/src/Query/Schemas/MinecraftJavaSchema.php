@@ -60,12 +60,14 @@ class MinecraftJavaSchema implements QueryTypeSchemaInterface
 
         return $result
             ->withGameMode($properties['gamemode'] ?? null)
+            ->withWhitelist(isset($properties['white-list']) ? $properties['white-list'] === 'true' : null)
             ->withSeed($this->seed($repository, $properties['level-name'] ?? 'world'));
     }
 
+    /** Minecraft has no join password - the whitelist is what actually decides who gets in. */
     public function supportedFields(): array
     {
-        return ['hostname', 'version', 'gameMode', 'seed', 'players'];
+        return ['hostname', 'version', 'gameMode', 'seed', 'whitelist', 'players'];
     }
 
     protected function tryQuery(string $ip, int $port): ?QueryResult

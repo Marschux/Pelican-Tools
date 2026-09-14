@@ -27,6 +27,7 @@ readonly class QueryResult
         public ?string $seed = null,
         public ?string $password = null,
         public ?int $reservedSlots = null,
+        public ?bool $whitelist = null,
         public ?array $playerList = null,
     ) {
         $this->hostname = self::plain($hostname);
@@ -59,6 +60,7 @@ readonly class QueryResult
         'passworded',
         'secure',
         'seed',
+        'whitelist',
         'password',
     ];
 
@@ -98,6 +100,11 @@ readonly class QueryResult
         return $this->with(['gameMode' => $gameMode]);
     }
 
+    public function withWhitelist(?bool $whitelist): self
+    {
+        return $this->with(['whitelist' => $whitelist]);
+    }
+
     /** password is attached by GameQuery, not by a schema - no protocol ever reports it. */
     public function withPassword(?string $password): self
     {
@@ -121,6 +128,7 @@ readonly class QueryResult
             'seed' => $this->seed,
             'password' => $this->password,
             'reserved_slots' => $this->reservedSlots,
+            'whitelist' => $this->whitelist,
             'players_list' => $this->playerList === null ? null : array_map(fn (QueryPlayer $p) => [
                 'name' => $p->name,
                 'score' => $p->score,

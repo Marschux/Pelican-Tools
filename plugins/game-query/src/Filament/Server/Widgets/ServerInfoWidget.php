@@ -131,7 +131,7 @@ class ServerInfoWidget extends StatsOverviewWidget
             'players' => $this->playerCount($result),
             'bots' => $result->bots === null ? null : (string) $result->bots,
             'gameMode' => $this->gameMode($result->gameMode),
-            'passworded', 'secure' => match ($result->get($field)) {
+            'passworded', 'secure', 'whitelist' => match ($result->get($field)) {
                 true => trans('game-query::query.yes'),
                 false => trans('game-query::query.no'),
                 default => null,

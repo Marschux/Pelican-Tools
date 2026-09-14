@@ -134,7 +134,8 @@ assert((new GoldSourceSchema())->supportedFields() === $sourceFields);
 
 $mcFields = (new MinecraftJavaSchema())->supportedFields();
 assert(!in_array('bots', $mcFields, true), 'minecraft has no bot concept');
-assert(in_array('seed', $mcFields, true) && in_array('gameMode', $mcFields, true));
+assert(in_array('seed', $mcFields, true) && in_array('gameMode', $mcFields, true) && in_array('whitelist', $mcFields, true));
+assert(!in_array('whitelist', $sourceFields, true), 'whitelist is a minecraft concept');
 assert(!in_array('map', $mcFields, true), 'the level name says nothing a player needs, the seed replaced it');
 
 // valheim answers A2S, but several of the fields that come back are meaningless or wrong for
@@ -184,6 +185,11 @@ assert($withPassword->seed === 'abc' && $withPassword->password === 'secret', 'e
 $withMode = $withPassword->withGameMode('survival');
 assert($withPassword->gameMode === null && $withMode->gameMode === 'survival');
 assert($withMode->seed === 'abc' && $withMode->password === 'secret');
+
+// false is an answer ("whitelist off"), null is not - both have to survive the copy distinctly
+$whitelistOff = $withMode->withWhitelist(false);
+assert($withMode->whitelist === null && $whitelistOff->whitelist === false);
+assert($whitelistOff->gameMode === 'survival' && $whitelistOff->toArray()['whitelist'] === false);
 
 // re-running the constructor through with() must not double-mangle an already-clean hostname
 assert((new QueryResult(hostname: '<color=lime>Already</color>', players: 0, maxPlayers: 0))->withSeed('x')->hostname === 'Already');
