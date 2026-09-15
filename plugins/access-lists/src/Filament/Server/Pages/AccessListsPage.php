@@ -63,7 +63,7 @@ class AccessListsPage extends Page implements HasForms
 
         return parent::canAccess()
             && user()?->can(SubuserPermission::FileReadContent, $server)
-            && (Presets::forServer($server) !== [] || AccessList::definitionsFor($server) !== []);
+            && self::definitionsFor($server) !== [];
     }
 
     public static function getNavigationLabel(): string
@@ -296,26 +296,21 @@ class AccessListsPage extends Page implements HasForms
     }
 
     /**
-     * The presets this server has, plus whatever was configured in the admin panel. A configured
-     * list wins over a preset for the same file - overriding one is the reason to add it.
+     * What was configured for this egg in the admin panel, or the detected presets when nothing
+     * was. Configured replaces rather than adds: a file removed there must not come back through
+     * detection.
      *
      * @return array<string, ListDefinition>
      */
     private function definitions(): array
     {
-        $definitions = Presets::forServer($this->server());
+        return self::definitionsFor($this->server());
+    }
 
-        foreach (AccessList::definitionsFor($this->server()) as $configured) {
-            foreach ($definitions as $key => $preset) {
-                if ($preset->path === $configured->path) {
-                    unset($definitions[$key]);
-                }
-            }
-
-            $definitions[$configured->key] = $configured;
-        }
-
-        return $definitions;
+    /** @return array<string, ListDefinition> */
+    private static function definitionsFor(Server $server): array
+    {
+        return AccessList::definitionsFor($server) ?: Presets::forServer($server);
     }
 
     private function server(): Server

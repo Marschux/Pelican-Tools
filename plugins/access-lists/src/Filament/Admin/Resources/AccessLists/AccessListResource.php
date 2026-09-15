@@ -12,11 +12,14 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 use Marschux\AccessLists\Filament\Admin\Resources\AccessLists\Pages\ManageAccessLists;
 use Marschux\AccessLists\Lists\ListDefinition;
+use Marschux\AccessLists\Lists\Presets;
 use Marschux\AccessLists\Models\AccessList;
 
 class AccessListResource extends Resource
@@ -62,6 +65,25 @@ class AccessListResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
+            // only a starting point: it fills the files below and is not stored itself
+            Select::make('preset')
+                ->label(trans('access-lists::lists.fields.preset'))
+                ->helperText(trans('access-lists::lists.fields.preset_hint'))
+                ->options(Presets::options())
+                ->dehydrated(false)
+                ->live()
+                ->afterStateUpdated(function (?string $state, Get $get, Set $set) {
+                    if ($state === null) {
+                        return;
+                    }
+
+                    $set('files', collect(Presets::formFiles($state))->keyBy(fn () => (string) Str::uuid())->all());
+
+                    if (blank($get('name'))) {
+                        $set('name', Presets::options()[$state]);
+                    }
+                })
+                ->columnSpanFull(),
             TextInput::make('name')
                 ->label(trans('access-lists::lists.fields.name'))
                 ->placeholder(trans('access-lists::lists.fields.name_placeholder'))
@@ -76,7 +98,9 @@ class AccessListResource extends Resource
             Repeater::make('files')
                 ->label(trans('access-lists::lists.fields.files'))
                 ->addActionLabel(trans('access-lists::lists.fields.add_file'))
-                ->itemLabel(fn (array $state) => $state['label'] ?? $state['path'] ?? null)
+                ->itemLabel(fn (array $state) => filled($state['path'] ?? null)
+                    ? trim(($state['label'] ?? '') . ' - ' . $state['path'], ' -')
+                    : null)
                 ->collapsed()
                 ->defaultItems(1)
                 ->columnSpanFull()

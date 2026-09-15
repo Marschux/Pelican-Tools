@@ -25,6 +25,12 @@ assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim'][
 
 foreach ($presets as $game => $preset) {
     assert($preset['dir'] !== '', "$game: a preset needs a directory to look in");
+    assert(Presets::options()[$game] === $preset['name']);
+
+    // what the admin form gets must store back into the same list
+    foreach (Presets::formFiles($game) as $index => $formFile) {
+        assert(ListDefinition::fromArray('x', $formFile) == ListDefinition::fromArray('x', $preset['files'][$index]), "$game/$index: form files differ from the preset");
+    }
 
     foreach ($preset['files'] as $index => $file) {
         $definition = ListDefinition::fromArray("preset:$game:$index", $file);

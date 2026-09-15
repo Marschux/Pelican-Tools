@@ -5,6 +5,8 @@ return [
     'no_lists' => 'Keine Zugriffslisten',
 
     'fields' => [
+        'preset' => 'Vorlage',
+        'preset_hint' => 'Füllt die Dateien unten mit einem eingebauten Spiel, danach frei anpassbar. Ersetzt die bereits eingetragenen Dateien.',
         'name' => 'Bezeichnung',
         'name_placeholder' => 'z. B. Minecraft',
         'files' => 'Dateien',

@@ -28,6 +28,7 @@ class Presets
     {
         return [
             'minecraft' => [
+                'name' => 'Minecraft',
                 'dir' => '/',
                 'files' => [
                     [
@@ -65,6 +66,7 @@ class Presets
                 ],
             ],
             'valheim' => [
+                'name' => 'Valheim',
                 'dir' => 'savegames',
                 'files' => [
                     ['label' => 'Admins', 'path' => 'savegames/adminlist.txt'],
@@ -74,6 +76,7 @@ class Presets
             ],
             // only who may reach ServerQuery - client bans and groups live in the database
             'teamspeak' => [
+                'name' => 'TeamSpeak',
                 'dir' => '/',
                 'files' => [
                     ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt'],
@@ -81,6 +84,27 @@ class Presets
                 ],
             ],
         ];
+    }
+
+    /** @return array<string, string> game => name, for the admin form's picker */
+    public static function options(): array
+    {
+        return array_map(fn (array $preset) => $preset['name'], self::all());
+    }
+
+    /**
+     * A preset's files in the shape the admin form stores, so picking one fills the repeater.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function formFiles(string $game): array
+    {
+        return array_map(fn (array $file) => $file + [
+            'format' => ListDefinition::FORMAT_LINES,
+            'key_field' => null,
+            'display_field' => null,
+            'entry_template' => null,
+        ], self::all()[$game]['files'] ?? []);
     }
 
     /**

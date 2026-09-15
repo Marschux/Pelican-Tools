@@ -5,6 +5,8 @@ return [
     'no_lists' => 'No access lists',
 
     'fields' => [
+        'preset' => 'Preset',
+        'preset_hint' => 'Fills the files below with a built-in game, which you can then change. Replaces the files already listed.',
         'name' => 'Label',
         'name_placeholder' => 'e.g. Minecraft',
         'files' => 'Files',

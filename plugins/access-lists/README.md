@@ -35,7 +35,10 @@ get renamed and copied, while a Minecraft server without a `whitelist.json` has 
 edit either. One directory listing answers that, cached for five minutes; "Reload" on the page
 checks again immediately.
 
-Everything below is only needed for a game that is not built in, or to override a preset.
+Everything below is only needed for a game that is not built in, or to change a preset. An entry
+in the admin panel replaces detection for its eggs entirely: those servers get exactly the files
+listed there, so a file removed from it stays gone. Picking a preset in the form fills the files
+with the built-in ones as a starting point.
 
 ## Configuring a list
 
