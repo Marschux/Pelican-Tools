@@ -5,10 +5,11 @@
 --}}
 <x-filament-panels::page>
     <x-filament::tabs>
+        {{-- blade directives are not compiled inside component attributes, echoes are; keys are "<id>:<index>" or "preset:<game>:<index>" --}}
         @foreach ($this->fileTabs() as $key => $label)
             <x-filament::tabs.item
                 :active="($this->data['file'] ?? null) === $key"
-                wire:click="switchFile(@js($key))"
+                wire:click="switchFile('{{ $key }}')"
             >
                 {{ $label }}
             </x-filament::tabs.item>
