@@ -2,36 +2,24 @@
 
 namespace Marschux\AccessLists\Lists;
 
-use App\Models\Server;
-use App\Repositories\Daemon\DaemonFileRepository;
-use Illuminate\Support\Facades\Cache;
-use Throwable;
-
 /**
- * The lists that ship with the plugin, so the common games need no setup at all.
- *
- * Which of them apply is decided by the files a server actually has, not by its egg name: eggs
- * get renamed, copied and written by anyone, while a Minecraft server that has no whitelist.json
- * has no whitelist to edit either. One directory listing per preset directory answers it.
+ * The lists that ship with the plugin, offered as templates in the admin form. They switch
+ * nothing on by themselves: a server only gets lists once an entry is linked to its egg.
  */
 class Presets
 {
-    /** Detection asks the daemon, so the answer is kept for a while - navigation renders often. */
-    private const TTL = 300;
-
     private const REASON = 'Banned by an operator.';
 
     private const VALHEIM_ID = 'Eine ID pro Eintrag, mit Plattform-Präfix, z. B. Steam_76561197960287930. Die ID steht im Server-Log, wenn sich der Spieler verbindet.';
 
     /**
-     * @return array<string, array{dir: string, files: array<int, array<string, mixed>>}>
+     * @return array<string, array{name: string, files: array<int, array<string, mixed>>}>
      */
     public static function all(): array
     {
         return [
             'minecraft' => [
                 'name' => 'Minecraft',
-                'dir' => '/',
                 'files' => [
                     [
                         'label' => 'Whitelist',
@@ -73,7 +61,6 @@ class Presets
             ],
             'valheim' => [
                 'name' => 'Valheim',
-                'dir' => 'savegames',
                 'files' => [
                     ['label' => 'Admins', 'path' => 'savegames/adminlist.txt', 'hint' => self::VALHEIM_ID],
                     ['label' => 'Bans', 'path' => 'savegames/bannedlist.txt', 'hint' => self::VALHEIM_ID],
@@ -83,7 +70,6 @@ class Presets
             // only who may reach ServerQuery - client bans and groups live in the database
             'teamspeak' => [
                 'name' => 'TeamSpeak',
-                'dir' => '/',
                 'files' => [
                     ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen dürfen auf ServerQuery und sind vom Flood-Schutz ausgenommen. Betrifft nicht, wer auf den Voice-Server darf.'],
                     ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen werden von ServerQuery ausgesperrt. Betrifft nicht, wer auf den Voice-Server darf.'],
@@ -112,88 +98,5 @@ class Presets
             'entry_template' => null,
             'hint' => null,
         ], self::all()[$game]['files'] ?? []);
-    }
-
-    /**
-     * The preset lists this server actually has, keyed like the configured ones.
-     *
-     * @return array<string, ListDefinition>
-     */
-    public static function forServer(Server $server): array
-    {
-        $definitions = [];
-
-        foreach (self::detected($server) as $key) {
-            [$game, $index] = explode(':', $key, 2);
-            $file = self::all()[$game]['files'][(int) $index] ?? null;
-
-            $definition = $file === null ? null : ListDefinition::fromArray("preset:$key", $file);
-
-            if ($definition) {
-                $definitions[$definition->key] = $definition;
-            }
-        }
-
-        return $definitions;
-    }
-
-    public static function forget(Server $server): void
-    {
-        Cache::forget(self::cacheKey($server));
-    }
-
-    /** @return string[] "<game>:<index>" of every preset file that exists on this server */
-    private static function detected(Server $server): array
-    {
-        return Cache::remember(self::cacheKey($server), self::TTL, function () use ($server) {
-            $found = [];
-            $listings = [];
-
-            foreach (self::all() as $game => $preset) {
-                $names = $listings[$preset['dir']] ??= self::names($server, $preset['dir']);
-
-                if ($names === []) {
-                    continue;
-                }
-
-                foreach ($preset['files'] as $index => $file) {
-                    if (in_array(basename($file['path']), $names, true)) {
-                        $found[] = "$game:$index";
-                    }
-                }
-            }
-
-            return $found;
-        });
-    }
-
-    /**
-     * File names in one directory, empty when it cannot be listed - a stopped server, a missing
-     * folder or no permission all mean "no presets from here" rather than an error.
-     *
-     * @return string[]
-     */
-    private static function names(Server $server, string $directory): array
-    {
-        try {
-            $entries = app(DaemonFileRepository::class)->setServer($server)->getDirectory($directory);
-        } catch (Throwable) {
-            return [];
-        }
-
-        $names = [];
-
-        foreach ($entries as $entry) {
-            if (!($entry['directory'] ?? false)) {
-                $names[] = (string) ($entry['name'] ?? '');
-            }
-        }
-
-        return $names;
-    }
-
-    private static function cacheKey(Server $server): string
-    {
-        return "access-lists.presets.$server->uuid";
     }
 }

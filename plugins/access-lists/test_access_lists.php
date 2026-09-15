@@ -24,7 +24,6 @@ $presets = Presets::all();
 assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2);
 
 foreach ($presets as $game => $preset) {
-    assert($preset['dir'] !== '', "$game: a preset needs a directory to look in");
     assert(Presets::options()[$game] === $preset['name']);
 
     // what the admin form gets must store back into the same list
@@ -38,7 +37,6 @@ foreach ($presets as $game => $preset) {
         assert($definition !== null, "$game/$index: every shipped preset has to build");
         assert($definition->label !== $definition->path, "$game/$index: a preset without a real label would show its path");
         assert($definition->hint !== null, "$game/$index: a shipped preset tells the editor what goes in");
-        assert(str_starts_with($file['path'], $preset['dir'] === '/' ? '' : $preset['dir']), "$game/$index: the file has to live in the directory detection looks at");
 
         if (!$definition->isJson()) {
             continue;

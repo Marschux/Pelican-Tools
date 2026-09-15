@@ -22,7 +22,6 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
-use Marschux\AccessLists\Lists\Presets;
 use Marschux\AccessLists\Models\AccessList;
 use Throwable;
 
@@ -62,7 +61,7 @@ class AccessListsPage extends Page implements HasForms
 
         return parent::canAccess()
             && user()?->can(SubuserPermission::FileReadContent, $server)
-            && self::definitionsFor($server) !== [];
+            && AccessList::definitionsFor($server) !== [];
     }
 
     public static function getNavigationLabel(): string
@@ -132,9 +131,6 @@ class AccessListsPage extends Page implements HasForms
 
     public function reload(): void
     {
-        // a file created since the page loaded should show up, and detection is cached
-        Presets::forget($this->server());
-
         $this->read();
 
         Notification::make()->title(trans('access-lists::lists.messages.reloaded'))->success()->send();
@@ -176,11 +172,6 @@ class AccessListsPage extends Page implements HasForms
         }
 
         Activity::event('server:file.write')->property('file', $definition->path)->log();
-
-        if (!$this->fileExisted) {
-            // it exists now, so the preset for it should be offered from here on
-            Presets::forget($server);
-        }
 
         Notification::make()->title(trans('access-lists::lists.messages.saved'))->success()->send();
 
@@ -309,21 +300,14 @@ class AccessListsPage extends Page implements HasForms
     }
 
     /**
-     * What was configured for this egg in the admin panel, or the detected presets when nothing
-     * was. Configured replaces rather than adds: a file removed there must not come back through
-     * detection.
+     * Only what was configured for this egg in the admin panel - an egg without an entry gets no
+     * lists at all, even if the game's files are there.
      *
      * @return array<string, ListDefinition>
      */
     private function definitions(): array
     {
-        return self::definitionsFor($this->server());
-    }
-
-    /** @return array<string, ListDefinition> */
-    private static function definitionsFor(Server $server): array
-    {
-        return AccessList::definitionsFor($server) ?: Presets::forServer($server);
+        return AccessList::definitionsFor($this->server());
     }
 
     private function server(): Server

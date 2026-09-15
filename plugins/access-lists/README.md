@@ -14,12 +14,14 @@ sudo -u www-data php artisan filament:cache-components
 systemctl restart php8.4-fpm   # match your installed php version
 ```
 
-There is no seeder - create the lists by hand under **Access Lists** in the admin panel and link
-them to eggs.
+A server only gets the page once an entry under **Access Lists** in the admin panel is linked to
+its egg. Nothing is switched on automatically, even when a game's files are there.
 
-## Built in, no setup
+## Presets
 
-Minecraft, Valheim and TeamSpeak work out of the box:
+The admin form offers presets for Minecraft, Valheim and TeamSpeak. Picking one fills the files
+with these, each with a hint for whoever edits the list; they can then be removed, changed or added
+to:
 
 | Game | Files |
 |---|---|
@@ -30,15 +32,6 @@ Minecraft, Valheim and TeamSpeak work out of the box:
 The TeamSpeak lists only control who may reach ServerQuery. Client bans and server groups live in
 its database and are not files, so they are not editable here.
 
-Which of them a server gets is decided by the files it actually has, not by its egg name - eggs
-get renamed and copied, while a Minecraft server without a `whitelist.json` has no whitelist to
-edit either. One directory listing answers that, cached for five minutes; "Reload" on the page
-checks again immediately.
-
-Everything below is only needed for a game that is not built in, or to change a preset. An entry
-in the admin panel replaces detection for its eggs entirely: those servers get exactly the files
-listed there, so a file removed from it stays gone. Picking a preset in the form fills the files
-with the built-in ones as a starting point.
 
 ## Configuring a list
 
