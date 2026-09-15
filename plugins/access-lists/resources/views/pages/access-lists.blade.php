@@ -1,9 +1,20 @@
 {{--
-    The save button is a plain submit button in this view rather than a Filament page action:
-    page and table actions did not render at all in this panel, and a list editor whose only
-    button is invisible is worthless.
+    The save button and the file tabs are plain blade components in this view rather than Filament
+    page actions: page and table actions did not render at all in this panel, and a list editor
+    whose only button is invisible is worthless.
 --}}
 <x-filament-panels::page>
+    <x-filament::tabs>
+        @foreach ($this->fileTabs() as $key => $label)
+            <x-filament::tabs.item
+                :active="($this->data['file'] ?? null) === $key"
+                wire:click="switchFile(@js($key))"
+            >
+                {{ $label }}
+            </x-filament::tabs.item>
+        @endforeach
+    </x-filament::tabs>
+
     <form wire:submit="save" class="grid gap-6">
         {{ $this->form }}
 

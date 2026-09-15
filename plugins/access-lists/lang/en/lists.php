@@ -32,7 +32,6 @@ return [
 
     'page' => [
         'navigation' => 'Access lists',
-        'list' => 'List',
         'entries' => 'Entries',
         'entry' => 'Entry',
         'add' => 'Add entry',

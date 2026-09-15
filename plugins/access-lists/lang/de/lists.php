@@ -32,7 +32,6 @@ return [
 
     'page' => [
         'navigation' => 'Zugriffslisten',
-        'list' => 'Liste',
         'entries' => 'Einträge',
         'entry' => 'Eintrag',
         'add' => 'Eintrag hinzufügen',

@@ -9,7 +9,6 @@ use App\Repositories\Daemon\DaemonFileRepository;
 use App\Traits\Filament\BlockAccessInConflict;
 use BackedEnum;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -31,7 +30,7 @@ use Throwable;
  * Edits the access list files configured for this server's egg - admin lists, ban lists,
  * whitelists.
  *
- * Only files: no player list, no console commands. A file is picked from a select, its entries
+ * Only files: no player list, no console commands. A file is picked from the tabs, its entries
  * are edited as tags, and whoever needs the file exactly as it is switches to the text mode.
  */
 class AccessListsPage extends Page implements HasForms
@@ -93,12 +92,6 @@ class AccessListsPage extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Select::make('file')
-                    ->label(trans('access-lists::lists.page.list'))
-                    ->options(fn () => array_map(fn (ListDefinition $definition) => $definition->label, $this->definitions()))
-                    ->selectablePlaceholder(false)
-                    ->live()
-                    ->afterStateUpdated(fn () => $this->read()),
                 Toggle::make('raw')
                     ->label(trans('access-lists::lists.page.raw'))
                     ->helperText(trans('access-lists::lists.page.raw_hint'))
@@ -115,6 +108,24 @@ class AccessListsPage extends Page implements HasForms
                     ->visible(fn (Get $get) => (bool) $get('raw'))
                     ->columnSpanFull(),
             ]);
+    }
+
+    /** @return array<string, string> key => label, one tab per file */
+    public function fileTabs(): array
+    {
+        return array_map(fn (ListDefinition $definition) => $definition->label, $this->definitions());
+    }
+
+    public function switchFile(string $key): void
+    {
+        // called straight from the browser, so only a file this server actually has
+        if (!array_key_exists($key, $this->definitions())) {
+            return;
+        }
+
+        $this->data['file'] = $key;
+
+        $this->read();
     }
 
     public function reload(): void
