@@ -25,8 +25,17 @@ component cache is rebuilt.
 
 By default queries go to the **node** the server runs on, not to the allocation ip. Docker
 publishes the allocation port on the node host, so this also works when the allocation ip is
-`0.0.0.0`, `::` or a local address the panel cannot reach directly. Switch to the allocation ip
-or its alias in the plugin settings if you need to.
+`0.0.0.0`, `::` or a local address the panel cannot reach directly.
+
+There is no settings form. The defaults live in `config/game-query.php`; a setup that needs
+something else sets them in the panel's `.env` and runs `optimize:clear`:
+
+| Variable | Default | |
+|---|---|---|
+| `GAME_QUERY_ADDRESS_SOURCE` | `node` | `node`, `allocation` or `alias` |
+| `GAME_QUERY_TIMEOUT` | `3` | seconds to wait for an answer |
+| `GAME_QUERY_CACHE_TTL` | `15` | seconds a result is reused, `0` disables the cache |
+| `GAME_QUERY_DEBUG` | `false` | log failed queries |
 
 ## Protocols
 

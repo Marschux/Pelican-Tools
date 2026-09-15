@@ -52,21 +52,7 @@ return [
 
     'players_with_bots' => ':players / :max (+:bots Bots)',
 
-    'address_source' => 'Query-Adresse',
-    'address_source_hint' => 'Welche Adresse das Panel abfragt. "Node" funktioniert auch, wenn die Allocation-IP 0.0.0.0/:: oder eine lokale IP ist, weil Docker den Port auf der Node selbst veröffentlicht.',
-    'address_node' => 'Node-Adresse (empfohlen)',
-    'address_allocation' => 'Allocation-IP',
-    'address_alias' => 'Allocation-Alias',
-
-    'timeout' => 'Query Timeout',
-    'timeout_hint' => 'Wie lange auf eine Antwort gewartet wird. Niedriger heißt, dass offline Server die Seite kürzer blockieren.',
-    'cache_ttl' => 'Cache-Dauer',
-    'cache_ttl_hint' => 'Wie lange ein Ergebnis wiederverwendet wird. Ohne Cache öffnet jeder offene Tab und jeder API-Aufruf einen eigenen Socket. 0 deaktiviert den Cache.',
-    'debug' => 'Query-Fehler loggen?',
-    'debug_hint' => 'Standardmäßig aus - ein offline Server ist der Normalfall und würde sonst bei jedem Poll eine Exception loggen.',
-
     'notifications' => [
-        'settings_saved' => 'Einstellungen gespeichert',
         'test_no_server' => 'Kein Server verwendet eines der verknüpften Eggs',
         'test_failed' => 'Query fehlgeschlagen',
         'test_failed_body' => 'Keine Antwort von :server. Prüfe Port-Offset/Variable, die Query-Adresse und ob der Server läuft.',

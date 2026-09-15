@@ -52,21 +52,7 @@ return [
 
     'players_with_bots' => ':players / :max (+:bots bots)',
 
-    'address_source' => 'Query Address',
-    'address_source_hint' => 'Which address the panel queries. "Node" works even when the allocation ip is 0.0.0.0/:: or a local ip, because docker publishes the port on the node itself.',
-    'address_node' => 'Node address (recommended)',
-    'address_allocation' => 'Allocation IP',
-    'address_alias' => 'Allocation alias',
-
-    'timeout' => 'Query Timeout',
-    'timeout_hint' => 'How long to wait for an answer. Lower means offline servers block the page for less time.',
-    'cache_ttl' => 'Cache Duration',
-    'cache_ttl_hint' => 'How long a result is reused. Without this every open tab and api call opens its own socket. 0 disables caching.',
-    'debug' => 'Log query errors?',
-    'debug_hint' => 'Off by default - an offline server is the normal case, and would otherwise log an exception on every poll.',
-
     'notifications' => [
-        'settings_saved' => 'Settings saved',
         'test_no_server' => 'No server uses one of the linked eggs',
         'test_failed' => 'Query failed',
         'test_failed_body' => 'No answer from :server. Check the port offset/variable, the query address setting and whether the server is running.',

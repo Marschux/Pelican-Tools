@@ -2,22 +2,18 @@
 
 namespace Marschux\GameQuery;
 
-use App\Contracts\Plugins\HasPluginSettings;
 use App\Enums\ConsoleWidgetPosition;
 use App\Filament\Server\Pages\Console;
-use App\Traits\EnvironmentWriterTrait;
 use Filament\Contracts\Plugin;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
 use Filament\Panel;
 use Marschux\GameQuery\Filament\Server\Widgets\ServerInfoWidget;
 
-class GameQueryPlugin implements HasPluginSettings, Plugin
+/**
+ * No settings form: the defaults in config/game-query.php fit, and the rare setup that needs
+ * something else sets the GAME_QUERY_* variables in .env.
+ */
+class GameQueryPlugin implements Plugin
 {
-    use EnvironmentWriterTrait;
-
     public function getId(): string
     {
         return 'game-query';
@@ -43,66 +39,5 @@ class GameQueryPlugin implements HasPluginSettings, Plugin
         // this the widget exists but appears nowhere. AboveConsole puts it right after the
         // core overview blocks.
         Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
-    }
-
-    public function getSettingsFormData(): array
-    {
-        return config('game-query');
-    }
-
-    public function getSettingsForm(): array
-    {
-        return [
-            Select::make('address_source')
-                ->label(trans('game-query::query.address_source'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.address_source_hint'))
-                ->options([
-                    'node' => trans('game-query::query.address_node'),
-                    'allocation' => trans('game-query::query.address_allocation'),
-                    'alias' => trans('game-query::query.address_alias'),
-                ])
-                ->selectablePlaceholder(false)
-                ->default(fn () => config('game-query.address_source')),
-            TextInput::make('timeout')
-                ->label(trans('game-query::query.timeout'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.timeout_hint'))
-                ->numeric()
-                ->minValue(1)
-                ->maxValue(30)
-                ->suffix('s')
-                ->default(fn () => config('game-query.timeout')),
-            TextInput::make('cache_ttl')
-                ->label(trans('game-query::query.cache_ttl'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.cache_ttl_hint'))
-                ->numeric()
-                ->minValue(0)
-                ->maxValue(600)
-                ->suffix('s')
-                ->default(fn () => config('game-query.cache_ttl')),
-            Toggle::make('debug')
-                ->label(trans('game-query::query.debug'))
-                ->hintIcon('tabler-question-mark')
-                ->hintIconTooltip(trans('game-query::query.debug_hint'))
-                ->inline(false)
-                ->default(fn () => config('game-query.debug')),
-        ];
-    }
-
-    public function saveSettings(array $data): void
-    {
-        $this->writeToEnvironment([
-            'GAME_QUERY_ADDRESS_SOURCE' => $data['address_source'],
-            'GAME_QUERY_TIMEOUT' => $data['timeout'],
-            'GAME_QUERY_CACHE_TTL' => $data['cache_ttl'],
-            'GAME_QUERY_DEBUG' => $data['debug'],
-        ]);
-
-        Notification::make()
-            ->title(trans('game-query::query.notifications.settings_saved'))
-            ->success()
-            ->send();
     }
 }
