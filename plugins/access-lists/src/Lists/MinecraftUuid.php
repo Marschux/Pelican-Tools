@@ -36,6 +36,23 @@ class MinecraftUuid
         return is_string($id) ? self::dashed($id) : null;
     }
 
+    /** The dashed uuid when someone typed one instead of a name, with or without dashes. */
+    public static function fromInput(string $value): ?string
+    {
+        // lowercase like the uuids Mojang and the server itself write
+        return self::dashed(strtolower(str_replace('-', '', trim($value))));
+    }
+
+    /** Null when Mojang has no account with this uuid; throws only when Mojang cannot be reached. */
+    public static function nameFor(string $uuid, int $timeout): ?string
+    {
+        $response = Http::timeout($timeout)->get('https://sessionserver.mojang.com/session/minecraft/profile/' . str_replace('-', '', $uuid));
+
+        $name = $response->json('name');
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
     /** Mojang returns uuids without dashes; the files store them with. */
     public static function dashed(string $hex): ?string
     {

@@ -28,7 +28,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}"}',
-                        'hint' => 'Spielernamen eintragen, die UUID sucht das Panel selbst. Wirkt nur mit white-list=true in server.properties; ein laufender Server übernimmt Änderungen erst nach "whitelist reload" oder einem Neustart.',
+                        'hint' => 'Spielernamen oder UUID eintragen, das jeweils andere sucht das Panel selbst. Wirkt nur mit white-list=true in server.properties; ein laufender Server übernimmt Änderungen erst nach "whitelist reload" oder einem Neustart.',
                     ],
                     [
                         'label' => 'Admins',
@@ -37,7 +37,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "level": 4, "bypassesPlayerLimit": false}',
-                        'hint' => 'Spielernamen eintragen. Neue Admins bekommen Level 4, also volle Rechte. Greift nach einem Neustart.',
+                        'hint' => 'Spielernamen oder UUID eintragen. Neue Admins bekommen Level 4, also volle Rechte. Greift nach einem Neustart.',
                     ],
                     [
                         'label' => 'Bans',
@@ -46,7 +46,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
-                        'hint' => 'Spielernamen eintragen, die UUID sucht das Panel selbst. Greift nach einem Neustart.',
+                        'hint' => 'Spielernamen oder UUID eintragen, das jeweils andere sucht das Panel selbst. Greift nach einem Neustart.',
                     ],
                     [
                         'label' => 'IP bans',

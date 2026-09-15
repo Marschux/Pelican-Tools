@@ -229,10 +229,36 @@ class AccessListsPage extends Page implements HasForms
         ];
 
         if ($definition->needsUuid()) {
-            $replacements['{uuid}'] = $offline ? MinecraftUuid::offline($value) : $this->lookup($value);
+            $uuid = MinecraftUuid::fromInput($value);
+
+            if ($uuid !== null) {
+                // a uuid was typed: take it as it is, and store the account's name next to it -
+                // an offline server has no account to ask, so the uuid stands in for the name
+                $replacements['{uuid}'] = $uuid;
+                $replacements['{name}'] = $offline ? $value : $this->nameFor($uuid);
+            } else {
+                $replacements['{uuid}'] = $offline ? MinecraftUuid::offline($value) : $this->lookup($value);
+            }
         }
 
         return ListFile::fillTemplate($definition->templateArray(), $replacements);
+    }
+
+    private function nameFor(string $uuid): string
+    {
+        try {
+            $name = MinecraftUuid::nameFor($uuid, 5);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            throw new ListEditException(trans('access-lists::lists.messages.mojang_unreachable'));
+        }
+
+        if ($name === null) {
+            throw new ListEditException(trans('access-lists::lists.messages.unknown_player', ['name' => $uuid]));
+        }
+
+        return $name;
     }
 
     private function lookup(string $name): string

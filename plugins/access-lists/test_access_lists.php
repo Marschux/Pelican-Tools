@@ -57,6 +57,11 @@ assert(ListFile::fillTemplate($whitelistPreset->templateArray(), ['{uuid}' => 'u
 $ipPreset = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
 assert(!$ipPreset->needsUuid() && $ipPreset->valueField() === 'ip');
 
+// a typed uuid is taken as one, dashed or not; a name never is
+assert(MinecraftUuid::fromInput('a160cfdf15704999ae8d8bf42b0f8ae3') === 'a160cfdf-1570-4999-ae8d-8bf42b0f8ae3');
+assert(MinecraftUuid::fromInput(' A160CFDF-1570-4999-AE8D-8BF42B0F8AE3 ') === 'a160cfdf-1570-4999-ae8d-8bf42b0f8ae3');
+assert(MinecraftUuid::fromInput('Notch') === null && MinecraftUuid::fromInput('') === null);
+
 // --- what the admin form produces ---------------------------------------------------------------
 
 $json = ListDefinition::fromArray('7:0', [
