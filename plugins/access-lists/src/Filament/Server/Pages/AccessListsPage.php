@@ -99,10 +99,12 @@ class AccessListsPage extends Page implements HasForms
                     ->inline(false),
                 TagsInput::make('entries')
                     ->label(trans('access-lists::lists.page.entries'))
+                    ->helperText(fn () => $this->definition()?->hint)
                     ->placeholder(trans('access-lists::lists.page.add'))
                     ->visible(fn (Get $get) => !$get('raw'))
                     ->columnSpanFull(),
                 Textarea::make('text')
+                    ->helperText(fn () => $this->definition()?->hint)
                     ->label(trans('access-lists::lists.page.text'))
                     ->rows(18)
                     ->visible(fn (Get $get) => (bool) $get('raw'))

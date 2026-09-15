@@ -118,6 +118,13 @@ class AccessListResource extends Resource
                         ->hintIconTooltip(trans('access-lists::lists.fields.path_hint'))
                         ->required()
                         ->maxLength(191),
+                    Textarea::make('hint')
+                        ->label(trans('access-lists::lists.fields.hint'))
+                        ->placeholder(trans('access-lists::lists.fields.hint_placeholder'))
+                        ->helperText(trans('access-lists::lists.fields.hint_help'))
+                        ->rows(2)
+                        ->maxLength(1000)
+                        ->columnSpanFull(),
                     Select::make('format')
                         ->label(trans('access-lists::lists.fields.format'))
                         ->options([

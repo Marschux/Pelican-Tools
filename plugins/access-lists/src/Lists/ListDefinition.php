@@ -20,6 +20,8 @@ readonly class ListDefinition
         public ?string $keyField,
         public ?string $displayField,
         public ?string $template,
+        /** free text for whoever edits the list: what goes in, where to find it */
+        public ?string $hint = null,
     ) {}
 
     /**
@@ -41,6 +43,7 @@ readonly class ListDefinition
             keyField: self::nullable($file['key_field'] ?? null),
             displayField: self::nullable($file['display_field'] ?? null),
             template: self::nullable($file['entry_template'] ?? null),
+            hint: self::nullable($file['hint'] ?? null),
         );
     }
 

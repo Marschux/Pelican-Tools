@@ -21,6 +21,8 @@ class Presets
 
     private const REASON = 'Banned by an operator.';
 
+    private const VALHEIM_ID = 'Eine ID pro Eintrag, mit Plattform-Präfix, z. B. Steam_76561197960287930. Die ID steht im Server-Log, wenn sich der Spieler verbindet.';
+
     /**
      * @return array<string, array{dir: string, files: array<int, array<string, mixed>>}>
      */
@@ -38,6 +40,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}"}',
+                        'hint' => 'Spielernamen eintragen, die UUID sucht das Panel selbst. Wirkt nur mit white-list=true in server.properties; ein laufender Server übernimmt Änderungen erst nach "whitelist reload" oder einem Neustart.',
                     ],
                     [
                         'label' => 'Admins',
@@ -46,6 +49,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "level": 4, "bypassesPlayerLimit": false}',
+                        'hint' => 'Spielernamen eintragen. Neue Admins bekommen Level 4, also volle Rechte. Greift nach einem Neustart.',
                     ],
                     [
                         'label' => 'Bans',
@@ -54,6 +58,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
+                        'hint' => 'Spielernamen eintragen, die UUID sucht das Panel selbst. Greift nach einem Neustart.',
                     ],
                     [
                         'label' => 'IP bans',
@@ -62,6 +67,7 @@ class Presets
                         'key_field' => 'ip',
                         'display_field' => 'ip',
                         'entry_template' => '{"ip": "{ip}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
+                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Greift nach einem Neustart.',
                     ],
                 ],
             ],
@@ -69,9 +75,9 @@ class Presets
                 'name' => 'Valheim',
                 'dir' => 'savegames',
                 'files' => [
-                    ['label' => 'Admins', 'path' => 'savegames/adminlist.txt'],
-                    ['label' => 'Bans', 'path' => 'savegames/bannedlist.txt'],
-                    ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt'],
+                    ['label' => 'Admins', 'path' => 'savegames/adminlist.txt', 'hint' => self::VALHEIM_ID],
+                    ['label' => 'Bans', 'path' => 'savegames/bannedlist.txt', 'hint' => self::VALHEIM_ID],
+                    ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt', 'hint' => self::VALHEIM_ID . ' Steht hier mindestens ein Eintrag, dürfen nur diese Spieler beitreten.'],
                 ],
             ],
             // only who may reach ServerQuery - client bans and groups live in the database
@@ -79,8 +85,8 @@ class Presets
                 'name' => 'TeamSpeak',
                 'dir' => '/',
                 'files' => [
-                    ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt'],
-                    ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt'],
+                    ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen dürfen auf ServerQuery und sind vom Flood-Schutz ausgenommen. Betrifft nicht, wer auf den Voice-Server darf.'],
+                    ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen werden von ServerQuery ausgesperrt. Betrifft nicht, wer auf den Voice-Server darf.'],
                 ],
             ],
         ];
@@ -104,6 +110,7 @@ class Presets
             'key_field' => null,
             'display_field' => null,
             'entry_template' => null,
+            'hint' => null,
         ], self::all()[$game]['files'] ?? []);
     }
 

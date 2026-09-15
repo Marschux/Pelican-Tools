@@ -37,6 +37,7 @@ foreach ($presets as $game => $preset) {
 
         assert($definition !== null, "$game/$index: every shipped preset has to build");
         assert($definition->label !== $definition->path, "$game/$index: a preset without a real label would show its path");
+        assert($definition->hint !== null, "$game/$index: a shipped preset tells the editor what goes in");
         assert(str_starts_with($file['path'], $preset['dir'] === '/' ? '' : $preset['dir']), "$game/$index: the file has to live in the directory detection looks at");
 
         if (!$definition->isJson()) {
