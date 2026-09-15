@@ -21,7 +21,7 @@ use Marschux\AccessLists\Lists\Presets;
 
 $presets = Presets::all();
 
-assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3);
+assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2);
 
 foreach ($presets as $game => $preset) {
     assert($preset['dir'] !== '', "$game: a preset needs a directory to look in");

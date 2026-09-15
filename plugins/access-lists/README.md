@@ -19,12 +19,16 @@ them to eggs.
 
 ## Built in, no setup
 
-Minecraft and Valheim work out of the box:
+Minecraft, Valheim and TeamSpeak work out of the box:
 
 | Game | Files |
 |---|---|
 | Minecraft | `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json` |
 | Valheim | `savegames/adminlist.txt`, `savegames/bannedlist.txt`, `savegames/permittedlist.txt` |
+| TeamSpeak | `query_ip_allowlist.txt`, `query_ip_denylist.txt` |
+
+The TeamSpeak lists only control who may reach ServerQuery. Client bans and server groups live in
+its database and are not files, so they are not editable here.
 
 Which of them a server gets is decided by the files it actually has, not by its egg name - eggs
 get renamed and copied, while a Minecraft server without a `whitelist.json` has no whitelist to

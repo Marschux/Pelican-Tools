@@ -72,6 +72,14 @@ class Presets
                     ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt'],
                 ],
             ],
+            // only who may reach ServerQuery - client bans and groups live in the database
+            'teamspeak' => [
+                'dir' => '/',
+                'files' => [
+                    ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt'],
+                    ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt'],
+                ],
+            ],
         ];
     }
 
@@ -108,9 +116,10 @@ class Presets
     {
         return Cache::remember(self::cacheKey($server), self::TTL, function () use ($server) {
             $found = [];
+            $listings = [];
 
             foreach (self::all() as $game => $preset) {
-                $names = self::names($server, $preset['dir']);
+                $names = $listings[$preset['dir']] ??= self::names($server, $preset['dir']);
 
                 if ($names === []) {
                     continue;
