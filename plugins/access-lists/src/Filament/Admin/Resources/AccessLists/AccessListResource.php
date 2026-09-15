@@ -177,7 +177,7 @@ class AccessListResource extends Resource
                 DeleteAction::make(),
             ])
             ->toolbarActions([
-                CreateAction::make(),
+                CreateAction::make()->createAnother(false),
             ])
             ->emptyStateIcon('tabler-list-check')
             ->emptyStateDescription('')

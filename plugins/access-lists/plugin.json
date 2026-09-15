@@ -2,7 +2,7 @@
     "id": "access-lists",
     "name": "Access Lists",
     "author": "Marschux",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "Edit a game server's admin, ban and whitelist files from the panel",
     "category": "plugin",
     "url": null,
