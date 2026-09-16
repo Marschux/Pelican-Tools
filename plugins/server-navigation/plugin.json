@@ -1,0 +1,18 @@
+{
+    "id": "server-navigation",
+    "name": "Server Navigation",
+    "author": "Marschux",
+    "version": "1.0.0",
+    "description": "Hide sidebar entries of the server panel per server",
+    "category": "plugin",
+    "url": null,
+    "update_url": null,
+    "namespace": "Marschux\\ServerNavigation",
+    "class": "ServerNavigationPlugin",
+    "panels": [
+        "admin",
+        "server"
+    ],
+    "panel_version": null,
+    "composer_packages": {}
+}
