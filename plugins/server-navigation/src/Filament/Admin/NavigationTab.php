@@ -7,8 +7,11 @@ use App\Models\Server;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
 use Marschux\ServerNavigation\Navigation\NavigationUrl;
 use Throwable;
 
@@ -28,11 +31,16 @@ class NavigationTab
                 Repeater::make('server_navigation')
                     ->hiddenLabel()
                     ->helperText(fn () => trans('server-navigation::navigation.hint'))
+                    // one table row per entry instead of a card each
+                    ->table([
+                        TableColumn::make(fn () => trans('server-navigation::navigation.entry')),
+                        TableColumn::make(fn () => trans('server-navigation::navigation.visible'))->width('1%'),
+                    ])
                     ->schema([
                         Hidden::make('slug'),
-                        Toggle::make('visible')->label(fn () => trans('server-navigation::navigation.visible')),
+                        Text::make(fn (Get $get) => static::entries()[$get('slug')] ?? $get('slug')),
+                        Toggle::make('visible')->hiddenLabel(),
                     ])
-                    ->itemLabel(fn (array $state) => static::entries()[$state['slug'] ?? ''] ?? ($state['slug'] ?? null))
                     ->addable(false)
                     ->deletable(false)
                     ->reorderable()
