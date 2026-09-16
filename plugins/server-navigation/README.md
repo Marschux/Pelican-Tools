@@ -1,9 +1,9 @@
 # Server Navigation
 
 Hides sidebar entries of the server panel per server. Admin panel → edit a server → tab
-**Sidebar** next to allocations and databases: uncheck what this server does not need.
+**Sidebar** next to allocations and databases: unchecked entries move into a collapsed "More" menu at the end of the sidebar.
 
-Only the sidebar changes - a hidden page stays reachable by its url, and permissions are untouched.
+Only the sidebar changes - permissions are untouched.
 
 ## Install
 

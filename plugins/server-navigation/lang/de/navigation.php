@@ -3,7 +3,8 @@
 return [
     'tab' => 'Seitenleiste',
     'visible' => 'Sichtbare Einträge',
-    'visible_hint' => 'Abgehakte Einträge erscheinen in der Seitenleiste dieses Servers. Ausgeblendete Seiten bleiben über ihre Adresse erreichbar.',
+    'visible_hint' => 'Abgehakte Einträge erscheinen direkt in der Seitenleiste dieses Servers, die übrigen im eingeklappten Menü „Weitere“.',
+    'more' => 'Weitere',
     'save' => 'Speichern',
     'saved' => 'Seitenleiste gespeichert',
 ];
