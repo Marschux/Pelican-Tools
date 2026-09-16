@@ -9,12 +9,15 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -22,6 +25,8 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Marschux\GameQuery\Filament\Admin\Resources\GameQueries\Pages\ManageGameQueries;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\GameQuery\Query\QueryResult;
@@ -180,12 +185,57 @@ class GameQueryResource extends Resource
         return $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
     }
 
-    /** Drops any checked field the newly selected type can no longer show. */
+    /** The row in the field list between shown fields and the rest - no field is named like it. */
+    private const HIDDEN_DIVIDER = '__hidden__';
+
+    /**
+     * Repeater rows for the field list: the shown fields in their order, the divider, then every
+     * other field the type can report. Keyed by uuid like the repeater's own items - reordering
+     * merges by key, and plain 0..n keys would append empty rows on a move.
+     *
+     * @param  string[]  $visible
+     * @param  string[]  $allowed
+     * @return array<string, array{field: string}>
+     */
+    private static function fieldRows(array $visible, array $allowed): array
+    {
+        $visible = array_values(array_intersect($visible, $allowed));
+        $rows = [];
+
+        foreach ([...$visible, self::HIDDEN_DIVIDER, ...array_diff($allowed, $visible)] as $field) {
+            $rows[(string) Str::uuid()] = ['field' => $field];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * The fields above the divider, in the order of the rows.
+     *
+     * @param  array<array{field?: string}>|null  $rows
+     * @return string[]
+     */
+    private static function visibleFromRows(?array $rows): array
+    {
+        $fields = [];
+
+        foreach ($rows ?? [] as $row) {
+            if (($row['field'] ?? null) === self::HIDDEN_DIVIDER) {
+                break;
+            }
+
+            if (isset($row['field'])) {
+                $fields[] = $row['field'];
+            }
+        }
+
+        return $fields;
+    }
+
+    /** Rebuilds the field list for a newly selected type, keeping what is still shown in its order. */
     private static function pruneVisibleFields(Set $set, Get $get, QueryTypeService $service): void
     {
-        $allowed = static::allowedFields($get, $service);
-
-        $set('visible_fields', array_values(array_intersect((array) $get('visible_fields'), $allowed)));
+        $set('visible_fields', static::fieldRows(static::visibleFromRows($get('visible_fields')), static::allowedFields($get, $service)));
     }
 
     public static function form(Schema $schema): Schema
@@ -245,17 +295,34 @@ class GameQueryResource extends Resource
                     ->nullable()
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.port_variable_hint')),
-                CheckboxList::make('visible_fields')
+                // one sortable list with a divider: fields above it show on the server page, in
+                // this order. Only fields the selected protocol can actually report are listed -
+                // a "VAC" row for valheim would just be a row that lies. Stored as before: the
+                // shown fields as a plain list.
+                Repeater::make('visible_fields')
                     ->label(trans('game-query::query.visible_fields'))
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.visible_fields_hint'))
-                    // only fields the selected protocol can actually report are offered -
-                    // showing a "VAC" checkbox for valheim would just be a checkbox that lies
-                    ->options(fn (Get $get, QueryTypeService $service) => collect(static::allowedFields($get, $service))
-                        ->mapWithKeys(fn ($field) => [$field => trans("game-query::query.field.$field")])
-                        ->all())
-                    ->bulkToggleable()
-                    ->columns(3)
+                    ->helperText(trans('game-query::query.visible_fields_order'))
+                    ->table([
+                        TableColumn::make(trans('game-query::query.field_label')),
+                    ])
+                    ->compact()
+                    ->schema([
+                        Hidden::make('field'),
+                        Text::make(fn (Get $get) => $get('field') === self::HIDDEN_DIVIDER
+                            // only a line; inline styles, the panel's css has no classes of ours
+                            ? new HtmlString('<div style="border-top: 2px solid currentColor; opacity: .5; width: 100%"></div>')
+                            : trans('game-query::query.field.' . $get('field'))),
+                    ])
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable()
+                    ->reorderableWithButtons()
+                    // formatStateUsing, not afterStateHydrated: that would replace the repeater's
+                    // own hook which gives every item its key
+                    ->formatStateUsing(fn (?array $state, Get $get, QueryTypeService $service) => static::fieldRows($state ?? [], static::allowedFields($get, $service)))
+                    ->dehydrateStateUsing(fn (?array $state) => static::visibleFromRows($state))
                     ->columnSpanFull(),
                 Select::make('eggs')
                     ->label(trans('game-query::query.eggs'))

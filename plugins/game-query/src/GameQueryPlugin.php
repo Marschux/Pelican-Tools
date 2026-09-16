@@ -43,18 +43,18 @@ class GameQueryPlugin implements Plugin
         // core overview blocks.
         Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
 
-        // Every tile widget - the core overview and ours - stacks in the first of the page's three
-        // columns, the console takes the other two beside them, over the two rows the tile widgets
-        // fill. The core widgets fix their own spans, so this is css: the console is found by its
-        // #terminal, the tiles by filament's stats widget class. Below lg it all stacks as before.
+        // Our tiles stack in the first of the page's three columns, the console takes the other two
+        // beside them; the core overview above stays as it is. The console fixes its own span to
+        // "full", so this is css, and only when our tiles render before it - an offline server
+        // keeps the full-width console. Tiles by their own class (our view), console by #terminal.
+        // Below lg it all stacks as before.
         FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
             fn () => new HtmlString('<style>@media (min-width: 64rem) {'
-                . '.fi-console-page .fi-wi > .fi-wi-stats-overview { grid-column: 1 / 2 !important; }'
-                . '.fi-console-page .fi-wi > .fi-wi-stats-overview .fi-grid { grid-template-columns: minmax(0, 1fr) !important; }'
-                . '.fi-console-page .fi-wi > :has(#terminal) { grid-column: 2 / -1 !important; grid-row: 1 / span 2 !important; display: flex; flex-direction: column; contain: size; }'
-                . '.fi-console-page #terminal { flex: 1 1 0; min-height: 0; }'
-                . '.fi-console-page #terminal .xterm { height: 100%; }'
+                . '.fi-console-page .fi-wi > .game-query-tiles { grid-column: 1 / 2 !important; }'
+                . '.fi-console-page .fi-wi > .game-query-tiles ~ :has(#terminal) { grid-column: 2 / -1 !important; display: flex; flex-direction: column; contain: size; }'
+                . '.fi-console-page .game-query-tiles ~ :has(#terminal) #terminal { flex: 1 1 0; min-height: 0; }'
+                . '.fi-console-page .game-query-tiles ~ :has(#terminal) #terminal .xterm { height: 100%; }'
                 . '}</style>'),
             scopes: Console::class,
         );

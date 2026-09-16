@@ -24,6 +24,8 @@ return [
     'port_variable_hint' => 'Der Env Name der Startup Variable, die für den Query Port verwendet werden soll, z.B. "QUERY_PORT". Wenn ein Wert gesetzt wurde wird der Query Port Offset ignoriert!',
 
     'visible_fields' => 'Sichtbare Felder',
+    'visible_fields_order' => 'Reihenfolge per Ziehen oder Pfeilen. Felder über der Linie zeigt die Server-Seite in dieser Reihenfolge, die darunter nicht.',
+    'field_label' => 'Feld',
     'visible_fields_hint' => 'Welche Felder die Server-Seite anzeigt. Angeboten werden nur Felder, die der gewählte Typ überhaupt liefern kann, und ein Feld erscheint erst, wenn das Protokoll es tatsächlich gemeldet hat.',
 
     'field' => [

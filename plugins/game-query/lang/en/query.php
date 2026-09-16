@@ -24,6 +24,8 @@ return [
     'port_variable_hint' => 'Env name of the startup variable holding the query port, e.g. "QUERY_PORT". When set, the port offset is ignored.',
 
     'visible_fields' => 'Visible Fields',
+    'visible_fields_order' => 'Drag or use the arrows to order. Fields above the line show on the server page in this order, those below it do not.',
+    'field_label' => 'Field',
     'visible_fields_hint' => 'Which fields the server page shows. Only fields the selected type can actually report are offered, and a field only appears once the protocol has reported it.',
 
     'field' => [

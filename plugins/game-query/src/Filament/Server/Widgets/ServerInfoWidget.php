@@ -15,6 +15,15 @@ class ServerInfoWidget extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
 
+    /** Filament's own view plus a class the console page css can find - see GameQueryPlugin::boot(). */
+    protected string $view = 'game-query::widgets.server-info';
+
+    /** The tiles stack in their narrow column left of the console. */
+    protected function getColumns(): int|array|null
+    {
+        return 1;
+    }
+
     public static function canView(): bool
     {
         /** @var Server $server */
