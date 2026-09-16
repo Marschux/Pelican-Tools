@@ -52,8 +52,52 @@ class GameQueryPlugin implements Plugin
             fn () => new HtmlString('<style>@media (min-width: 64rem) {'
                 . '.fi-console-page .fi-wi > .fi-wi-stats-overview { grid-column: 1 / 2 !important; }'
                 . '.fi-console-page .fi-wi > .fi-wi-stats-overview .fi-grid { grid-template-columns: minmax(0, 1fr) !important; }'
-                . '.fi-console-page .fi-wi > :has(#terminal) { grid-column: 2 / -1 !important; grid-row: 1 / span 2 !important; }'
+                . '.fi-console-page .fi-wi > :has(#terminal) { grid-column: 2 / -1 !important; grid-row: 1 / span 2 !important; display: flex; flex-direction: column; contain: size; }'
+                . '.fi-console-page #terminal { flex: 1 1 0; min-height: 0; }'
+                . '.fi-console-page #terminal .xterm { height: 100%; }'
                 . '}</style>'),
+            scopes: Console::class,
+        );
+
+        // The console is as tall as the tile column: "contain: size" above keeps its own row count
+        // from stretching the grid, so the tiles set the height and the terminal fills it. xterm's
+        // fit addon only recalculates rows on a window resize, so one is sent whenever the
+        // terminal's box changes - tiles appearing, a poll adding a field, the window itself.
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::BODY_END,
+            fn () => new HtmlString(<<<'HTML'
+                <script>
+                    (() => {
+                        const watch = () => {
+                            const terminal = document.getElementById('terminal');
+
+                            if (!terminal || terminal.dataset.gameQueryObserved) {
+                                return;
+                            }
+
+                            terminal.dataset.gameQueryObserved = '1';
+
+                            let width = 0, height = 0;
+
+                            new ResizeObserver(([entry]) => {
+                                const box = entry.contentRect;
+
+                                // only a real change - the resize event itself must not loop back here
+                                if (Math.round(box.width) === width && Math.round(box.height) === height) {
+                                    return;
+                                }
+
+                                width = Math.round(box.width);
+                                height = Math.round(box.height);
+                                window.dispatchEvent(new Event('resize'));
+                            }).observe(terminal);
+                        };
+
+                        watch();
+                        document.addEventListener('livewire:navigated', watch);
+                    })();
+                </script>
+                HTML),
             scopes: Console::class,
         );
     }
