@@ -11,6 +11,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Marschux\ServerNavigation\Navigation\NavigationUrl;
 use Throwable;
@@ -42,12 +43,10 @@ class NavigationTab
                     ->compact()
                     ->schema([
                         Hidden::make('slug'),
+                        // the divider is only a line; inline styles, the panel's css has no classes of ours
                         Text::make(fn (Get $get) => $get('slug') === self::DIVIDER
-                            ? trans('server-navigation::navigation.more')
-                            : (static::entries()[$get('slug')] ?? $get('slug')))
-                            ->badge(fn (Get $get) => $get('slug') === self::DIVIDER)
-                            ->color(fn (Get $get) => $get('slug') === self::DIVIDER ? 'gray' : null)
-                            ->icon(fn (Get $get) => $get('slug') === self::DIVIDER ? 'tabler-chevron-down' : null),
+                            ? new HtmlString('<div style="border-top: 2px solid currentColor; opacity: .5; width: 100%"></div>')
+                            : (static::entries()[$get('slug')] ?? $get('slug'))),
                     ])
                     ->addable(false)
                     ->deletable(false)
