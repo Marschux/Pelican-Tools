@@ -24,6 +24,7 @@ readonly class QueryResult
         public ?bool $passworded = null,
         public ?bool $secure = null,
         public ?string $icon = null,
+        public ?string $world = null,
         public ?string $seed = null,
         public ?string $password = null,
         public ?int $reservedSlots = null,
@@ -59,6 +60,7 @@ readonly class QueryResult
         'gameMode',
         'passworded',
         'secure',
+        'world',
         'seed',
         'whitelist',
         'password',
@@ -88,6 +90,11 @@ readonly class QueryResult
     private function with(array $overrides): self
     {
         return new self(...array_merge(get_object_vars($this), $overrides));
+    }
+
+    public function withWorld(?string $world): self
+    {
+        return $this->with(['world' => $world]);
     }
 
     public function withSeed(?string $seed): self
@@ -125,6 +132,7 @@ readonly class QueryResult
             'passworded' => $this->passworded,
             'secure' => $this->secure,
             'icon' => $this->icon,
+            'world' => $this->world,
             'seed' => $this->seed,
             'password' => $this->password,
             'reserved_slots' => $this->reservedSlots,

@@ -13,7 +13,7 @@ use Throwable;
 use xPaw\SourceQuery\SourceQuery;
 
 /**
- * Valheim: a normal A2S query plus the world seed.
+ * Valheim: a normal A2S query plus the world name and seed.
  *
  * The seed is not part of any network protocol - Valheim has no way to report it and no way to
  * set it on the command line. It only exists inside the world metadata file, so it is read
@@ -44,7 +44,10 @@ class ValheimSchema extends SourceSchema
             return null;
         }
 
-        return $result->withSeed($this->seed($server));
+        // the world name is only the egg's WORLD variable - A2S does not report it either
+        $world = $server->variables()->where('env_variable', 'WORLD')->first()?->server_value ?: null;
+
+        return $result->withWorld($world)->withSeed($world ? $this->seed($server, $world) : null);
     }
 
     /**
@@ -54,7 +57,7 @@ class ValheimSchema extends SourceSchema
      */
     public function supportedFields(): array
     {
-        return ['hostname', 'players', 'seed', 'password'];
+        return ['hostname', 'players', 'world', 'seed', 'password'];
     }
 
     /**
@@ -80,14 +83,8 @@ class ValheimSchema extends SourceSchema
         );
     }
 
-    private function seed(Server $server): ?string
+    private function seed(Server $server, string $world): ?string
     {
-        $world = $server->variables()->where('env_variable', 'WORLD')->first()?->server_value;
-
-        if (!$world) {
-            return null;
-        }
-
         try {
             $repository = app(DaemonFileRepository::class)->setServer($server);
 

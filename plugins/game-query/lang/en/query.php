@@ -37,6 +37,7 @@ return [
         'whitelist' => 'Whitelist',
         'password' => 'Password',
         'secure' => 'VAC',
+        'world' => 'World',
         'seed' => 'World Seed',
         'icon' => 'Server Icon',
     ],

@@ -44,7 +44,7 @@ something else sets them in the panel's `.env` and runs `optimize:clear`:
 | `source` | CS2, CS:GO, CS:S, TF2, Garry's Mod, L4D 1/2, Rust, Arma 3, Conan Exiles, Enshrouded, The Forest, Sons of the Forest, Return to Moria |
 | `goldsrc` | CS 1.6, Condition Zero, Half-Life Deathmatch |
 | `minecraft_java` | Minecraft (query, falling back to ping) |
-| `valheim` | Valheim - the A2S query plus the world seed |
+| `valheim` | Valheim - the A2S query plus the world name and seed |
 
 Which fields are offered for a query depend on its type: each schema declares
 `supportedFields()`, and the admin's field list only shows what that protocol can actually

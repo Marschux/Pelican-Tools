@@ -146,7 +146,8 @@ $valheimFields = (new ValheimSchema())->supportedFields();
 foreach (['map', 'bots', 'version', 'secure', 'gameMode', 'os'] as $wrong) {
     assert(!in_array($wrong, $valheimFields, true), "valheim must not offer $wrong");
 }
-assert(in_array('seed', $valheimFields, true));
+assert(in_array('seed', $valheimFields, true) && in_array('world', $valheimFields, true));
+assert(!in_array('world', (new SourceSchema())->supportedFields(), true), 'only valheim knows its world name');
 
 // every field a schema claims to support must be a real QueryResult field, and every schema
 // must be resolvable through get() - otherwise the admin could offer a checkbox that always
@@ -182,6 +183,7 @@ assert($service->get('does-not-exist') === null);
 $base = new QueryResult(hostname: 'X', players: 1, maxPlayers: 2);
 $withSeed = $base->withSeed('abc');
 assert($base->seed === null && $withSeed->seed === 'abc');
+assert($withSeed->withWorld('Dedicated')->world === 'Dedicated' && $withSeed->withWorld('Dedicated')->seed === 'abc');
 
 $withPassword = $withSeed->withPassword('secret');
 assert($withSeed->password === null, 'the earlier copy must stay untouched');
