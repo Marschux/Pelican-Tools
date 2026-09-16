@@ -3,7 +3,6 @@
 return [
     'tab' => 'Sidebar',
     'entry' => 'Entry',
-    'visible' => 'Visible',
-    'hint' => 'Drag or use the arrows to order. Switched off entries go, in the same order, into the collapsed menu "More".',
+    'hint' => 'Drag or use the arrows to order. Everything above "More" shows directly in the sidebar, everything below it in the collapsed menu.',
     'more' => 'More',
 ];

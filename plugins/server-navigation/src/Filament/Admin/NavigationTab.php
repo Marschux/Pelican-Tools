@@ -8,7 +8,6 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
@@ -18,10 +17,14 @@ use Throwable;
 
 /**
  * The tab after "actions" on the admin's edit server page: the sidebar entries of this server in
- * their order, each shown directly or under "more". Saved with the page's own save button.
+ * their order, split by a divider row: above it shown directly, below it under "more". Saved with
+ * the page's own save button.
  */
 class NavigationTab
 {
+    /** The row between shown entries and those under "more" - no page has a slug like it. */
+    private const DIVIDER = '__more__';
+
     public static function make(): Tab
     {
         // labels as closures: this is built while the panel registers, before translations load
@@ -35,12 +38,15 @@ class NavigationTab
                     // one table row per entry instead of a card each
                     ->table([
                         TableColumn::make(fn () => trans('server-navigation::navigation.entry')),
-                        TableColumn::make(fn () => trans('server-navigation::navigation.visible'))->width('1%'),
                     ])
                     ->schema([
                         Hidden::make('slug'),
-                        Text::make(fn (Get $get) => static::entries()[$get('slug')] ?? $get('slug')),
-                        Toggle::make('visible')->hiddenLabel(),
+                        Text::make(fn (Get $get) => $get('slug') === self::DIVIDER
+                            ? trans('server-navigation::navigation.more')
+                            : (static::entries()[$get('slug')] ?? $get('slug')))
+                            ->badge(fn (Get $get) => $get('slug') === self::DIVIDER)
+                            ->color(fn (Get $get) => $get('slug') === self::DIVIDER ? 'gray' : null)
+                            ->icon(fn (Get $get) => $get('slug') === self::DIVIDER ? 'tabler-chevron-down' : null),
                     ])
                     ->addable(false)
                     ->deletable(false)
@@ -54,11 +60,16 @@ class NavigationTab
                     ->formatStateUsing(fn (?Server $record) => static::state($record))
                     ->saveRelationshipsUsing(function (Server $record, ?array $state) {
                         $known = static::entries();
+                        $visible = true;
                         $rows = [];
 
-                        foreach (array_values($state ?? []) as $sort => $item) {
-                            if (isset($known[$item['slug'] ?? ''])) {
-                                $rows[] = ['slug' => $item['slug'], 'visible' => (bool) ($item['visible'] ?? true), 'sort' => $sort];
+                        foreach (array_values($state ?? []) as $item) {
+                            $slug = $item['slug'] ?? '';
+
+                            if ($slug === self::DIVIDER) {
+                                $visible = false;
+                            } elseif (isset($known[$slug])) {
+                                $rows[] = ['slug' => $slug, 'visible' => $visible, 'sort' => count($rows)];
                             }
                         }
 
@@ -69,29 +80,31 @@ class NavigationTab
     }
 
     /**
-     * What the server has stored, in its order, followed by entries it has none for yet - a page a
-     * plugin added later - shown directly.
+     * The shown entries, the divider, then the entries under "more" - each part in the stored
+     * order. Entries the server has none stored for yet - a page a plugin added later - go last
+     * among the shown ones.
      *
      * Keyed by uuid like the repeater's own items: reordering merges by key, and with plain
      * 0..n keys a move appended empty rows instead.
      *
-     * @return array<string, array{slug: string, visible: bool}>
+     * @return array<string, array{slug: string}>
      */
     private static function state(?Server $record): array
     {
         $known = static::entries();
         $stored = $record?->navigationEntries()->orderBy('sort')->get()->filter(fn ($entry) => isset($known[$entry->slug])) ?? collect();
 
-        $items = $stored->map(fn ($entry) => ['slug' => $entry->slug, 'visible' => $entry->visible])->values()->all();
-
-        foreach (array_diff(array_keys($known), $stored->pluck('slug')->all()) as $slug) {
-            $items[] = ['slug' => $slug, 'visible' => true];
-        }
+        $slugs = [
+            ...$stored->where('visible', true)->pluck('slug')->all(),
+            ...array_diff(array_keys($known), $stored->pluck('slug')->all()),
+            self::DIVIDER,
+            ...$stored->where('visible', false)->pluck('slug')->all(),
+        ];
 
         $state = [];
 
-        foreach ($items as $item) {
-            $state[(string) Str::uuid()] = $item;
+        foreach ($slugs as $slug) {
+            $state[(string) Str::uuid()] = ['slug' => $slug];
         }
 
         return $state;

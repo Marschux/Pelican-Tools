@@ -3,7 +3,6 @@
 return [
     'tab' => 'Seitenleiste',
     'entry' => 'Eintrag',
-    'visible' => 'Sichtbar',
-    'hint' => 'Reihenfolge per Ziehen oder Pfeilen. Ausgeschaltete Einträge landen in derselben Reihenfolge im eingeklappten Menü „Weitere“.',
+    'hint' => 'Reihenfolge per Ziehen oder Pfeilen. Was über „Weitere“ steht, erscheint direkt in der Seitenleiste, alles darunter im eingeklappten Menü.',
     'more' => 'Weitere',
 ];
