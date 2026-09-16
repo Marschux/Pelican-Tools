@@ -15,6 +15,15 @@ class ServerInfoWidget extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
 
+    /** One of the console page's three columns, left of the console - see GameQueryPlugin::boot(). */
+    protected int|string|array $columnSpan = 1;
+
+    /** The tiles stack in that narrow column. */
+    protected function getColumns(): int|array|null
+    {
+        return 1;
+    }
+
     public static function canView(): bool
     {
         /** @var Server $server */

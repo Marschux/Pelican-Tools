@@ -6,6 +6,9 @@ use App\Enums\ConsoleWidgetPosition;
 use App\Filament\Server\Pages\Console;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
 use Marschux\GameQuery\Filament\Server\Widgets\ServerInfoWidget;
 
 /**
@@ -39,5 +42,15 @@ class GameQueryPlugin implements Plugin
         // this the widget exists but appears nowhere. AboveConsole puts it right after the
         // core overview blocks.
         Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
+
+        // The tiles take one of the page's three columns, left of the console. The console's own
+        // span is fixed to "full" in the core widget, so it is narrowed here - and only when the
+        // tiles actually render before it, an offline server keeps the full-width console.
+        // Widgets are found by their livewire snapshot, which carries the component name.
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::STYLES_AFTER,
+            fn () => new HtmlString('<style>@media (min-width: 64rem) { .fi-console-page [wire\:snapshot*="server-info-widget"] ~ [wire\:snapshot*="server-console"] { grid-column: span 2 / span 2 !important; } }</style>'),
+            scopes: Console::class,
+        );
     }
 }
