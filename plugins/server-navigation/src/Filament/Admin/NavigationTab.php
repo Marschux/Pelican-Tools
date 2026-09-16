@@ -113,7 +113,8 @@ class NavigationTab
 
     /**
      * Every page of the server panel that has a sidebar entry, core and plugins alike, as
-     * slug => label in the panel's own order. The console stays out: it is where a server opens.
+     * slug => label in the panel's own order, plus the admin link. The console stays out: it is where a
+     * server opens.
      *
      * @return array<string, string>
      */
@@ -140,6 +141,9 @@ class NavigationTab
                 $entries[$slug] ??= [999, class_basename($class)];
             }
         }
+
+        // not a page: the panel adds it for admins only, with its sort of 99
+        $entries[NavigationUrl::ADMIN] = [99, trans('server/console.open_in_admin')];
 
         uasort($entries, fn (array $a, array $b) => $a <=> $b);
 

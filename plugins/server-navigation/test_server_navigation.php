@@ -11,7 +11,8 @@ use Marschux\ServerNavigation\Navigation\NavigationUrl;
 assert(NavigationUrl::slug('https://panel.test/server/84eb5e20/backups', '84eb5e20') === 'backups');
 assert(NavigationUrl::slug('https://panel.test/server/84eb5e20/files/edit?x=1', '84eb5e20') === 'files');
 assert(NavigationUrl::slug('/server/84eb5e20', '84eb5e20') === null);
-assert(NavigationUrl::slug('https://panel.test/admin/servers/10/edit', '84eb5e20') === null);
+assert(NavigationUrl::slug('https://panel.test/admin/servers/10/edit', '84eb5e20') === NavigationUrl::ADMIN);
+assert(NavigationUrl::slug('https://panel.test/app/servers', '84eb5e20') === null);
 
 assert(NavigationUrl::firstSegment('files/{path?}') === 'files');
 assert(NavigationUrl::firstSegment('webhook') === 'webhook');

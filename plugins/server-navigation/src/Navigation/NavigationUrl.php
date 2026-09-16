@@ -4,13 +4,22 @@ namespace Marschux\ServerNavigation\Navigation;
 
 class NavigationUrl
 {
+    /** The panel's own "open in admin" link, the one entry that is not a page of the server. */
+    public const ADMIN = 'open-in-admin';
+
     /**
      * The segment right after the server in a server panel url - "/server/84eb5e20/backups/create"
-     * gives "backups". Null for anything outside the server, like the admin link.
+     * gives "backups". A link into the admin panel counts as the "open in admin" entry; anything
+     * else outside the server gives null.
      */
-    public static function slug(string $url, string $tenant): ?string
+    public static function slug(string $url, string $tenant, string $adminPath = 'admin'): ?string
     {
         $segments = explode('/', trim((string) parse_url($url, PHP_URL_PATH), '/'));
+
+        if ($segments[0] === trim($adminPath, '/')) {
+            return self::ADMIN;
+        }
+
         $index = array_search($tenant, $segments, true);
 
         return $index === false ? null : ($segments[$index + 1] ?? null);

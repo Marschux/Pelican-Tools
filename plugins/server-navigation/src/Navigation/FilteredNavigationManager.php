@@ -32,7 +32,7 @@ class FilteredNavigationManager extends NavigationManager
             return $groups;
         }
 
-        $entryOf = fn (NavigationItem $item): ?NavigationEntry => $entries->get((string) NavigationUrl::slug((string) $item->getUrl(), $server->uuid_short));
+        $entryOf = fn (NavigationItem $item): ?NavigationEntry => $entries->get((string) NavigationUrl::slug((string) $item->getUrl(), $server->uuid_short, Filament::getPanel('admin')->getPath()));
         $moved = [];
 
         // a group's items come back as a collection here, not the array getItems() promises
