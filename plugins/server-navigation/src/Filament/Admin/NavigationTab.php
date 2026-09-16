@@ -12,6 +12,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
+use Illuminate\Support\Str;
 use Marschux\ServerNavigation\Navigation\NavigationUrl;
 use Throwable;
 
@@ -71,17 +72,26 @@ class NavigationTab
      * What the server has stored, in its order, followed by entries it has none for yet - a page a
      * plugin added later - shown directly.
      *
-     * @return array<int, array{slug: string, visible: bool}>
+     * Keyed by uuid like the repeater's own items: reordering merges by key, and with plain
+     * 0..n keys a move appended empty rows instead.
+     *
+     * @return array<string, array{slug: string, visible: bool}>
      */
     private static function state(?Server $record): array
     {
         $known = static::entries();
         $stored = $record?->navigationEntries()->orderBy('sort')->get()->filter(fn ($entry) => isset($known[$entry->slug])) ?? collect();
 
-        $state = $stored->map(fn ($entry) => ['slug' => $entry->slug, 'visible' => $entry->visible])->values()->all();
+        $items = $stored->map(fn ($entry) => ['slug' => $entry->slug, 'visible' => $entry->visible])->values()->all();
 
         foreach (array_diff(array_keys($known), $stored->pluck('slug')->all()) as $slug) {
-            $state[] = ['slug' => $slug, 'visible' => true];
+            $items[] = ['slug' => $slug, 'visible' => true];
+        }
+
+        $state = [];
+
+        foreach ($items as $item) {
+            $state[(string) Str::uuid()] = $item;
         }
 
         return $state;
