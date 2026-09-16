@@ -40,8 +40,9 @@ class GameQueryPlugin implements Plugin
                 PanelsRenderHook::STYLES_AFTER,
                 fn () => new HtmlString('<style>'
                     . '.game-query-compact td { padding-block: 0 !important; }'
-                    . '.game-query-compact .fi-fo-table-repeater-actions { gap: .375rem !important; }'
-                    . '.game-query-compact .fi-fo-table-repeater-actions .fi-icon-btn { height: 1.5rem !important; width: 1.5rem !important; }'
+                    // only the height is tightened: squeezing the width made the icons overlap
+                    . '.game-query-compact .fi-fo-table-repeater-actions { display: flex !important; align-items: center; gap: .75rem !important; }'
+                    . '.game-query-compact .fi-fo-table-repeater-actions .fi-icon-btn { height: 1.5rem !important; }'
                     . '</style>'),
             );
         }
