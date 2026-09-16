@@ -33,6 +33,19 @@ class GameQueryPlugin implements Plugin
 
     public function boot(Panel $panel): void
     {
+        if ($panel->getId() === 'admin') {
+            // the field list in the game query form: filament's compact table rows are still as
+            // tall as their move buttons, so cells and buttons are tightened here
+            FilamentView::registerRenderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                fn () => new HtmlString('<style>'
+                    . '.game-query-compact td { padding-block: 0 !important; }'
+                    . '.game-query-compact .fi-fo-table-repeater-actions { gap: 0 !important; }'
+                    . '.game-query-compact .fi-fo-table-repeater-actions .fi-icon-btn { height: 1.5rem !important; width: 1.5rem !important; }'
+                    . '</style>'),
+            );
+        }
+
         if ($panel->getId() !== 'server') {
             return;
         }

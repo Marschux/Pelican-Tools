@@ -308,11 +308,14 @@ class GameQueryResource extends Resource
                         TableColumn::make(trans('game-query::query.field_label')),
                     ])
                     ->compact()
+                    // tighter rows, see GameQueryPlugin::boot()
+                    ->extraAttributes(['class' => 'game-query-compact'])
                     ->schema([
                         Hidden::make('field'),
                         Text::make(fn (Get $get) => $get('field') === self::HIDDEN_DIVIDER
-                            // only a line; inline styles, the panel's css has no classes of ours
-                            ? new HtmlString('<div style="border-top: 2px solid currentColor; opacity: .5; width: 100%"></div>')
+                            // only a line; inline styles, the panel's css has no classes of ours. The
+                            // text sits in an inline box, so the line needs a width of its own.
+                            ? new HtmlString('<span style="display: block; width: 20rem; max-width: 100%; border-top: 2px solid currentColor; opacity: .5"></span>')
                             : trans('game-query::query.field.' . $get('field'))),
                     ])
                     ->addable(false)
