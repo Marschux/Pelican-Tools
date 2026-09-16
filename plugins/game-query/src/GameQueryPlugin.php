@@ -43,13 +43,17 @@ class GameQueryPlugin implements Plugin
         // core overview blocks.
         Console::registerCustomWidgets(ConsoleWidgetPosition::AboveConsole, [ServerInfoWidget::class]);
 
-        // The tiles take one of the page's three columns, left of the console. The console's own
-        // span is fixed to "full" in the core widget, so it is narrowed here - and only when the
-        // tiles actually render before it, an offline server keeps the full-width console.
-        // Widgets are found by their livewire snapshot, which carries the component name.
+        // Every tile widget - the core overview and ours - stacks in the first of the page's three
+        // columns, the console takes the other two beside them, over the two rows the tile widgets
+        // fill. The core widgets fix their own spans, so this is css: the console is found by its
+        // #terminal, the tiles by filament's stats widget class. Below lg it all stacks as before.
         FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
-            fn () => new HtmlString('<style>@media (min-width: 64rem) { .fi-console-page [wire\:snapshot*="server-info-widget"] ~ [wire\:snapshot*="server-console"] { grid-column: span 2 / span 2 !important; } }</style>'),
+            fn () => new HtmlString('<style>@media (min-width: 64rem) {'
+                . '.fi-console-page .fi-wi > .fi-wi-stats-overview { grid-column: 1 / 2 !important; }'
+                . '.fi-console-page .fi-wi > .fi-wi-stats-overview .fi-grid { grid-template-columns: minmax(0, 1fr) !important; }'
+                . '.fi-console-page .fi-wi > :has(#terminal) { grid-column: 2 / -1 !important; grid-row: 1 / span 2 !important; }'
+                . '}</style>'),
             scopes: Console::class,
         );
     }
