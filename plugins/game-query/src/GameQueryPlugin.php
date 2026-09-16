@@ -40,7 +40,7 @@ class GameQueryPlugin implements Plugin
                 PanelsRenderHook::STYLES_AFTER,
                 fn () => new HtmlString('<style>'
                     . '.game-query-compact td { padding-block: 0 !important; }'
-                    . '.game-query-compact .fi-fo-table-repeater-actions { gap: 0 !important; }'
+                    . '.game-query-compact .fi-fo-table-repeater-actions { gap: .375rem !important; }'
                     . '.game-query-compact .fi-fo-table-repeater-actions .fi-icon-btn { height: 1.5rem !important; width: 1.5rem !important; }'
                     . '</style>'),
             );
