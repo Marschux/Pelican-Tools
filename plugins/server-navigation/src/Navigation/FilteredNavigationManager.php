@@ -31,13 +31,12 @@ class FilteredNavigationManager extends NavigationManager
             return $groups;
         }
 
-        return array_filter(array_map(function (NavigationGroup $group) use ($hidden, $server) {
-            $items = array_filter(
-                $group->getItems(),
-                fn (NavigationItem $item) => !in_array(NavigationUrl::slug((string) $item->getUrl(), $server->uuid_short), $hidden, true),
-            );
-
-            return $items === [] ? null : $group->items($items);
-        }, $groups));
+        // a group's items come back as a collection here, not the array getItems() promises
+        return collect($groups)
+            ->map(fn (NavigationGroup $group) => $group->items(collect($group->getItems())
+                ->reject(fn (NavigationItem $item) => in_array(NavigationUrl::slug((string) $item->getUrl(), $server->uuid_short), $hidden, true))
+                ->all()))
+            ->filter(fn (NavigationGroup $group) => $group->getItems() !== [])
+            ->all();
     }
 }
