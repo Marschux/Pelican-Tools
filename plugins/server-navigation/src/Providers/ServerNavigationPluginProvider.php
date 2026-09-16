@@ -14,7 +14,6 @@ class ServerNavigationPluginProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(plugin_path('server-navigation', 'database/migrations'));
         $this->loadTranslationsFrom(plugin_path('server-navigation', 'lang'), 'server-navigation');
-        $this->loadViewsFrom(plugin_path('server-navigation', 'resources/views'), 'server-navigation');
 
         // bound in boot, not register: Filament binds its own manager while registering, and the
         // later binding wins - done too early, Filament's would replace this one again

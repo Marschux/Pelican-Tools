@@ -2,12 +2,11 @@
 
 namespace Marschux\ServerNavigation;
 
-use App\Filament\Admin\Resources\Servers\RelationManagers\AllocationsRelationManager;
-use App\Filament\Admin\Resources\Servers\RelationManagers\DatabasesRelationManager;
-use App\Filament\Admin\Resources\Servers\ServerResource;
+use App\Enums\TabPosition;
+use App\Filament\Admin\Resources\Servers\Pages\EditServer;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Marschux\ServerNavigation\Filament\Admin\RelationManagers\NavigationRelationManager;
+use Marschux\ServerNavigation\Filament\Admin\NavigationTab;
 
 class ServerNavigationPlugin implements Plugin
 {
@@ -19,13 +18,7 @@ class ServerNavigationPlugin implements Plugin
     public function register(Panel $panel): void
     {
         if ($panel->getId() === 'admin') {
-            // custom relations come before the core ones - naming those first keeps ours third,
-            // getRelations() drops the duplicates
-            ServerResource::registerCustomRelations(
-                AllocationsRelationManager::class,
-                DatabasesRelationManager::class,
-                NavigationRelationManager::class,
-            );
+            EditServer::registerCustomTabs(TabPosition::After, NavigationTab::make());
         }
     }
 
