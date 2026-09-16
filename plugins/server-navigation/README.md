@@ -1,7 +1,7 @@
 # Server Navigation
 
 Hides sidebar entries of the server panel per server. Admin panel → edit a server → tab
-**Sidebar** after the actions tab, saved with the page: unchecked entries move into a collapsed "More" menu at the end of the sidebar.
+**Sidebar** after the actions tab, saved with the page: order the entries and switch off those that belong in the collapsed "More" menu at the end of the sidebar.
 
 Only the sidebar changes - permissions are untouched.
 

@@ -2,7 +2,7 @@
 
 return [
     'tab' => 'Seitenleiste',
-    'visible' => 'Sichtbare Einträge',
-    'visible_hint' => 'Abgehakte Einträge erscheinen direkt in der Seitenleiste dieses Servers, die übrigen im eingeklappten Menü „Weitere“.',
+    'visible' => 'In der Seitenleiste',
+    'hint' => 'Reihenfolge per Ziehen oder Pfeilen. Ausgeschaltete Einträge landen in derselben Reihenfolge im eingeklappten Menü „Weitere“.',
     'more' => 'Weitere',
 ];

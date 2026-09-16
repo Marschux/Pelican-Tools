@@ -5,14 +5,16 @@ namespace Marschux\ServerNavigation\Filament\Admin;
 use App\Filament\Server\Pages\Console;
 use App\Models\Server;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Tabs\Tab;
 use Marschux\ServerNavigation\Navigation\NavigationUrl;
 use Throwable;
 
 /**
- * The tab after "actions" on the admin's edit server page: which sidebar entries this server
- * shows directly. Saved with the page's own save button.
+ * The tab after "actions" on the admin's edit server page: the sidebar entries of this server in
+ * their order, each shown directly or under "more". Saved with the page's own save button.
  */
 class NavigationTab
 {
@@ -23,32 +25,63 @@ class NavigationTab
             ->label(fn () => trans('server-navigation::navigation.tab'))
             ->icon('tabler-layout-sidebar')
             ->schema([
-                CheckboxList::make('server_navigation_visible')
-                    ->label(fn () => trans('server-navigation::navigation.visible'))
-                    ->helperText(fn () => trans('server-navigation::navigation.visible_hint'))
-                    ->options(fn () => static::entries())
-                    ->bulkToggleable()
-                    ->columns(3)
+                Repeater::make('server_navigation')
+                    ->hiddenLabel()
+                    ->helperText(fn () => trans('server-navigation::navigation.hint'))
+                    ->schema([
+                        Hidden::make('slug'),
+                        Toggle::make('visible')->label(fn () => trans('server-navigation::navigation.visible')),
+                    ])
+                    ->itemLabel(fn (array $state) => static::entries()[$state['slug'] ?? ''] ?? ($state['slug'] ?? null))
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable()
+                    ->reorderableWithButtons()
                     ->columnSpanFull()
                     // not a column of the server - kept out of its update, stored as rows instead
                     ->dehydrated(false)
-                    ->afterStateHydrated(function (CheckboxList $component, ?Server $record) {
-                        $hidden = $record?->hiddenNavigationItems()->pluck('slug')->all() ?? [];
-
-                        $component->state(array_values(array_diff(array_keys(static::entries()), $hidden)));
-                    })
+                    // formatStateUsing, not afterStateHydrated: that would replace the repeater's own
+                    // hook which gives every item its key
+                    ->formatStateUsing(fn (?Server $record) => static::state($record))
                     ->saveRelationshipsUsing(function (Server $record, ?array $state) {
-                        $hidden = array_diff(array_keys(static::entries()), $state ?? []);
+                        $known = static::entries();
+                        $rows = [];
 
-                        $record->hiddenNavigationItems()->delete();
-                        $record->hiddenNavigationItems()->createMany(array_map(fn (string $slug) => ['slug' => $slug], $hidden));
+                        foreach (array_values($state ?? []) as $sort => $item) {
+                            if (isset($known[$item['slug'] ?? ''])) {
+                                $rows[] = ['slug' => $item['slug'], 'visible' => (bool) ($item['visible'] ?? true), 'sort' => $sort];
+                            }
+                        }
+
+                        $record->navigationEntries()->delete();
+                        $record->navigationEntries()->createMany($rows);
                     }),
             ]);
     }
 
     /**
+     * What the server has stored, in its order, followed by entries it has none for yet - a page a
+     * plugin added later - shown directly.
+     *
+     * @return array<int, array{slug: string, visible: bool}>
+     */
+    private static function state(?Server $record): array
+    {
+        $known = static::entries();
+        $stored = $record?->navigationEntries()->orderBy('sort')->get()->filter(fn ($entry) => isset($known[$entry->slug])) ?? collect();
+
+        $state = $stored->map(fn ($entry) => ['slug' => $entry->slug, 'visible' => $entry->visible])->values()->all();
+
+        foreach (array_diff(array_keys($known), $stored->pluck('slug')->all()) as $slug) {
+            $state[] = ['slug' => $slug, 'visible' => true];
+        }
+
+        return $state;
+    }
+
+    /**
      * Every page of the server panel that has a sidebar entry, core and plugins alike, as
-     * slug => label. The console stays out: it is where a server opens.
+     * slug => label in the panel's own order. The console stays out: it is where a server opens.
      *
      * @return array<string, string>
      */
@@ -62,20 +95,22 @@ class NavigationTab
                 continue;
             }
 
+            $slug = NavigationUrl::firstSegment($class::getSlug($panel));
+
             try {
                 if (!$class::shouldRegisterNavigation()) {
                     continue;
                 }
 
-                $entries[NavigationUrl::firstSegment($class::getSlug($panel))] = $class::getNavigationLabel();
+                $entries[$slug] = [$class::getNavigationSort() ?? 999, $class::getNavigationLabel()];
             } catch (Throwable) {
                 // some entries ask for the current server, which the admin panel has none of
-                $entries[NavigationUrl::firstSegment($class::getSlug($panel))] ??= class_basename($class);
+                $entries[$slug] ??= [999, class_basename($class)];
             }
         }
 
-        asort($entries);
+        uasort($entries, fn (array $a, array $b) => $a <=> $b);
 
-        return $entries;
+        return array_map(fn (array $entry) => $entry[1], $entries);
     }
 }

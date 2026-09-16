@@ -5,7 +5,7 @@ namespace Marschux\ServerNavigation\Providers;
 use App\Models\Server;
 use Filament\Navigation\NavigationManager;
 use Illuminate\Support\ServiceProvider;
-use Marschux\ServerNavigation\Models\HiddenNavigationItem;
+use Marschux\ServerNavigation\Models\NavigationEntry;
 use Marschux\ServerNavigation\Navigation\FilteredNavigationManager;
 
 class ServerNavigationPluginProvider extends ServiceProvider
@@ -19,6 +19,6 @@ class ServerNavigationPluginProvider extends ServiceProvider
         // later binding wins - done too early, Filament's would replace this one again
         $this->app->scoped(NavigationManager::class, fn () => new FilteredNavigationManager());
 
-        Server::resolveRelationUsing('hiddenNavigationItems', fn (Server $server) => $server->hasMany(HiddenNavigationItem::class));
+        Server::resolveRelationUsing('navigationEntries', fn (Server $server) => $server->hasMany(NavigationEntry::class));
     }
 }
