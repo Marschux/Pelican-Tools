@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'list' => 'Zugriffsliste|Zugriffslisten',
-    'no_lists' => 'Keine Zugriffslisten',
+    'list' => 'Access List|Access Lists',
+    'no_lists' => 'Keine Access Lists',
 
     'fields' => [
         'preset' => 'Vorlage',
@@ -34,7 +34,7 @@ return [
     ],
 
     'page' => [
-        'navigation' => 'Zugriffslisten',
+        'navigation' => 'Access Lists',
         'entries' => 'Einträge',
         'entry' => 'Eintrag',
         'add' => 'Eintrag hinzufügen',
@@ -53,7 +53,7 @@ return [
         'invalid_json' => 'Der eingegebene Text ist kein gültiges JSON',
         'unknown_player' => 'Spieler bei Mojang nicht gefunden: :name',
         'mojang_unreachable' => 'Mojang ist nicht erreichbar',
-        'no_lists' => 'Für dieses Egg ist keine Zugriffsliste eingerichtet',
+        'no_lists' => 'Für dieses Egg ist keine Access List eingerichtet',
         'missing_file' => 'Die Datei gibt es noch nicht - beim Speichern wird sie angelegt',
     ],
 ];
