@@ -39,6 +39,7 @@ class NavigationTab
                     ->table([
                         TableColumn::make(fn () => trans('server-navigation::navigation.entry')),
                     ])
+                    ->compact()
                     ->schema([
                         Hidden::make('slug'),
                         Text::make(fn (Get $get) => $get('slug') === self::DIVIDER
