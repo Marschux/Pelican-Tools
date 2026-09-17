@@ -3,18 +3,21 @@
 namespace Marschux\ServerResources\Filament\Admin\Widgets;
 
 use Carbon\CarbonInterface;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Widget;
 use Marschux\ServerResources\Host\HostStats;
+use Marschux\ServerResources\Resources;
 
 /**
- * The machine the panel itself runs on - not a node. Read from /proc, so it only shows on linux.
+ * The machine the panel itself runs on - not a node - as a card like the node cards. Read from
+ * /proc, so it only shows on linux; in an LXC container those are the container's values.
  */
-class PanelHostWidget extends StatsOverviewWidget
+class PanelHostWidget extends Widget
 {
     protected static ?int $sort = -2;
 
-    protected ?string $pollingInterval = '10s';
+    protected string $view = 'server-resources::widgets.panel-host';
+
+    protected int|string|array $columnSpan = 'full';
 
     /** The previous /proc/stat reading, shared by every viewer - see cpu(). */
     private const CPU_CACHE_KEY = 'server-resources.host.cpu_times';
@@ -24,31 +27,36 @@ class PanelHostWidget extends StatsOverviewWidget
         return is_readable('/proc/meminfo') && (bool) user()?->isRootAdmin();
     }
 
-    protected function getHeading(): ?string
-    {
-        return trans('server-resources::resources.host.heading');
-    }
-
-    protected function getStats(): array
+    /** @return array<string, mixed> */
+    protected function getViewData(): array
     {
         $stat = self::read('/proc/stat');
         $memory = HostStats::memory(self::read('/proc/meminfo'));
         $load = HostStats::load(self::read('/proc/loadavg'));
         $uptime = HostStats::uptime(self::read('/proc/uptime'));
 
-        $diskTotal = @disk_total_space(base_path()) ?: 0;
-        $diskUsed = $diskTotal - (@disk_free_space(base_path()) ?: 0);
+        $diskTotal = (int) (@disk_total_space(base_path()) ?: 0);
+        $diskUsed = $diskTotal - (int) (@disk_free_space(base_path()) ?: 0);
 
         $cpu = $this->cpu($stat);
 
+        $facts = [Resources::fact('tabler-cpu-2', trans('server-resources::resources.host.cores', ['count' => HostStats::cpuCount($stat)]))];
+
+        if ($load) {
+            $facts[] = Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn (float $value) => format_number($value, 2), $load)));
+        }
+
+        if ($uptime !== null) {
+            $facts[] = Resources::fact('tabler-clock', trans('server-resources::resources.host.uptime') . ' ' . now()->subSeconds($uptime)->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, parts: 2));
+        }
+
         return [
-            Stat::make(trans('server-resources::resources.cpu'), $cpu === null ? '-' : format_number($cpu, 1) . ' %')
-                ->description(trans('server-resources::resources.host.cores', ['count' => HostStats::cpuCount($stat)])),
-            Stat::make(trans('server-resources::resources.memory'), $memory ? convert_bytes_to_readable($memory['used']) . ' / ' . convert_bytes_to_readable($memory['total']) : '-'),
-            Stat::make(trans('server-resources::resources.disk'), $diskTotal ? convert_bytes_to_readable((int) $diskUsed) . ' / ' . convert_bytes_to_readable((int) $diskTotal) : '-'),
-            Stat::make(trans('server-resources::resources.host.load'), $load ? implode(' · ', array_map(fn (float $value) => format_number($value, 2), $load)) : '-')
-                ->description(trans('server-resources::resources.host.load_hint')),
-            Stat::make(trans('server-resources::resources.host.uptime'), $uptime === null ? '-' : now()->subSeconds($uptime)->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, parts: 2)),
+            'bars' => [
+                Resources::bar('cpu', $cpu ?? 0, 100, $cpu === null ? '-' : format_number($cpu, 1) . ' %'),
+                Resources::bytesBar('memory', $memory['used'] ?? 0, $memory['total'] ?? 0),
+                Resources::bytesBar('disk', $diskUsed, $diskTotal),
+            ],
+            'facts' => $facts,
         ];
     }
 

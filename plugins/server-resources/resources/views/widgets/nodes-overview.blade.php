@@ -7,29 +7,20 @@
         @forelse ($nodes as $node)
             <x-filament::section>
                 <x-slot name="heading">
+                    <x-filament::icon icon="tabler-server-2" style="width: 1.25rem; height: 1.25rem; display: inline-block; vertical-align: -.25rem; margin-right: .375rem;" />
                     <a href="{{ $node['url'] }}" style="font-weight: 600;">{{ $node['name'] }}</a>
                     <span style="opacity: .6; font-weight: 400; margin-left: .5rem;">{{ $node['fqdn'] }}</span>
                 </x-slot>
 
                 @if ($node['state'])
-                    <x-filament::badge color="danger" style="margin-bottom: 1rem;">
+                    <x-filament::badge color="danger" icon="tabler-alert-triangle">
                         {{ trans('server-resources::resources.node.' . $node['state']) }}
                     </x-filament::badge>
                 @else
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
-                        @foreach ($node['bars'] as $bar)
-                            <div>
-                                <div style="display: flex; justify-content: space-between; gap: .5rem; font-size: .875rem; margin-bottom: .25rem;">
-                                    <span style="opacity: .7;">{{ $bar['label'] }}</span>
-                                    <span style="font-weight: 600;">{{ $bar['text'] }}</span>
-                                </div>
-                                <div style="height: .5rem; border-radius: 9999px; background: rgba(127, 127, 127, .25); overflow: hidden;">
-                                    <div style="height: 100%; width: {{ $bar['percent'] }}%; border-radius: 9999px; background: {{ $bar['percent'] >= 90 ? 'var(--danger-500, #ef4444)' : ($bar['percent'] >= 70 ? 'var(--warning-500, #f59e0b)' : 'var(--primary-500, #3b82f6)') }};"></div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
+                    @include('server-resources::partials.bars', ['bars' => $node['bars'], 'facts' => $node['facts']])
                 @endif
+
+                <div style="margin-top: 1.25rem;"></div>
 
                 @if ($node['servers'] === [])
                     <div style="opacity: .6; font-size: .875rem;">{{ trans('server-resources::resources.node.no_servers') }}</div>
@@ -39,13 +30,13 @@
                             <thead>
                                 <tr style="text-align: left; opacity: .7;">
                                     <th style="padding: .5rem; width: 2.5rem;"></th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.server.name') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.server.egg') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.server.status') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.cpu') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.memory') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.disk') }}</th>
-                                    <th style="padding: .5rem;">{{ trans('server-resources::resources.server.players') }}</th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-server" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.name') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-egg" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.egg') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-heart-rate-monitor" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.status') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-cpu" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.cpu') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-device-desktop-analytics" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.memory') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-device-sd-card" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.disk') }}</span></th>
+                                    <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-users" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.players') }}</span></th>
                                 </tr>
                             </thead>
                             <tbody>

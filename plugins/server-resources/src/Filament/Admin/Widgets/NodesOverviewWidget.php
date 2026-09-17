@@ -9,6 +9,7 @@ use App\Models\Node;
 use App\Models\Server;
 use Filament\Widgets\Widget;
 use Marschux\GameQuery\Models\GameQuery;
+use Marschux\ServerResources\Resources;
 use Throwable;
 
 /**
@@ -58,10 +59,16 @@ class NodesOverviewWidget extends Widget
             'url' => NodeResource::getUrl('edit', ['record' => $node]),
             'state' => $maintenance ? 'maintenance' : ($reachable ? null : 'unreachable'),
             'bars' => $stats === null ? [] : [
-                $this->bar('cpu', (float) $stats['cpu_percent'], 100, format_number($stats['cpu_percent'], 1) . ' %' . ($cores ? ' · ' . trans('server-resources::resources.host.cores', ['count' => $cores]) : '')),
-                $this->bar('memory', $stats['memory_used'], $stats['memory_total'], convert_bytes_to_readable($stats['memory_used']) . ' / ' . convert_bytes_to_readable($stats['memory_total'])),
-                $this->bar('disk', $stats['disk_used'], $stats['disk_total'], convert_bytes_to_readable($stats['disk_used']) . ' / ' . convert_bytes_to_readable($stats['disk_total'])),
+                Resources::bar('cpu', (float) $stats['cpu_percent'], 100, format_number($stats['cpu_percent'], 1) . ' %'),
+                Resources::bytesBar('memory', (int) $stats['memory_used'], (int) $stats['memory_total']),
+                Resources::bytesBar('disk', (int) $stats['disk_used'], (int) $stats['disk_total']),
             ],
+            'facts' => $stats === null ? [] : array_values(array_filter([
+                // what wings' go runtime sees, not what the node's container is configured with
+                $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => $cores])) : null,
+                Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
+                Resources::fact('tabler-server', trans('server-resources::resources.node.servers', ['count' => $node->servers->count()])),
+            ])),
             'servers' => $node->servers->map(fn (Server $server) => $this->server($server, $reachable))->all(),
         ];
     }
@@ -129,15 +136,5 @@ class NodesOverviewWidget extends Widget
         return $result->bots
             ? trans('game-query::query.players_with_bots', ['players' => $result->humanPlayers(), 'max' => $result->maxPlayers, 'bots' => $result->bots])
             : $result->players . ' / ' . $result->maxPlayers;
-    }
-
-    /** @return array{label: string, text: string, percent: float} */
-    private function bar(string $key, float|int $used, float|int $total, string $text): array
-    {
-        return [
-            'label' => trans("server-resources::resources.$key"),
-            'text' => $text,
-            'percent' => $total > 0 ? round(min(100, $used / $total * 100), 1) : 0,
-        ];
     }
 }

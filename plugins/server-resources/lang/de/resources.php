@@ -18,6 +18,8 @@ return [
         'unreachable' => 'Node nicht erreichbar',
         'no_servers' => 'Keine Server auf diesem Node',
         'none' => 'Keine Nodes eingerichtet',
+        'cpus' => ':count CPUs laut Wings',
+        'servers' => ':count Server',
     ],
 
     'server' => [
