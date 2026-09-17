@@ -3,8 +3,10 @@
 namespace Marschux\ServerResources\Filament\Admin\Widgets;
 
 use App\Enums\ServerResourceType;
+use App\Filament\Admin\Resources\Eggs\EggResource;
 use App\Filament\Admin\Resources\Nodes\NodeResource;
 use App\Filament\Admin\Resources\Servers\ServerResource;
+use App\Filament\Server\Pages\Console;
 use App\Models\Node;
 use App\Models\Server;
 use Filament\Widgets\Widget;
@@ -82,6 +84,8 @@ class NodesOverviewWidget extends Widget
             'url' => ServerResource::getUrl('edit', ['record' => $server]),
             'icon' => $server->icon ?: $server->egg?->icon,
             'egg' => $server->egg?->name,
+            'egg_url' => $server->egg ? EggResource::getUrl('edit', ['record' => $server->egg]) : null,
+            'console_url' => Console::getUrl(panel: 'server', tenant: $server),
             'status' => null,
             'color' => 'gray',
             'cpu' => null,

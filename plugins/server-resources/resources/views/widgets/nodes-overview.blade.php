@@ -52,10 +52,16 @@
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">
                                             <a href="{{ $server['url'] }}" style="font-weight: 600;">{{ $server['name'] }}</a>
                                         </td>
-                                        <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['egg'] ?? '-' }}</td>
+                                        <td style="padding: .375rem .5rem; white-space: nowrap;">
+                                            @if ($server['egg_url'])
+                                                <a href="{{ $server['egg_url'] }}">{{ $server['egg'] }}</a>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td style="padding: .375rem .5rem;">
                                             @if ($server['status'])
-                                                <x-filament::badge :color="$server['color']">{{ $server['status'] }}</x-filament::badge>
+                                                <a href="{{ $server['console_url'] }}"><x-filament::badge :color="$server['color']">{{ $server['status'] }}</x-filament::badge></a>
                                             @else
                                                 -
                                             @endif
