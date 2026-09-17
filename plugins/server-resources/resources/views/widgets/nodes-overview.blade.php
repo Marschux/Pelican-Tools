@@ -66,7 +66,9 @@
                                         </td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">
                                             @if ($server['port'])
-                                                <a href="{{ $server['port_url'] }}"><x-filament::badge color="warning">{{ $server['port'] }}</x-filament::badge></a>
+                                                {{-- a plain span, not x-filament::badge: only the panel's registered colors work there, and
+                                                 purple is not one of them --}}
+                                            <a href="{{ $server['port_url'] }}"><span style="display: inline-flex; align-items: center; border-radius: .375rem; padding: .125rem .5rem; font-size: .75rem; font-weight: 500; line-height: 1.25rem; color: rgb(192 132 252); background-color: rgb(168 85 247 / .15); box-shadow: inset 0 0 0 1px rgb(168 85 247 / .3);">{{ $server['port'] }}</span></a>
                                             @else
                                                 -
                                             @endif
