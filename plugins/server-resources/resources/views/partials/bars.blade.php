@@ -4,6 +4,8 @@
 
     $bars  - [['icon', 'label', 'text', 'percent']]
     $facts - [['icon', 'text']]
+    $toggle - optional server count: puts the collapse button for the server list at the right end
+              of the facts line; needs the caller's alpine "open"
 --}}
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem;">
     @foreach ($bars as $bar)
@@ -22,13 +24,22 @@
     @endforeach
 </div>
 
-@if ($facts !== [])
-    <div style="display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-top: .875rem; font-size: .8125rem; opacity: .7;">
-        @foreach ($facts as $fact)
-            <span style="display: flex; align-items: center; gap: .375rem;">
-                <x-filament::icon :icon="$fact['icon']" style="width: 1rem; height: 1rem;" />
-                {{ $fact['text'] }}
-            </span>
-        @endforeach
+@if ($facts !== [] || isset($toggle))
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; margin-top: .875rem; font-size: .8125rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; opacity: .7;">
+            @foreach ($facts as $fact)
+                <span style="display: flex; align-items: center; gap: .375rem;">
+                    <x-filament::icon :icon="$fact['icon']" style="width: 1rem; height: 1rem;" />
+                    {{ $fact['text'] }}
+                </span>
+            @endforeach
+        </div>
+
+        @isset($toggle)
+            <button type="button" x-on:click="open = !open" style="display: flex; align-items: center; gap: .375rem; font-weight: 600;">
+                {{ trans('server-resources::resources.node.servers', ['count' => $toggle]) }}
+                <x-filament::icon icon="tabler-chevron-down" x-bind:style="open ? 'transition: transform .15s' : 'transform: rotate(90deg); transition: transform .15s'" style="width: 1rem; height: 1rem;" />
+            </button>
+        @endisset
     </div>
 @endif

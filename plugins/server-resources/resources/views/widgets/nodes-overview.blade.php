@@ -12,27 +12,21 @@
                     <span style="opacity: .6; font-weight: 400; margin-left: .5rem;">{{ $node['fqdn'] }}</span>
                 </x-slot>
 
+                {{-- open/closed of the server list lives in alpine and is kept per node across reloads;
+                     wire:ignore.self keeps the 15s poll from resetting it --}}
+                <div x-data="{ open: $persist(true).as('server-resources.node.{{ $node['id'] }}.open') }" wire:ignore.self>
                 @if ($node['state'])
                     <x-filament::badge color="danger" icon="tabler-alert-triangle">
                         {{ trans('server-resources::resources.node.' . $node['state']) }}
                     </x-filament::badge>
-                @else
-                    @include('server-resources::partials.bars', ['bars' => $node['bars'], 'facts' => $node['facts']])
                 @endif
 
-                <div style="margin-top: 1.25rem;"></div>
+                @include('server-resources::partials.bars', ['bars' => $node['bars'], 'facts' => $node['facts']] + ($node['servers'] === [] ? [] : ['toggle' => count($node['servers'])]))
 
                 @if ($node['servers'] === [])
-                    <div style="opacity: .6; font-size: .875rem;">{{ trans('server-resources::resources.node.no_servers') }}</div>
+                    <div style="opacity: .6; font-size: .875rem; margin-top: 1.25rem;">{{ trans('server-resources::resources.node.no_servers') }}</div>
                 @else
-                    {{-- open/closed lives in alpine and is kept per node across reloads; wire:ignore.self
-                         keeps the 15s poll from resetting it --}}
-                    <div x-data="{ open: $persist(true).as('server-resources.node.{{ $node['id'] }}.open') }" wire:ignore.self>
-                    <button type="button" x-on:click="open = !open" style="display: flex; align-items: center; gap: .375rem; font-size: .875rem; font-weight: 600; margin-bottom: .5rem;">
-                        <x-filament::icon icon="tabler-chevron-down" x-bind:style="open ? 'transition: transform .15s' : 'transform: rotate(-90deg); transition: transform .15s'" style="width: 1rem; height: 1rem;" />
-                        {{ trans('server-resources::resources.node.servers', ['count' => count($node['servers'])]) }}
-                    </button>
-                    <div x-show="open" style="overflow-x: auto;">
+                    <div x-show="open" style="overflow-x: auto; margin-top: 1rem;">
                         <table style="width: 100%; border-collapse: collapse; font-size: .875rem;">
                             <thead>
                                 <tr style="text-align: left; opacity: .7;">
@@ -105,8 +99,8 @@
                             </tbody>
                         </table>
                     </div>
-                    </div>
                 @endif
+                </div>
             </x-filament::section>
         @empty
             <x-filament::section>{{ trans('server-resources::resources.node.none') }}</x-filament::section>
