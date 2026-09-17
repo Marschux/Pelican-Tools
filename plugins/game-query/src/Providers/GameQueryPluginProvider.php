@@ -75,13 +75,23 @@ class GameQueryPluginProvider extends ServiceProvider
             // belongs next to the server it counts
             $columns = [];
             $inserted = false;
+            $growNext = false;
 
             foreach ($table->getColumns() as $key => $column) {
+                // the name column eats all free width, which is the gap the player count would
+                // otherwise sit behind; the slack goes to the column after the count instead
+                if ($growNext) {
+                    $growNext = false;
+                    $this->setGrow($column, true);
+                }
+
                 $columns[] = $column;
 
                 if (!$inserted && ($key === 'name' || str_ends_with((string) $key, '.name'))) {
                     $inserted = true;
-                    $columns[] = ServerPlayersColumn::make();
+                    $growNext = true;
+                    $this->setGrow($column, false);
+                    $columns[] = ServerPlayersColumn::make()->grow(false);
                 }
             }
 
@@ -91,5 +101,12 @@ class GameQueryPluginProvider extends ServiceProvider
 
             $table->columns($columns);
         });
+    }
+
+    private function setGrow(mixed $column, bool $grow): void
+    {
+        if (method_exists($column, 'grow')) {
+            $column->grow($grow);
+        }
     }
 }
