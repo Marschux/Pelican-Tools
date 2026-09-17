@@ -115,6 +115,9 @@ class GameQueryResource extends Resource
                 Action::make('test')
                     ->label(trans('game-query::query.test'))
                     ->icon('tabler-plug-connected')
+                    // only the icon, like edit and delete next to it - the label stays as tooltip
+                    ->iconButton()
+                    ->tooltip(trans('game-query::query.test'))
                     ->color('gray')
                     ->action(fn (GameQuery $record) => static::test($record)),
                 ViewAction::make()
