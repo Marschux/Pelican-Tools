@@ -8,7 +8,6 @@ use App\Facades\Activity;
 use App\Filament\Admin\Resources\Eggs\EggResource;
 use App\Filament\Admin\Resources\Nodes\NodeResource;
 use App\Filament\Admin\Resources\Servers\ServerResource;
-use App\Filament\Server\Pages\Allocations;
 use App\Filament\Server\Pages\Console;
 use App\Models\Node;
 use App\Models\Server;
@@ -104,7 +103,7 @@ class NodesOverviewWidget extends Widget
     {
         return [
             'nodes' => Node::query()
-                ->with(['servers', 'servers.egg', 'servers.allocation'])
+                ->with(['servers', 'servers.egg', 'servers.allocation', 'servers.allocations'])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Node $node) => $this->node($node))
@@ -156,11 +155,14 @@ class NodesOverviewWidget extends Widget
             'url' => ServerResource::getUrl('edit', ['record' => $server]),
             'icon' => $server->icon ?: $server->egg?->icon,
             'egg' => $server->egg?->name,
-            'port' => $server->allocation?->port,
-            // the client panel's network page, where the allocations of this server are managed
-            'port_url' => $server->allocation && class_exists(Allocations::class)
-                ? Allocations::getUrl(panel: 'server', tenant: $server)
-                : null,
+            // every allocation, the primary one first
+            'ports' => $server->allocations
+                ->sortBy(fn ($allocation) => [$allocation->id === $server->allocation_id ? 0 : 1, $allocation->port])
+                ->pluck('port')
+                ->all(),
+            // the client panel's network page - built by hand, the page class is not part of the
+            // panel's public api
+            'port_url' => url("/server/{$server->uuid_short}/allocations"),
             'egg_url' => $server->egg ? EggResource::getUrl('edit', ['record' => $server->egg]) : null,
             'console_url' => Console::getUrl(panel: 'server', tenant: $server),
             'status' => null,

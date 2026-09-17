@@ -30,7 +30,7 @@
                         <table style="width: 100%; border-collapse: collapse; font-size: .875rem;">
                             <thead>
                                 <tr style="text-align: left; opacity: .7;">
-                                    <th style="padding: .5rem; white-space: nowrap;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-hash" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.external_id') }}</span></th>
+                                    <th style="padding: .5rem; width: 1%; white-space: nowrap;"><span style="display: inline-flex; align-items: center; gap: .375rem;" title="{{ trans('server-resources::resources.server.external_id') }}"><x-filament::icon icon="tabler-hash" style="width: 1rem; height: 1rem;" /></span></th>
                                     <th style="padding: .5rem; width: 2.5rem;"></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-server" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.name') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-egg" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.egg') }}</span></th>
@@ -46,7 +46,7 @@
                             <tbody>
                                 @foreach ($node['servers'] as $server)
                                     <tr style="border-top: 1px solid rgba(127, 127, 127, .2);">
-                                        <td style="padding: .375rem .5rem; white-space: nowrap; opacity: .7;">{{ $server['external_id'] ?: '-' }}</td>
+                                        <td style="padding: .375rem .5rem; width: 1%; white-space: nowrap; opacity: .7;">{{ $server['external_id'] ?: '-' }}</td>
                                         <td style="padding: .375rem .5rem;">
                                             @if ($server['icon'])
                                                 <img src="{{ $server['icon'] }}" alt="" style="width: 2rem; height: 2rem; border-radius: .375rem; object-fit: cover;">
@@ -65,11 +65,13 @@
                                             @endif
                                         </td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">
-                                            @if ($server['port'] && $server['port_url'])
-                                                <a href="{{ $server['port_url'] }}">{{ $server['port'] }}</a>
-                                            @else
-                                                {{ $server['port'] ?: '-' }}
-                                            @endif
+                                            <div style="display: inline-flex; align-items: center; gap: .25rem; flex-wrap: wrap;">
+                                            @forelse ($server['ports'] as $port)
+                                                <a href="{{ $server['port_url'] }}"><x-filament::badge color="warning">{{ $port }}</x-filament::badge></a>
+                                            @empty
+                                                -
+                                            @endforelse
+                                            </div>
                                         </td>
                                         <td style="padding: .375rem .5rem;">
                                             @if ($server['status'])
