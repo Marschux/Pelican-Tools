@@ -52,6 +52,15 @@ readonly class ListDefinition
         return $this->format === self::FORMAT_JSON;
     }
 
+    /**
+     * The shape entries of a line list have around the typed value, e.g. "banid 0 {value}".
+     * Without it a line list holds whatever was typed, verbatim.
+     */
+    public function lineTemplate(): ?string
+    {
+        return !$this->isJson() && str_contains((string) $this->template, '{value}') ? $this->template : null;
+    }
+
     /** The field shown and typed in the editor; falls back to the key field. */
     public function valueField(): string
     {

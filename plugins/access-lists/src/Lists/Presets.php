@@ -67,6 +67,25 @@ class Presets
                     ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt', 'hint' => self::VALHEIM_ID . ' Steht hier mindestens ein Eintrag, dürfen nur diese Spieler beitreten.'],
                 ],
             ],
+            // the server rewrites both files itself on "writeid"/"writeip", so an edit here is
+            // gone once someone bans in game without writing the list back
+            'cs2' => [
+                'name' => 'Counter-Strike 2',
+                'files' => [
+                    [
+                        'label' => 'Bans',
+                        'path' => 'game/csgo/cfg/banned_user.cfg',
+                        'entry_template' => 'banid 0 {value}',
+                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_1:0:12345678. Ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'IP bans',
+                        'path' => 'game/csgo/cfg/banned_ip.cfg',
+                        'entry_template' => 'addip 0 {value}',
+                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                ],
+            ],
             // only who may reach ServerQuery - client bans and groups live in the database
             'teamspeak' => [
                 'name' => 'TeamSpeak',

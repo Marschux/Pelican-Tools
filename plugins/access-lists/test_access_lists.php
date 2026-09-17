@@ -21,7 +21,7 @@ use Marschux\AccessLists\Lists\Presets;
 
 $presets = Presets::all();
 
-assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2);
+assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2 && count($presets['cs2']['files']) === 2);
 
 foreach ($presets as $game => $preset) {
     assert(Presets::options()[$game] === $preset['name']);
@@ -47,6 +47,19 @@ foreach ($presets as $game => $preset) {
         assert(array_key_exists($definition->displayField, $definition->templateArray()), "$game/$index: the template must fill the field the editor types into");
     }
 }
+
+// --- line templates ------------------------------------------------------------------------------
+
+$bans = ListDefinition::fromArray('preset:cs2:0', $presets['cs2']['files'][0]);
+assert($bans->lineTemplate() === 'banid 0 {value}');
+assert(ListFile::wrapLine($bans->lineTemplate(), 'STEAM_1:0:1') === 'banid 0 STEAM_1:0:1');
+assert(ListFile::wrapLine($bans->lineTemplate(), 'banid 0 STEAM_1:0:1') === 'banid 0 STEAM_1:0:1', 'an entry read back and saved again must not nest');
+assert(ListFile::unwrapLine($bans->lineTemplate(), 'banid 0 STEAM_1:0:1') === 'STEAM_1:0:1');
+assert(ListFile::unwrapLine($bans->lineTemplate(), 'something else') === 'something else', 'a line that does not fit the shape stays as it is');
+assert(ListFile::unwrapLine($bans->lineTemplate(), 'banid 0 ') === 'banid 0 ', 'an empty value is not a value');
+
+$whitelist = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);
+assert($whitelist->lineTemplate() === null, 'a json list has no line shape');
 
 // a whitelist entry has to end up with a real uuid, not the placeholder
 $whitelistPreset = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);

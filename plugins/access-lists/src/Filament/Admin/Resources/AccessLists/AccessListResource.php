@@ -151,12 +151,11 @@ class AccessListResource extends Resource
                         ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON),
                     Textarea::make('entry_template')
                         ->label(trans('access-lists::lists.fields.entry_template'))
-                        ->placeholder('{"uuid": "{uuid}", "name": "{name}"}')
-                        ->helperText(trans('access-lists::lists.fields.entry_template_hint'))
+                        ->placeholder(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON ? '{"uuid": "{uuid}", "name": "{name}"}' : 'banid 0 {value}')
+                        ->helperText(fn (Get $get) => trans($get('format') === ListDefinition::FORMAT_JSON ? 'access-lists::lists.fields.entry_template_hint' : 'access-lists::lists.fields.entry_template_lines_hint'))
                         ->rows(3)
-                        ->visible(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
                         ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
-                        ->rule('json')
+                        ->rule(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON ? 'json' : null)
                         ->columnSpanFull(),
                 ]),
         ]);

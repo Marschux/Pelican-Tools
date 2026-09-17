@@ -25,6 +25,7 @@ return [
         'display_field_hint' => 'Feld, das in der Bearbeitungsmaske steht und dort eingegeben wird, z. B. "name".',
         'entry_template' => 'Vorlage für neue Einträge',
         'entry_template_hint' => 'JSON-Objekt für einen neuen Eintrag. Platzhalter: {name}, {uuid}, {ip}, {now}. Enthält die Vorlage {uuid}, sucht das Panel die UUID zum Namen (Mojang, oder lokal berechnet im Offline-Modus).',
+        'entry_template_lines_hint' => 'Optional: die Form, in der eine Zeile in der Datei steht, mit {value} für den eingegebenen Wert, z. B. "banid 0 {value}". Ohne Vorlage landet die Zeile so in der Datei, wie sie eingetippt wurde.',
         'eggs' => 'Eggs',
     ],
 

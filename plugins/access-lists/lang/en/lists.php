@@ -25,6 +25,7 @@ return [
         'display_field_hint' => 'Field shown and entered in the editor, e.g. "name".',
         'entry_template' => 'Template for new entries',
         'entry_template_hint' => 'JSON object for a new entry. Placeholders: {name}, {uuid}, {ip}, {now}. When the template contains {uuid}, the panel looks the uuid up (Mojang, or derived locally in offline mode).',
+        'entry_template_lines_hint' => 'Optional: the shape a line has in the file, with {value} for the typed value, e.g. "banid 0 {value}". Without a template a line is written exactly as typed.',
         'eggs' => 'Eggs',
     ],
 

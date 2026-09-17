@@ -199,6 +199,12 @@ class AccessListsPage extends Page implements HasForms
         $current = $this->readFile($definition->path);
 
         if (!$definition->isJson()) {
+            $template = $definition->lineTemplate();
+
+            if ($template !== null) {
+                $entries = array_map(fn (string $entry) => ListFile::wrapLine($template, trim($entry)), $entries);
+            }
+
             return ListFile::buildLines($current ?? '', $entries);
         }
 
@@ -293,6 +299,11 @@ class AccessListsPage extends Page implements HasForms
         $entries = $definition->isJson()
             ? ListFile::displayValues(ListFile::jsonEntries($content ?? '') ?? [], $definition->valueField())
             : ListFile::lineEntries($content ?? '');
+
+        // a line list with a template shows the bare value, the shape around it stays in the file
+        if (!$definition->isJson() && $definition->lineTemplate() !== null) {
+            $entries = array_map(fn (string $entry) => ListFile::unwrapLine($definition->lineTemplate(), $entry), $entries);
+        }
 
         $this->form->fill([
             'file' => $definition->key,

@@ -148,6 +148,48 @@ class ListFile
     }
 
     /**
+     * Wraps a typed value into a configured line shape, e.g. "76561..." into
+     * "banid 0 76561..." for a source engine ban list. A value that already carries the shape is
+     * left as it is, so editing an entry twice does not nest it.
+     */
+    public static function wrapLine(string $template, string $value): string
+    {
+        [$prefix, $suffix] = self::lineParts($template);
+
+        return self::unwrapLine($template, $value) === $value && ($prefix !== '' || $suffix !== '')
+            ? $prefix . $value . $suffix
+            : $value;
+    }
+
+    /** The bare value inside a templated line, or the line itself when it does not fit the shape. */
+    public static function unwrapLine(string $template, string $line): string
+    {
+        [$prefix, $suffix] = self::lineParts($template);
+
+        if ($prefix !== '' && !str_starts_with(strtolower($line), strtolower($prefix))) {
+            return $line;
+        }
+
+        if ($suffix !== '' && !str_ends_with(strtolower($line), strtolower($suffix))) {
+            return $line;
+        }
+
+        $inner = substr($line, strlen($prefix), strlen($line) - strlen($prefix) - strlen($suffix));
+
+        return trim($inner) === '' ? $line : trim($inner);
+    }
+
+    /** @return array{0: string, 1: string} */
+    private static function lineParts(string $template): array
+    {
+        $position = strpos($template, '{value}');
+
+        return $position === false
+            ? ['', '']
+            : [substr($template, 0, $position), substr($template, $position + strlen('{value}'))];
+    }
+
+    /**
      * Fills {name}, {uuid}, {ip} and {now} into a configured entry shape.
      *
      * @param  array<string, mixed>  $template
