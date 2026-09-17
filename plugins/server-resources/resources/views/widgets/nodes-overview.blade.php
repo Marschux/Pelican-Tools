@@ -73,6 +73,7 @@
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['players'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap; text-align: right;">
                                             {{-- plain icon buttons: filament actions did not render in this panel's own views --}}
+                                            <div style="display: inline-flex; align-items: center; gap: .25rem;">
                                             @foreach ($server['power'] as $action => $button)
                                                 <x-filament::icon-button
                                                     :icon="$button['icon']"
@@ -84,6 +85,7 @@
                                                     wire:loading.attr="disabled"
                                                 />
                                             @endforeach
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
