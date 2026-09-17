@@ -39,6 +39,7 @@ return [
         'external_id' => 'External ID',
         'name' => 'Server',
         'egg' => 'Egg',
+        'port' => 'Port',
         'status' => 'Status',
         'players' => 'Players',
     ],

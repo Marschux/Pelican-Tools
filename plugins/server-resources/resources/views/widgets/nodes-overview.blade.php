@@ -34,6 +34,7 @@
                                     <th style="padding: .5rem; width: 2.5rem;"></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-server" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.name') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-egg" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.egg') }}</span></th>
+                                    <th style="padding: .5rem; white-space: nowrap;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-plug-connected" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.port') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-heart-rate-monitor" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.status') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-cpu" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.cpu') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-device-desktop-analytics" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.memory') }}</span></th>
@@ -61,6 +62,13 @@
                                                 <a href="{{ $server['egg_url'] }}">{{ $server['egg'] }}</a>
                                             @else
                                                 -
+                                            @endif
+                                        </td>
+                                        <td style="padding: .375rem .5rem; white-space: nowrap;">
+                                            @if ($server['port'] && $server['port_url'])
+                                                <a href="{{ $server['port_url'] }}">{{ $server['port'] }}</a>
+                                            @else
+                                                {{ $server['port'] ?: '-' }}
                                             @endif
                                         </td>
                                         <td style="padding: .375rem .5rem;">

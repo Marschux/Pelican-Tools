@@ -8,6 +8,7 @@ use App\Facades\Activity;
 use App\Filament\Admin\Resources\Eggs\EggResource;
 use App\Filament\Admin\Resources\Nodes\NodeResource;
 use App\Filament\Admin\Resources\Servers\ServerResource;
+use App\Filament\Server\Pages\Allocations;
 use App\Filament\Server\Pages\Console;
 use App\Models\Node;
 use App\Models\Server;
@@ -155,6 +156,11 @@ class NodesOverviewWidget extends Widget
             'url' => ServerResource::getUrl('edit', ['record' => $server]),
             'icon' => $server->icon ?: $server->egg?->icon,
             'egg' => $server->egg?->name,
+            'port' => $server->allocation?->port,
+            // the client panel's network page, where the allocations of this server are managed
+            'port_url' => $server->allocation && class_exists(Allocations::class)
+                ? Allocations::getUrl(panel: 'server', tenant: $server)
+                : null,
             'egg_url' => $server->egg ? EggResource::getUrl('edit', ['record' => $server->egg]) : null,
             'console_url' => Console::getUrl(panel: 'server', tenant: $server),
             'status' => null,
