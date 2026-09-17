@@ -70,7 +70,13 @@
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['cpu'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['memory'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['disk'] ?? '-' }}</td>
-                                        <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['players'] ?? '-' }}</td>
+                                        <td style="padding: .375rem .5rem; white-space: nowrap;">
+                                            @if ($server['players'] !== null)
+                                                <x-filament::badge color="info">{{ $server['players'] }}</x-filament::badge>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap; text-align: right;">
                                             {{-- plain icon buttons: filament actions did not render in this panel's own views --}}
                                             <div style="display: inline-flex; align-items: center; gap: .25rem;">
