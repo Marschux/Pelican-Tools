@@ -1,49 +1,425 @@
 {
-  "_comment": "Counter-Strike 2 dedicated server egg.",
-  "meta": {"version": "PTDL_v2", "update_url": null},
-  "exported_at": "2026-09-10T00:00:00+02:00",
-  "name": "Counter-Strike 2",
-  "author": "GrassNotFound",
-  "description": "Counter-Strike 2 dedicated server.",
-  "features": ["steam_disk_space"],
-  "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},
-  "file_denylist": [],
-  "startup": "./game/bin/linuxsteamrt64/cs2 -dedicated -console $( [[ \"${ENABLE_RCON}\" == \"1\" ]] && echo -n \"-usercon\" ) $( [[ \"${INSECURE}\" == \"1\" ]] && echo -n \"-insecure\" ) -port {{SERVER_PORT}} +ip 0.0.0.0 -maxplayers_override {{MAX_PLAYERS}} $( [[ -z \"${STEAM_ACC}\" ]] || echo -n \"+sv_setsteamaccount ${STEAM_ACC}\" ) $( [[ -z \"${WORKSHOP_AUTHKEY}\" ]] || echo -n \"-authkey ${WORKSHOP_AUTHKEY}\" ) +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} +hostname \"{{HOSTNAME}}\" +sv_password \"{{SRV_PASSWORD}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_lan {{SV_LAN}} +sv_region {{SV_REGION}} +bot_quota {{BOT_QUOTA}} +sv_hibernate_when_empty {{HIBERNATE}} $( [[ \"${TV_ENABLE}\" == \"1\" ]] && echo -n \"+tv_enable 1 +tv_port ${TV_PORT} +tv_delay ${TV_DELAY} +tv_maxclients ${TV_MAXCLIENTS} +tv_password ${TV_PASSWORD:-0}\" || echo -n \"-nohltv\" ) $( [[ -z \"${WORKSHOP_COLLECTION}\" ]] || echo -n \"+host_workshop_collection ${WORKSHOP_COLLECTION}\" ) $( [[ -n \"${WORKSHOP_MAP}\" ]] && echo -n \"+host_workshop_map ${WORKSHOP_MAP}\" || echo -n \"+mapgroup ${MAPGROUP} +map ${SRCDS_MAP}\" ) $( [[ -z \"${EXEC_CFG}\" ]] || echo -n \"+exec ${EXEC_CFG}\" ) {{EXTRA_ARGS}}",
-  "config": {"files": "{}", "startup": "{\"done\": \"Connection to Steam servers successful\"}", "logs": "{}", "stop": "quit"},
-  "scripts": {
-    "installation": {
-      "script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd /mnt/server/steamapps\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\nexport HOME=/mnt/server\n./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_update ${SRCDS_APPID} validate +quit\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so",
-      "container": "ghcr.io/parkervcp/installers:debian",
-      "entrypoint": "bash"
-    }
-  },
-  "variables": [
-    {"name": "Hostname", "description": "Server name shown in the server browser.", "env_variable": "HOSTNAME", "default_value": "Counter-Strike 2 Server", "user_viewable": true, "user_editable": true, "rules": "required|string|max:64", "field_type": "text"},
-    {"name": "Game Server Login Token", "description": "Steam Game Server Login Token (GSLT), created at https://steamcommunity.com/dev/managegameservers with App ID 730. Required for a public, internet-visible server. Leave empty for LAN only.", "env_variable": "STEAM_ACC", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
-    {"name": "Server Password", "description": "Password players need to join. Leave empty for a public server.", "env_variable": "SRV_PASSWORD", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
-    {"name": "RCON Password", "description": "Password for remote console. Needed for the panel console to send commands. Leave empty to disable RCON.", "env_variable": "RCON_PASSWORD", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
-    {"name": "Enable RCON", "description": "Adds -usercon so the server accepts RCON connections. Requires an RCON password.", "env_variable": "ENABLE_RCON", "default_value": "1", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"},
-    {"name": "Max Players", "description": "Player slots (-maxplayers_override). Casual/Competitive normally use 10-16, Deathmatch up to 64.", "env_variable": "MAX_PLAYERS", "default_value": "16", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:1,64", "field_type": "text"},
-    {"name": "Game Type", "description": "First half of the game mode pair. 0 Classic, 1 Gun Game, 2 Training, 3 Custom, 4 Cooperative, 5 Skirmish. Combine with Game Mode: 0/0 Casual, 0/1 Competitive, 0/2 Wingman, 0/3 Weapons Expert, 1/0 Arms Race, 1/1 Demolition, 1/2 Deathmatch, 4/0 Guardian, 4/1 Co-op Strike.", "env_variable": "GAME_TYPE", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,5", "field_type": "text"},
-    {"name": "Game Mode", "description": "Second half of the game mode pair, see Game Type for the valid combinations.", "env_variable": "GAME_MODE", "default_value": "1", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,3", "field_type": "text"},
-    {"name": "Map", "description": "Map to start on. Ignored when a Workshop Map ID is set.", "env_variable": "SRCDS_MAP", "default_value": "de_dust2", "user_viewable": true, "user_editable": true, "rules": "required|string|alpha_dash", "field_type": "text"},
-    {"name": "Map Group", "description": "Map rotation group from gamemodes_server.txt, e.g. mg_active. Ignored when a Workshop Map ID is set.", "env_variable": "MAPGROUP", "default_value": "mg_active", "user_viewable": true, "user_editable": true, "rules": "required|string|max:64", "field_type": "text"},
-    {"name": "Workshop Map ID", "description": "Steam Workshop file ID to host instead of the map above (+host_workshop_map). Needs a Workshop API key.", "env_variable": "WORKSHOP_MAP", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|numeric", "field_type": "text"},
-    {"name": "Workshop Collection ID", "description": "Steam Workshop collection ID to use as map rotation (+host_workshop_collection). Needs a Workshop API key.", "env_variable": "WORKSHOP_COLLECTION", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|numeric", "field_type": "text"},
-    {"name": "Workshop API Key", "description": "Steam Web API key from https://steamcommunity.com/dev/apikey, required for downloading workshop maps (-authkey).", "env_variable": "WORKSHOP_AUTHKEY", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
-    {"name": "LAN Mode", "description": "1 makes the server LAN only: no Steam authentication, no GSLT needed, not visible on the internet.", "env_variable": "SV_LAN", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"},
-    {"name": "Region", "description": "Region shown in the server browser. 0 US East, 1 US West, 2 South America, 3 Europe, 4 Asia, 5 Australia, 6 Middle East, 7 Africa, 255 World.", "env_variable": "SV_REGION", "default_value": "3", "user_viewable": true, "user_editable": true, "rules": "required|in:0,1,2,3,4,5,6,7,255", "field_type": "text"},
-    {"name": "Bot Quota", "description": "Number of bots the server fills up with. 0 disables bots.", "env_variable": "BOT_QUOTA", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,64", "field_type": "text"},
-    {"name": "Hibernate When Empty", "description": "1 lets the server idle at low CPU usage while nobody is connected. Turn off if a plugin needs to keep running.", "env_variable": "HIBERNATE", "default_value": "1", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"},
-    {"name": "Insecure (VAC off)", "description": "Adds -insecure, disabling VAC. Needed for some plugin or debug setups, never for a public server.", "env_variable": "INSECURE", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"},
-    {"name": "Enable GOTV", "description": "Enables GOTV broadcasting. GOTV listens on its own port, so add a second allocation for it.", "env_variable": "TV_ENABLE", "default_value": "0", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"},
-    {"name": "GOTV Port", "description": "Port GOTV listens on. Must be an allocation assigned to this server.", "env_variable": "TV_PORT", "default_value": "27020", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:1024,65535", "field_type": "text"},
-    {"name": "GOTV Delay", "description": "GOTV broadcast delay in seconds.", "env_variable": "TV_DELAY", "default_value": "30", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,600", "field_type": "text"},
-    {"name": "GOTV Max Clients", "description": "Maximum number of GOTV spectators.", "env_variable": "TV_MAXCLIENTS", "default_value": "10", "user_viewable": true, "user_editable": true, "rules": "required|numeric|between:0,255", "field_type": "text"},
-    {"name": "GOTV Password", "description": "Password for GOTV spectators. Leave empty for none.", "env_variable": "TV_PASSWORD", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|alpha_dash|max:64", "field_type": "text"},
-    {"name": "Config to Execute", "description": "Config file in game/csgo/cfg executed on start, e.g. server.cfg. Leave empty to skip.", "env_variable": "EXEC_CFG", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:64", "field_type": "text"},
-    {"name": "Additional Arguments", "description": "Extra launch parameters or console variables appended verbatim, e.g. +mp_autoteambalance 0 +sv_cheats 0. Note: CS2 runs at a fixed subtick rate, -tickrate does nothing.", "env_variable": "EXTRA_ARGS", "default_value": "", "user_viewable": true, "user_editable": true, "rules": "nullable|string|max:256", "field_type": "text"},
-    {"name": "App ID", "description": "Steam app id used for install and auto updates.", "env_variable": "SRCDS_APPID", "default_value": "730", "user_viewable": false, "user_editable": false, "rules": "required|numeric", "field_type": "text"},
-    {"name": "Auto Update", "description": "Update the server files on every boot.", "env_variable": "AUTO_UPDATE", "default_value": "1", "user_viewable": true, "user_editable": true, "rules": "required|boolean", "field_type": "text"}
-  ]
+    "_comment": "Counter-Strike 2 dedicated server egg.",
+    "meta": {
+        "version": "PLCN_v3",
+        "update_url": null
+    },
+    "exported_at": "2026-09-17T22:52:28+00:00",
+    "name": "Counter-Strike 2",
+    "author": "GrassNotFound",
+    "uuid": "716a1643-b53d-4df1-8ab2-9f368bf38279",
+    "description": "Counter-Strike 2 dedicated server.",
+    "icon": null,
+    "tags": [
+        "source",
+        "steamcmd"
+    ],
+    "features": [
+        "steam_disk_space",
+        "gsl_token"
+    ],
+    "docker_images": {
+        "Source": "ghcr.io/parkervcp/games:source"
+    },
+    "file_denylist": [],
+    "startup_commands": {
+        "Default": "./start.sh"
+    },
+    "config": {
+        "files": "{}",
+        "startup": "{\n    \"done\": \"Connection to Steam servers successful\"\n}",
+        "logs": "{}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\nset -euo pipefail\n\nROOT=/mnt/server\nmkdir -p \"$ROOT/steamcmd\"\n\necho \"> Installing steamcmd ...\"\ncurl -sSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar -xzf - -C \"$ROOT/steamcmd\"\n\necho \"> Installing app ${SRCDS_APPID} ...\"\nexport HOME=\"$ROOT\"\n(cd \"$ROOT/steamcmd\" && ./steamcmd.sh +force_install_dir \"$ROOT\" +login anonymous +app_update \"${SRCDS_APPID}\" validate +quit)\n\nmkdir -p \"$ROOT/.steam/sdk32\" \"$ROOT/.steam/sdk64\"\ncp -v \"$ROOT/steamcmd/linux32/steamclient.so\" \"$ROOT/.steam/sdk32/steamclient.so\"\ncp -v \"$ROOT/steamcmd/linux64/steamclient.so\" \"$ROOT/.steam/sdk64/steamclient.so\"\n\n# Metamod and CounterStrikeSharp are installed here, not at boot: this container has curl, jq\n# and unzip, the game image does not. Switching the framework therefore needs a reinstall.\nif [[ \"${PLUGIN_FRAMEWORK:-none}\" != \"none\" ]]; then\n    echo \"> Installing Metamod:Source ...\"\n    MM_FILE=\"$(curl -sSL https://mms.alliedmods.net/mmsdrop/2.0/mmsource-latest-linux)\"\n    curl -sSL \"https://mms.alliedmods.net/mmsdrop/2.0/${MM_FILE}\" | tar -xzf - -C \"$ROOT/game/csgo\"\n\n    # metamod only loads when gameinfo.gi lists its search path\n    GI=\"$ROOT/game/csgo/gameinfo.gi\"\n    if ! grep -q 'csgo/addons/metamod' \"$GI\"; then\n        sed -i 's#^\\([[:space:]]*\\)Game_LowViolence#\\1Game\\tcsgo/addons/metamod\\n\\1Game_LowViolence#' \"$GI\"\n    fi\nfi\n\nif [[ \"${PLUGIN_FRAMEWORK:-none}\" == \"counterstrikesharp\" ]]; then\n    echo \"> Installing CounterStrikeSharp ...\"\n    CSS_URL=\"$(curl -sSL https://api.github.com/repos/roflmuffin/CounterStrikeSharp/releases/latest \\\n        | jq -r '.assets[] | select(.name | test(\"with-runtime-linux.*\\.zip$\")) | .browser_download_url')\"\n\n    if [[ -z \"$CSS_URL\" || \"$CSS_URL\" == \"null\" ]]; then\n        echo \"x No CounterStrikeSharp linux build in the latest release, skipping.\"\n    else\n        curl -sSL -o /tmp/css.zip \"$CSS_URL\"\n        unzip -o -q /tmp/css.zip -d \"$ROOT/game/csgo\"\n    fi\nfi\n\necho \"> Writing start.sh ...\"\ncat > \"$ROOT/start.sh\" <<'LAUNCHER'\n#!/bin/bash\n# Launcher for the Counter-Strike 2 egg. Written by the egg's install script - a reinstall\n# overwrites it, so keep own changes in the panel variables where you can.\nset -uo pipefail\n\nROOT=\"$(cd \"$(dirname \"$0\")\" && pwd)\"\ncd \"$ROOT\"\n\nif [[ \"${AUTO_UPDATE:-0}\" == \"1\" ]]; then\n    echo \"> Updating app ${SRCDS_APPID:-730} via steamcmd ...\"\n    (cd steamcmd && ./steamcmd.sh +force_install_dir \"$ROOT\" +login anonymous +app_update \"${SRCDS_APPID:-730}\" +quit)\nfi\n\nargs=(\n    -dedicated\n    -console\n    -port \"${SERVER_PORT:-27015}\"\n    +ip 0.0.0.0\n    -maxplayers_override \"${MAX_PLAYERS:-16}\"\n    +game_type \"${GAME_TYPE:-0}\"\n    +game_mode \"${GAME_MODE:-1}\"\n    +hostname \"${HOSTNAME:-Counter-Strike 2 Server}\"\n    +sv_password \"${SRV_PASSWORD:-}\"\n    +rcon_password \"${RCON_PASSWORD:-}\"\n    +sv_lan \"${SV_LAN:-0}\"\n    +sv_region \"${SV_REGION:-3}\"\n    +bot_quota \"${BOT_QUOTA:-0}\"\n    +sv_hibernate_when_empty \"${HIBERNATE:-1}\"\n)\n\n[[ \"${ENABLE_RCON:-0}\" == \"1\" ]] && args+=(-usercon)\n[[ \"${INSECURE:-0}\" == \"1\" ]] && args+=(-insecure)\n[[ -n \"${STEAM_ACC:-}\" ]] && args+=(+sv_setsteamaccount \"${STEAM_ACC}\")\n[[ -n \"${WORKSHOP_AUTHKEY:-}\" ]] && args+=(-authkey \"${WORKSHOP_AUTHKEY}\")\n\nif [[ \"${TV_ENABLE:-0}\" == \"1\" ]]; then\n    args+=(+tv_enable 1 +tv_port \"${TV_PORT:-27020}\" +tv_delay \"${TV_DELAY:-30}\" +tv_maxclients \"${TV_MAXCLIENTS:-10}\" +tv_password \"${TV_PASSWORD:-0}\")\nelse\n    args+=(-nohltv)\nfi\n\n[[ -n \"${WORKSHOP_COLLECTION:-}\" ]] && args+=(+host_workshop_collection \"${WORKSHOP_COLLECTION}\")\n\nif [[ -n \"${WORKSHOP_MAP:-}\" ]]; then\n    args+=(+host_workshop_map \"${WORKSHOP_MAP}\")\nelse\n    args+=(+mapgroup \"${MAPGROUP:-mg_active}\" +map \"${SRCDS_MAP:-de_dust2}\")\nfi\n\n[[ -n \"${EXEC_CFG:-}\" ]] && args+=(+exec \"${EXEC_CFG}\")\n# unquoted on purpose: this is a whole argument list, not one argument\n[[ -n \"${EXTRA_ARGS:-}\" ]] && args+=(${EXTRA_ARGS})\n\necho \"> ${args[*]}\"\n\n# exec, so cs2 keeps the console stdin the panel sends \"quit\" to\nexec ./game/bin/linuxsteamrt64/cs2 \"${args[@]}\"\nLAUNCHER\nchmod +x \"$ROOT/start.sh\"\n\necho \"> Done.\"\n",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "sort": 1,
+            "name": "Hostname",
+            "description": "Server name shown in the server browser.",
+            "env_variable": "HOSTNAME",
+            "default_value": "Counter-Strike 2 Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 2,
+            "name": "Game Server Login Token",
+            "description": "Steam Game Server Login Token (GSLT), created at https://steamcommunity.com/dev/managegameservers with App ID 730. Required for a public, internet-visible server. Leave empty for LAN only.",
+            "env_variable": "STEAM_ACC",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 3,
+            "name": "Server Password",
+            "description": "Password players need to join. Leave empty for a public server.",
+            "env_variable": "SRV_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 4,
+            "name": "RCON Password",
+            "description": "Password for remote console. Needed for the panel console to send commands. Leave empty to disable RCON.",
+            "env_variable": "RCON_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 5,
+            "name": "Enable RCON",
+            "description": "Adds -usercon so the server accepts RCON connections. Requires an RCON password.",
+            "env_variable": "ENABLE_RCON",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 6,
+            "name": "Max Players",
+            "description": "Player slots (-maxplayers_override). Casual/Competitive normally use 10-16, Deathmatch up to 64.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "16",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:1,64"
+            ]
+        },
+        {
+            "sort": 7,
+            "name": "Game Type",
+            "description": "First half of the game mode pair. 0 Classic, 1 Gun Game, 2 Training, 3 Custom, 4 Cooperative, 5 Skirmish. Combine with Game Mode: 0/0 Casual, 0/1 Competitive, 0/2 Wingman, 0/3 Weapons Expert, 1/0 Arms Race, 1/1 Demolition, 1/2 Deathmatch, 4/0 Guardian, 4/1 Co-op Strike.",
+            "env_variable": "GAME_TYPE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,5"
+            ]
+        },
+        {
+            "sort": 8,
+            "name": "Game Mode",
+            "description": "Second half of the game mode pair, see Game Type for the valid combinations.",
+            "env_variable": "GAME_MODE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,3"
+            ]
+        },
+        {
+            "sort": 9,
+            "name": "Map",
+            "description": "Map to start on. Ignored when a Workshop Map ID is set.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "de_dust2",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "alpha_dash"
+            ]
+        },
+        {
+            "sort": 10,
+            "name": "Map Group",
+            "description": "Map rotation group from gamemodes_server.txt, e.g. mg_active. Ignored when a Workshop Map ID is set.",
+            "env_variable": "MAPGROUP",
+            "default_value": "mg_active",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 11,
+            "name": "Workshop Map ID",
+            "description": "Steam Workshop file ID to host instead of the map above (+host_workshop_map). Needs a Workshop API key.",
+            "env_variable": "WORKSHOP_MAP",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "numeric"
+            ]
+        },
+        {
+            "sort": 12,
+            "name": "Workshop Collection ID",
+            "description": "Steam Workshop collection ID to use as map rotation (+host_workshop_collection). Needs a Workshop API key.",
+            "env_variable": "WORKSHOP_COLLECTION",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "numeric"
+            ]
+        },
+        {
+            "sort": 13,
+            "name": "Workshop API Key",
+            "description": "Steam Web API key from https://steamcommunity.com/dev/apikey, required for downloading workshop maps (-authkey).",
+            "env_variable": "WORKSHOP_AUTHKEY",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 14,
+            "name": "LAN Mode",
+            "description": "1 makes the server LAN only: no Steam authentication, no GSLT needed, not visible on the internet.",
+            "env_variable": "SV_LAN",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 15,
+            "name": "Region",
+            "description": "Region shown in the server browser. 0 US East, 1 US West, 2 South America, 3 Europe, 4 Asia, 5 Australia, 6 Middle East, 7 Africa, 255 World.",
+            "env_variable": "SV_REGION",
+            "default_value": "3",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "in:0,1,2,3,4,5,6,7,255"
+            ]
+        },
+        {
+            "sort": 16,
+            "name": "Bot Quota",
+            "description": "Number of bots the server fills up with. 0 disables bots.",
+            "env_variable": "BOT_QUOTA",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,64"
+            ]
+        },
+        {
+            "sort": 17,
+            "name": "Hibernate When Empty",
+            "description": "1 lets the server idle at low CPU usage while nobody is connected. Turn off if a plugin needs to keep running.",
+            "env_variable": "HIBERNATE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 18,
+            "name": "Insecure (VAC off)",
+            "description": "Adds -insecure, disabling VAC. Needed for some plugin or debug setups, never for a public server.",
+            "env_variable": "INSECURE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 19,
+            "name": "Enable GOTV",
+            "description": "Enables GOTV broadcasting. GOTV listens on its own port, so add a second allocation for it.",
+            "env_variable": "TV_ENABLE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 20,
+            "name": "GOTV Port",
+            "description": "Port GOTV listens on. Must be an allocation assigned to this server.",
+            "env_variable": "TV_PORT",
+            "default_value": "27020",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:1024,65535"
+            ]
+        },
+        {
+            "sort": 21,
+            "name": "GOTV Delay",
+            "description": "GOTV broadcast delay in seconds.",
+            "env_variable": "TV_DELAY",
+            "default_value": "30",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,600"
+            ]
+        },
+        {
+            "sort": 22,
+            "name": "GOTV Max Clients",
+            "description": "Maximum number of GOTV spectators.",
+            "env_variable": "TV_MAXCLIENTS",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,255"
+            ]
+        },
+        {
+            "sort": 23,
+            "name": "GOTV Password",
+            "description": "Password for GOTV spectators. Leave empty for none.",
+            "env_variable": "TV_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "alpha_dash",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 24,
+            "name": "Plugin Framework",
+            "description": "Installs a plugin framework alongside the server: none, metamod (Metamod:Source only) or counterstrikesharp (Metamod plus CounterStrikeSharp). Installed during (re)install, so changing this needs a reinstall.",
+            "env_variable": "PLUGIN_FRAMEWORK",
+            "default_value": "none",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "in:none,metamod,counterstrikesharp"
+            ]
+        },
+        {
+            "sort": 25,
+            "name": "Config to Execute",
+            "description": "Config file in game/csgo/cfg executed on start, e.g. server.cfg. Leave empty to skip.",
+            "env_variable": "EXEC_CFG",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 26,
+            "name": "Additional Arguments",
+            "description": "Extra launch parameters or console variables appended verbatim, e.g. +mp_autoteambalance 0 +sv_cheats 0. Note: CS2 runs at a fixed subtick rate, -tickrate does nothing.",
+            "env_variable": "EXTRA_ARGS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:256"
+            ]
+        },
+        {
+            "sort": 27,
+            "name": "Auto Update",
+            "description": "Runs a steamcmd update before every start. Costs a bit of boot time, keeps the server on the current build.",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 28,
+            "name": "App ID",
+            "description": "Steam app id used for install and auto updates.",
+            "env_variable": "SRCDS_APPID",
+            "default_value": "730",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": [
+                "required",
+                "numeric"
+            ]
+        }
+    ]
 }
