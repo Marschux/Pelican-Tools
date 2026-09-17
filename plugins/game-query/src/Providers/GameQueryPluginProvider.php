@@ -71,7 +71,25 @@ class GameQueryPluginProvider extends ServiceProvider
                 return;
             }
 
-            $table->pushColumns([ServerPlayersColumn::make()]);
+            // pushColumns would park it at the far right, past the resource bars; the count
+            // belongs next to the server it counts
+            $columns = [];
+            $inserted = false;
+
+            foreach ($table->getColumns() as $key => $column) {
+                $columns[] = $column;
+
+                if (!$inserted && ($key === 'name' || str_ends_with((string) $key, '.name'))) {
+                    $inserted = true;
+                    $columns[] = ServerPlayersColumn::make();
+                }
+            }
+
+            if (!$inserted) {
+                $columns[] = ServerPlayersColumn::make();
+            }
+
+            $table->columns($columns);
         });
     }
 }
