@@ -122,6 +122,7 @@ class NodesOverviewWidget extends Widget
         $cores = $node->cpu > 0 ? $node->cpu / 100 : null;
 
         return [
+            'id' => $node->id,
             'name' => $node->name,
             'fqdn' => $node->fqdn,
             'url' => NodeResource::getUrl('edit', ['record' => $node]),
@@ -134,7 +135,6 @@ class NodesOverviewWidget extends Widget
             'facts' => $stats === null ? [] : array_values(array_filter([
                 $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $node->cpu])) : null,
                 Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
-                Resources::fact('tabler-server', trans('server-resources::resources.node.servers', ['count' => $node->servers->count()])),
             ])),
             'servers' => $node->servers->map(fn (Server $server) => $this->server($server, $reachable))->all(),
         ];
