@@ -199,7 +199,9 @@ class GameQueryResource extends Resource
      */
     private static function fieldRows(array $visible, array $allowed): array
     {
-        $visible = array_values(array_intersect($visible, $allowed));
+        // only field names count: on create there is no stored list yet, and what arrives is the
+        // repeater's own empty default item - an array, which array_intersect cannot compare
+        $visible = array_values(array_intersect(array_filter($visible, is_string(...)), $allowed));
         $rows = [];
 
         foreach ([...$visible, self::HIDDEN_DIVIDER, ...array_diff($allowed, $visible)] as $field) {
@@ -322,6 +324,10 @@ class GameQueryResource extends Resource
                     ->deletable(false)
                     ->reorderable()
                     ->reorderableWithButtons()
+                    // a new query starts with every field of every type below the line - the type
+                    // select then narrows the list
+                    ->defaultItems(0)
+                    ->default(fn () => static::fieldRows([], QueryResult::FIELDS))
                     // formatStateUsing, not afterStateHydrated: that would replace the repeater's
                     // own hook which gives every item its key
                     ->formatStateUsing(fn (?array $state, Get $get, QueryTypeService $service) => static::fieldRows($state ?? [], static::allowedFields($get, $service)))
