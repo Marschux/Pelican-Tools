@@ -51,7 +51,9 @@ class NodesOverviewWidget extends Widget
         $maintenance = $node->isUnderMaintenance();
         $reachable = !$maintenance && !isset($node->systemInformation()['exception']);
         $stats = $reachable ? $node->statistics() : null;
-        $cores = (int) ($node->systemInformation()['cpu_count'] ?? 0);
+        // the cpu limit entered on the node, in percent - wings' own cpu count is what its process
+        // may be scheduled on, which in an LXC can be every thread of the host, not the cores it got
+        $cores = $node->cpu > 0 ? $node->cpu / 100 : null;
 
         return [
             'name' => $node->name,
@@ -64,8 +66,7 @@ class NodesOverviewWidget extends Widget
                 Resources::bytesBar('disk', (int) $stats['disk_used'], (int) $stats['disk_total']),
             ],
             'facts' => $stats === null ? [] : array_values(array_filter([
-                // what wings' go runtime sees, not what the node's container is configured with
-                $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => $cores])) : null,
+                $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $node->cpu])) : null,
                 Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
                 Resources::fact('tabler-server', trans('server-resources::resources.node.servers', ['count' => $node->servers->count()])),
             ])),

@@ -18,7 +18,7 @@ return [
         'unreachable' => 'Node unreachable',
         'no_servers' => 'No servers on this node',
         'none' => 'No nodes set up',
-        'cpus' => ':count CPUs as seen by Wings',
+        'cpus' => ':count cores (limit :limit %)',
         'servers' => ':count servers',
     ],
 
