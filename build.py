@@ -5,7 +5,7 @@ Die ZIP ist das Deploy-Artefakt und wird mit eingecheckt. Weicht sie vom Quellst
 laedt man eine alte Version hoch und sucht den Fehler anschliessend im Code - genau das
 ist beim Vorgaenger-Plugin passiert. Also immer hierueber bauen, nie von Hand.
 
-    python plugins/build.py game-query
+    python build.py game-query
 """
 import json
 import pathlib
@@ -17,7 +17,7 @@ SKIP_SUFFIX = {'.zip', '.pyc'}
 
 
 def build(name: str) -> None:
-    root = pathlib.Path(__file__).parent
+    root = pathlib.Path(__file__).parent / "plugins"
     source = root / name
 
     if not source.is_dir():
