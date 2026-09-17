@@ -103,7 +103,7 @@ class NodesOverviewWidget extends Widget
     {
         return [
             'nodes' => Node::query()
-                ->with(['servers' => fn ($query) => $query->orderBy('name'), 'servers.egg', 'servers.allocation'])
+                ->with(['servers' => fn ($query) => $query->orderByRaw('external_id is null')->orderBy('external_id')->orderBy('name'), 'servers.egg', 'servers.allocation'])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Node $node) => $this->node($node))
@@ -144,6 +144,7 @@ class NodesOverviewWidget extends Widget
     private function server(Server $server, bool $nodeReachable): array
     {
         $row = [
+            'external_id' => $server->external_id,
             'name' => $server->name,
             'url' => ServerResource::getUrl('edit', ['record' => $server]),
             'icon' => $server->icon ?: $server->egg?->icon,

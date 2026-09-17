@@ -36,6 +36,7 @@ return [
     ],
 
     'server' => [
+        'external_id' => 'Externe ID',
         'name' => 'Server',
         'egg' => 'Egg',
         'status' => 'Status',
