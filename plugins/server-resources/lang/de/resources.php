@@ -22,6 +22,19 @@ return [
         'servers' => ':count Server',
     ],
 
+    'power' => [
+        'start' => 'Starten',
+        'restart' => 'Neustarten',
+        'stop' => 'Stoppen',
+        'not_now' => 'Im aktuellen Zustand nicht möglich',
+        'failed' => 'Befehl konnte nicht gesendet werden',
+        'sent' => [
+            'start' => ':server wird gestartet',
+            'restart' => ':server wird neu gestartet',
+            'stop' => ':server wird gestoppt',
+        ],
+    ],
+
     'server' => [
         'name' => 'Server',
         'egg' => 'Egg',

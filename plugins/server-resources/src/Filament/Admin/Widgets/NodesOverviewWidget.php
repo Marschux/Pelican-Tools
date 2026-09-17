@@ -3,12 +3,16 @@
 namespace Marschux\ServerResources\Filament\Admin\Widgets;
 
 use App\Enums\ServerResourceType;
+use App\Enums\SubuserPermission;
+use App\Facades\Activity;
 use App\Filament\Admin\Resources\Eggs\EggResource;
 use App\Filament\Admin\Resources\Nodes\NodeResource;
 use App\Filament\Admin\Resources\Servers\ServerResource;
 use App\Filament\Server\Pages\Console;
 use App\Models\Node;
 use App\Models\Server;
+use App\Repositories\Daemon\DaemonServerRepository;
+use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Marschux\GameQuery\Models\GameQuery;
 use Marschux\ServerResources\Resources;
@@ -29,9 +33,69 @@ class NodesOverviewWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    /** The power buttons per server row, with the permission the console page requires for each. */
+    private const POWER = [
+        'start' => ['icon' => 'tabler-player-play-filled', 'color' => 'success', 'permission' => SubuserPermission::ControlStart],
+        'restart' => ['icon' => 'tabler-reload', 'color' => 'gray', 'permission' => SubuserPermission::ControlRestart],
+        'stop' => ['icon' => 'tabler-player-stop-filled', 'color' => 'danger', 'permission' => SubuserPermission::ControlStop],
+    ];
+
     public static function canView(): bool
     {
         return (bool) user()?->can('viewList node');
+    }
+
+    /**
+     * Sends a power action from a row's button. Called straight from the browser, so the server,
+     * the action and the permission are all checked again here rather than trusted from the view.
+     */
+    public function power(int $serverId, string $action): void
+    {
+        $server = Server::query()->find($serverId);
+
+        if (!$server || !isset(self::POWER[$action]) || !user()?->can(self::POWER[$action]['permission'], $server)) {
+            return;
+        }
+
+        if ($server->isInConflictState() || !$this->allows($server, $action)) {
+            Notification::make()->title(trans('server-resources::resources.power.not_now'))->warning()->send();
+
+            return;
+        }
+
+        try {
+            app(DaemonServerRepository::class)->setServer($server)->power($action);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()->title(trans('server-resources::resources.power.failed'))->body($exception->getMessage())->danger()->send();
+
+            return;
+        }
+
+        Activity::event("server:power.$action")->subject($server)->log();
+
+        // the cached status would still show the old state until it expires
+        cache()->forget("servers.$server->uuid.status");
+
+        Notification::make()->title(trans("server-resources::resources.power.sent.$action", ['server' => $server->name]))->success()->send();
+    }
+
+    /** The same state checks the console page's own power buttons use. */
+    private function allows(Server $server, string $action): bool
+    {
+        if ($server->isInConflictState()) {
+            return false;
+        }
+
+        $status = $server->retrieveStatus();
+
+        return match ($action) {
+            'start' => $status->isStartable(),
+            'restart' => $status->isRestartable(),
+            'stop' => $status->isStoppable(),
+            default => false,
+        };
     }
 
     /** @return array<string, mixed> */
@@ -92,6 +156,9 @@ class NodesOverviewWidget extends Widget
             'memory' => null,
             'disk' => null,
             'players' => null,
+            'id' => $server->id,
+            // which power buttons are offered, and which of them the current state allows
+            'power' => [],
         ];
 
         // an unreachable node would cost a daemon timeout per server - its servers show no values
@@ -104,6 +171,13 @@ class NodesOverviewWidget extends Widget
 
             $row['status'] = $condition->getLabel();
             $row['color'] = $condition->getColor();
+
+            foreach (self::POWER as $action => $button) {
+                if (user()?->can($button['permission'], $server)) {
+                    $row['power'][$action] = $button + ['enabled' => $this->allows($server, $action)];
+                }
+            }
+
             $row['cpu'] = $server->formatResource(ServerResourceType::CPU, 0) . ' / ' . $server->formatResource(ServerResourceType::CPULimit, 0);
             $row['memory'] = $server->formatResource(ServerResourceType::Memory) . ' / ' . $server->formatResource(ServerResourceType::MemoryLimit);
             $row['disk'] = $server->formatResource(ServerResourceType::Disk) . ' / ' . $server->formatResource(ServerResourceType::DiskLimit);

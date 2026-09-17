@@ -37,6 +37,7 @@
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-device-desktop-analytics" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.memory') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-device-sd-card" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.disk') }}</span></th>
                                     <th style="padding: .5rem;"><span style="display: inline-flex; align-items: center; gap: .375rem;"><x-filament::icon icon="tabler-users" style="width: 1rem; height: 1rem;" />{{ trans('server-resources::resources.server.players') }}</span></th>
+                                    <th style="padding: .5rem;"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -70,6 +71,20 @@
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['memory'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['disk'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['players'] ?? '-' }}</td>
+                                        <td style="padding: .375rem .5rem; white-space: nowrap; text-align: right;">
+                                            {{-- plain icon buttons: filament actions did not render in this panel's own views --}}
+                                            @foreach ($server['power'] as $action => $button)
+                                                <x-filament::icon-button
+                                                    :icon="$button['icon']"
+                                                    :color="$button['color']"
+                                                    :disabled="!$button['enabled']"
+                                                    :label="trans('server-resources::resources.power.' . $action)"
+                                                    :tooltip="trans('server-resources::resources.power.' . $action)"
+                                                    wire:click="power({{ $server['id'] }}, '{{ $action }}')"
+                                                    wire:loading.attr="disabled"
+                                                />
+                                            @endforeach
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
