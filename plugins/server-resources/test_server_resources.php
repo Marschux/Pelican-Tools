@@ -5,8 +5,10 @@
  */
 
 require __DIR__ . '/src/Host/HostStats.php';
+require __DIR__ . '/src/Resources.php';
 
 use Marschux\ServerResources\Host\HostStats;
+use Marschux\ServerResources\Resources;
 
 $meminfo = "MemTotal:        4194304 kB\nMemFree:          524288 kB\nMemAvailable:    3145728 kB\n";
 assert(HostStats::memory($meminfo) === ['total' => 4194304 * 1024, 'used' => 1048576 * 1024]);
@@ -23,5 +25,9 @@ assert(HostStats::cpuCount("cpu  1 2 3 4\ncpu0 1 2 3 4\ncpu1 1 2 3 4\nintr 5\n")
 assert(HostStats::uptime("12345.67 23456.78\n") === 12345);
 assert(HostStats::load("0.52 0.40 0.31 1/234 5678\n") === [0.52, 0.40, 0.31]);
 assert(HostStats::load('') === null);
+
+$order = ['b' => ['9', 'B'], 'a' => ['11', 'A'], 'c' => [null, 'C'], 'd' => ['x1', 'D']];
+uasort($order, fn ($a, $b) => Resources::sortKey(...$a) <=> Resources::sortKey(...$b));
+assert(array_keys($order) === ['b', 'a', 'd', 'c'], '9 before 11, text after numbers, empty last');
 
 echo "ok\n";

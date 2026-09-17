@@ -103,7 +103,7 @@ class NodesOverviewWidget extends Widget
     {
         return [
             'nodes' => Node::query()
-                ->with(['servers' => fn ($query) => $query->orderByRaw('external_id is null')->orderBy('external_id')->orderBy('name'), 'servers.egg', 'servers.allocation'])
+                ->with(['servers', 'servers.egg', 'servers.allocation'])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Node $node) => $this->node($node))
@@ -136,7 +136,13 @@ class NodesOverviewWidget extends Widget
                 $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $node->cpu])) : null,
                 Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
             ])),
-            'servers' => $node->servers->map(fn (Server $server) => $this->server($server, $reachable))->all(),
+            // sorted here, not in sql: external_id is a text column, so the database would put
+            // "11" before "9"
+            'servers' => $node->servers
+                ->sortBy(fn (Server $server) => Resources::sortKey($server->external_id, $server->name))
+                ->map(fn (Server $server) => $this->server($server, $reachable))
+                ->values()
+                ->all(),
         ];
     }
 
