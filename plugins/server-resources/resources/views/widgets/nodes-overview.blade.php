@@ -65,13 +65,11 @@
                                             @endif
                                         </td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">
-                                            <div style="display: inline-flex; align-items: center; gap: .25rem; flex-wrap: wrap;">
-                                            @forelse ($server['ports'] as $port)
-                                                <a href="{{ $server['port_url'] }}"><x-filament::badge color="warning">{{ $port }}</x-filament::badge></a>
-                                            @empty
+                                            @if ($server['port'])
+                                                <a href="{{ $server['port_url'] }}"><x-filament::badge color="warning">{{ $server['port'] }}</x-filament::badge></a>
+                                            @else
                                                 -
-                                            @endforelse
-                                            </div>
+                                            @endif
                                         </td>
                                         <td style="padding: .375rem .5rem;">
                                             @if ($server['status'])

@@ -103,7 +103,7 @@ class NodesOverviewWidget extends Widget
     {
         return [
             'nodes' => Node::query()
-                ->with(['servers', 'servers.egg', 'servers.allocation', 'servers.allocations'])
+                ->with(['servers', 'servers.egg', 'servers.allocation'])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Node $node) => $this->node($node))
@@ -155,11 +155,7 @@ class NodesOverviewWidget extends Widget
             'url' => ServerResource::getUrl('edit', ['record' => $server]),
             'icon' => $server->icon ?: $server->egg?->icon,
             'egg' => $server->egg?->name,
-            // every allocation, the primary one first
-            'ports' => $server->allocations
-                ->sortBy(fn ($allocation) => [$allocation->id === $server->allocation_id ? 0 : 1, $allocation->port])
-                ->pluck('port')
-                ->all(),
+            'port' => $server->allocation?->port,
             // the client panel's network page - built by hand, the page class is not part of the
             // panel's public api
             'port_url' => url("/server/{$server->uuid_short}/allocations"),
