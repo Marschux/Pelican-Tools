@@ -7,6 +7,7 @@ use App\Enums\SubuserPermission;
 use App\Facades\Activity;
 use App\Filament\Admin\Resources\Eggs\EggResource;
 use App\Filament\Admin\Resources\Nodes\NodeResource;
+use App\Filament\Admin\Resources\Servers\ServerResource;
 use App\Models\Node;
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonServerRepository;
@@ -150,9 +151,8 @@ class NodesOverviewWidget extends Widget
         $row = [
             'external_id' => $server->external_id,
             'name' => $server->name,
-            // the console, not the admin edit page: from this overview one wants to look at a
-            // server, not reconfigure it
-            'url' => url("/server/{$server->uuid_short}/console"),
+            'url' => ServerResource::getUrl('edit', ['record' => $server]),
+            'console_url' => url("/server/{$server->uuid_short}/console"),
             'icon' => $server->icon ?: $server->egg?->icon,
             'egg' => $server->egg?->name,
             'port' => $server->allocation?->port,

@@ -75,7 +75,7 @@
                                         </td>
                                         <td style="padding: .375rem .5rem;">
                                             @if ($server['status'])
-                                                <a href="{{ $server['url'] }}"><x-filament::badge :color="$server['color']">{{ $server['status'] }}</x-filament::badge></a>
+                                                <a href="{{ $server['console_url'] }}"><x-filament::badge :color="$server['color']">{{ $server['status'] }}</x-filament::badge></a>
                                             @else
                                                 -
                                             @endif
