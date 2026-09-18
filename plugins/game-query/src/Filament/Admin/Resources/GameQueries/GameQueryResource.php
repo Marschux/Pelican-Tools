@@ -9,6 +9,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
@@ -25,7 +26,6 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use Marschux\GameQuery\Filament\Admin\Resources\GameQueries\Pages\ManageGameQueries;
 use Marschux\GameQuery\Models\GameQuery;
@@ -188,17 +188,14 @@ class GameQueryResource extends Resource
         return $service->get($get('query_type'))?->supportedFields() ?? QueryResult::FIELDS;
     }
 
-    /** The row in the field list between shown fields and the rest - no field is named like it. */
-    private const HIDDEN_DIVIDER = '__hidden__';
-
     /**
-     * Repeater rows for the field list: the shown fields in their order, the divider, then every
-     * other field the type can report. Keyed by uuid like the repeater's own items - reordering
-     * merges by key, and plain 0..n keys would append empty rows on a move.
+     * Repeater rows for the field list: the ticked fields in their order first, then every other
+     * field the type can report. Keyed by uuid like the repeater's own items - reordering merges
+     * by key, and plain 0..n keys would append empty rows on a move.
      *
      * @param  string[]  $visible
      * @param  string[]  $allowed
-     * @return array<string, array{field: string}>
+     * @return array<string, array{field: string, shown: bool}>
      */
     private static function fieldRows(array $visible, array $allowed): array
     {
@@ -207,17 +204,17 @@ class GameQueryResource extends Resource
         $visible = array_values(array_intersect(array_filter($visible, is_string(...)), $allowed));
         $rows = [];
 
-        foreach ([...$visible, self::HIDDEN_DIVIDER, ...array_diff($allowed, $visible)] as $field) {
-            $rows[(string) Str::uuid()] = ['field' => $field];
+        foreach ([...$visible, ...array_diff($allowed, $visible)] as $field) {
+            $rows[(string) Str::uuid()] = ['field' => $field, 'shown' => in_array($field, $visible, true)];
         }
 
         return $rows;
     }
 
     /**
-     * The fields above the divider, in the order of the rows.
+     * The ticked fields, in the order of the rows.
      *
-     * @param  array<array{field?: string}>|null  $rows
+     * @param  array<array{field?: string, shown?: bool}>|null  $rows
      * @return string[]
      */
     private static function visibleFromRows(?array $rows): array
@@ -225,11 +222,7 @@ class GameQueryResource extends Resource
         $fields = [];
 
         foreach ($rows ?? [] as $row) {
-            if (($row['field'] ?? null) === self::HIDDEN_DIVIDER) {
-                break;
-            }
-
-            if (isset($row['field'])) {
+            if (isset($row['field']) && ($row['shown'] ?? false)) {
                 $fields[] = $row['field'];
             }
         }
@@ -300,16 +293,17 @@ class GameQueryResource extends Resource
                     ->nullable()
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.port_variable_hint')),
-                // one sortable list with a divider: fields above it show on the server page, in
-                // this order. Only fields the selected protocol can actually report are listed -
-                // a "VAC" row for valheim would just be a row that lies. Stored as before: the
-                // shown fields as a plain list.
+                // one sortable list, a tick per field: ticked fields show on the server page, in
+                // the order of the rows. Only fields the selected protocol can actually report
+                // are listed - a "VAC" row for valheim would just be a row that lies. Stored as
+                // before: the shown fields as a plain list.
                 Repeater::make('visible_fields')
                     ->label(trans('game-query::query.visible_fields'))
                     ->hintIcon('tabler-question-mark')
                     ->hintIconTooltip(trans('game-query::query.visible_fields_hint'))
                     ->helperText(trans('game-query::query.visible_fields_order'))
                     ->table([
+                        TableColumn::make(trans('game-query::query.field_shown')),
                         TableColumn::make(trans('game-query::query.field_label')),
                     ])
                     ->compact()
@@ -317,17 +311,14 @@ class GameQueryResource extends Resource
                     ->extraAttributes(['class' => 'game-query-compact'])
                     ->schema([
                         Hidden::make('field'),
-                        Text::make(fn (Get $get) => $get('field') === self::HIDDEN_DIVIDER
-                            // only a line; inline styles, the panel's css has no classes of ours. The
-                            // text sits in an inline box, so the line needs a width of its own.
-                            ? new HtmlString('<span style="display: block; width: 20rem; max-width: 100%; border-top: 2px solid currentColor; opacity: .5"></span>')
-                            : trans('game-query::query.field.' . $get('field'))),
+                        Checkbox::make('shown')->label(''),
+                        Text::make(fn (Get $get) => trans('game-query::query.field.' . $get('field'))),
                     ])
                     ->addable(false)
                     ->deletable(false)
                     ->reorderable()
                     ->reorderableWithButtons()
-                    // a new query starts with every field of every type below the line - the type
+                    // a new query starts with every field of every type, none ticked - the type
                     // select then narrows the list
                     ->defaultItems(0)
                     ->default(fn () => static::fieldRows([], QueryResult::FIELDS))
