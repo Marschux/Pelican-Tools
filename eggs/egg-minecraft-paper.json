@@ -1,13 +1,16 @@
 {
-    "_comment": "Paper Minecraft server egg.",
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
     "meta": {
-        "version": "PTDL_v2",
+        "version": "PLCN_v3",
         "update_url": null
     },
-    "exported_at": "2026-09-14T00:00:00+02:00",
+    "exported_at": "2026-09-18T22:59:42+00:00",
     "name": "Minecraft Paper",
     "author": "maximilian.rade@gmail.com",
+    "uuid": "2fc93ff9-3e04-4894-9a86-9efecd9c53db",
     "description": "High-performance Minecraft Java server based on Paper. The settings below are written into server.properties on every start.",
+    "icon": "data:image/png;base64,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",
+    "tags": [],
     "features": [
         "eula",
         "java_version",
@@ -19,10 +22,12 @@
         "Java 17": "ghcr.io/pelican-eggs/yolks:java_17"
     },
     "file_denylist": [],
-    "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}",
+    "startup_commands": {
+        "Default": "java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}"
+    },
     "config": {
-        "files": "{\"server.properties\": {\"parser\": \"properties\", \"find\": {\"server-ip\": \"\", \"server-port\": \"{{server.build.default.port}}\", \"query.port\": \"{{server.build.default.port}}\", \"enable-query\": \"{{env.ENABLE_QUERY}}\", \"motd\": \"{{env.MOTD}}\", \"max-players\": \"{{env.MAX_PLAYERS}}\", \"difficulty\": \"{{env.DIFFICULTY}}\", \"gamemode\": \"{{env.GAMEMODE}}\", \"force-gamemode\": \"{{env.FORCE_GAMEMODE}}\", \"hardcore\": \"{{env.HARDCORE}}\", \"level-name\": \"{{env.LEVEL_NAME}}\", \"level-seed\": \"{{env.LEVEL_SEED}}\", \"level-type\": \"{{env.LEVEL_TYPE}}\", \"generate-structures\": \"{{env.GENERATE_STRUCTURES}}\", \"white-list\": \"{{env.WHITELIST}}\", \"enforce-whitelist\": \"{{env.ENFORCE_WHITELIST}}\", \"online-mode\": \"{{env.ONLINE_MODE}}\", \"allow-flight\": \"{{env.ALLOW_FLIGHT}}\", \"spawn-protection\": \"{{env.SPAWN_PROTECTION}}\", \"view-distance\": \"{{env.VIEW_DISTANCE}}\", \"simulation-distance\": \"{{env.SIMULATION_DISTANCE}}\", \"pause-when-empty-seconds\": \"{{env.PAUSE_WHEN_EMPTY}}\", \"enable-rcon\": \"{{env.ENABLE_RCON}}\", \"rcon.port\": \"{{env.RCON_PORT}}\", \"rcon.password\": \"{{env.RCON_PASSWORD}}\"}}}",
-        "startup": "{\"done\": \")! For help, type \"}",
+        "files": "{\n    \"server.properties\": {\n        \"parser\": \"properties\",\n        \"find\": {\n            \"server-ip\": \"\",\n            \"server-port\": \"{{server.allocations.default.port}}\",\n            \"query.port\": \"{{server.allocations.default.port}}\",\n            \"enable-query\": \"{{env.ENABLE_QUERY}}\",\n            \"motd\": \"{{env.MOTD}}\",\n            \"max-players\": \"{{env.MAX_PLAYERS}}\",\n            \"difficulty\": \"{{env.DIFFICULTY}}\",\n            \"gamemode\": \"{{env.GAMEMODE}}\",\n            \"force-gamemode\": \"{{env.FORCE_GAMEMODE}}\",\n            \"hardcore\": \"{{env.HARDCORE}}\",\n            \"level-name\": \"{{env.LEVEL_NAME}}\",\n            \"level-seed\": \"{{env.LEVEL_SEED}}\",\n            \"level-type\": \"{{env.LEVEL_TYPE}}\",\n            \"generate-structures\": \"{{env.GENERATE_STRUCTURES}}\",\n            \"white-list\": \"{{env.WHITELIST}}\",\n            \"enforce-whitelist\": \"{{env.ENFORCE_WHITELIST}}\",\n            \"online-mode\": \"{{env.ONLINE_MODE}}\",\n            \"allow-flight\": \"{{env.ALLOW_FLIGHT}}\",\n            \"spawn-protection\": \"{{env.SPAWN_PROTECTION}}\",\n            \"view-distance\": \"{{env.VIEW_DISTANCE}}\",\n            \"simulation-distance\": \"{{env.SIMULATION_DISTANCE}}\",\n            \"pause-when-empty-seconds\": \"{{env.PAUSE_WHEN_EMPTY}}\",\n            \"enable-rcon\": \"{{env.ENABLE_RCON}}\",\n            \"rcon.port\": \"{{env.RCON_PORT}}\",\n            \"rcon.password\": \"{{env.RCON_PASSWORD}}\"\n        }\n    }\n}",
+        "startup": "{\n    \"done\": \")! For help, type \"\n}",
         "logs": "{}",
         "stop": "stop"
     },
@@ -35,254 +40,342 @@
     },
     "variables": [
         {
+            "sort": null,
             "name": "Server Jar File",
             "description": "The jar file to run.",
             "env_variable": "SERVER_JARFILE",
             "default_value": "server.jar",
             "user_viewable": false,
             "user_editable": false,
-            "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "regex:/^([\\w\\d._-]+)(\\.jar)$/"
+            ]
         },
         {
+            "sort": null,
             "name": "Paper Version",
             "description": "Minecraft version, or latest.",
             "env_variable": "PAPER_VERSION",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:15",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "string",
+                "max:15"
+            ]
         },
         {
+            "sort": null,
             "name": "Build Number",
             "description": "Paper build number, or latest.",
             "env_variable": "BUILD_NUMBER",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:15",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "string",
+                "max:15"
+            ]
         },
         {
+            "sort": null,
             "name": "MOTD",
             "description": "Message shown under the server name in the multiplayer list.",
             "env_variable": "MOTD",
             "default_value": "A Minecraft Server",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:59",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "string",
+                "max:59"
+            ]
         },
         {
+            "sort": null,
             "name": "Max Players",
             "description": "Maximum number of players online at the same time.",
             "env_variable": "MAX_PLAYERS",
             "default_value": "20",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:1,1000",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:1,1000"
+            ]
         },
         {
+            "sort": null,
             "name": "Difficulty",
             "description": "peaceful, easy, normal or hard.",
             "env_variable": "DIFFICULTY",
             "default_value": "easy",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:peaceful,easy,normal,hard",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:peaceful,easy,normal,hard"
+            ]
         },
         {
+            "sort": null,
             "name": "Gamemode",
             "description": "Default game mode for new players: survival, creative, adventure or spectator.",
             "env_variable": "GAMEMODE",
             "default_value": "survival",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:survival,creative,adventure,spectator",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:survival,creative,adventure,spectator"
+            ]
         },
         {
+            "sort": null,
             "name": "Force Gamemode",
             "description": "Put players back into the default game mode every time they join.",
             "env_variable": "FORCE_GAMEMODE",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Hardcore",
             "description": "Difficulty locked to hard, players become spectators when they die. Only applies when the world is created.",
             "env_variable": "HARDCORE",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Level Name",
             "description": "Name of the world folder. Changing it loads or creates a different world.",
             "env_variable": "LEVEL_NAME",
             "default_value": "world",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:64|regex:/^[\\w.-]+$/",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "string",
+                "max:64",
+                "regex:/^[\\w.-]+$/"
+            ]
         },
         {
+            "sort": null,
             "name": "Level Seed",
             "description": "Seed for a new world, empty for a random one. Only applies when the world is created.",
             "env_variable": "LEVEL_SEED",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "nullable|string|max:64",
-            "field_type": "text"
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
         },
         {
+            "sort": null,
             "name": "Level Type",
             "description": "World generator: minecraft:normal, minecraft:flat, minecraft:large_biomes, minecraft:amplified or minecraft:single_biome_surface. Only applies when the world is created.",
             "env_variable": "LEVEL_TYPE",
             "default_value": "minecraft:normal",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:minecraft:normal,minecraft:flat,minecraft:large_biomes,minecraft:amplified,minecraft:single_biome_surface",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:minecraft:normal,minecraft:flat,minecraft:large_biomes,minecraft:amplified,minecraft:single_biome_surface"
+            ]
         },
         {
+            "sort": null,
             "name": "Generate Structures",
             "description": "Generate villages, strongholds and other structures. Only applies to newly generated chunks.",
             "env_variable": "GENERATE_STRUCTURES",
             "default_value": "true",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Whitelist",
             "description": "Only players on the whitelist can join.",
             "env_variable": "WHITELIST",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Enforce Whitelist",
             "description": "Kick online players who are not on the whitelist when it is reloaded.",
             "env_variable": "ENFORCE_WHITELIST",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Online Mode",
             "description": "Verify players against Mojang's servers. Only turn this off behind a proxy like Velocity - otherwise anyone can join under any name, including an operator's.",
             "env_variable": "ONLINE_MODE",
             "default_value": "true",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Allow Flight",
             "description": "Allow flying in survival, e.g. for plugins. When off, players who fly too long get kicked.",
             "env_variable": "ALLOW_FLIGHT",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Spawn Protection",
             "description": "Radius around spawn in which only operators can build. 0 disables it.",
             "env_variable": "SPAWN_PROTECTION",
             "default_value": "16",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:0,1000",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:0,1000"
+            ]
         },
         {
+            "sort": null,
             "name": "View Distance",
             "description": "How many chunks around a player are sent to the client (3-32).",
             "env_variable": "VIEW_DISTANCE",
             "default_value": "10",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:3,32",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:3,32"
+            ]
         },
         {
+            "sort": null,
             "name": "Simulation Distance",
             "description": "How many chunks around a player are actively simulated (3-32).",
             "env_variable": "SIMULATION_DISTANCE",
             "default_value": "10",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:3,32",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:3,32"
+            ]
         },
         {
+            "sort": null,
             "name": "Pause When Empty",
             "description": "Seconds without any player before the server pauses ticking. 0 disables it.",
             "env_variable": "PAUSE_WHEN_EMPTY",
             "default_value": "60",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:0,86400",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:0,86400"
+            ]
         },
         {
+            "sort": null,
             "name": "Enable Query",
             "description": "Answer status queries over UDP on the game port - no extra allocation needed. Gives the Game Query plugin the full player list.",
             "env_variable": "ENABLE_QUERY",
             "default_value": "true",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "Enable RCON",
             "description": "Remote console access. Only starts when an RCON password is set.",
             "env_variable": "ENABLE_RCON",
             "default_value": "false",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "in:true,false"
+            ]
         },
         {
+            "sort": null,
             "name": "RCON Port",
             "description": "Port for RCON. Needs its own allocation if RCON should be reachable from outside the server.",
             "env_variable": "RCON_PORT",
             "default_value": "25575",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|integer|between:1025,65535",
-            "field_type": "text"
+            "rules": [
+                "required",
+                "integer",
+                "between:1025,65535"
+            ]
         },
         {
+            "sort": null,
             "name": "RCON Password",
             "description": "Password for RCON. RCON does not start without one.",
             "env_variable": "RCON_PASSWORD",
             "default_value": "",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "nullable|string|max:64",
-            "field_type": "text"
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
         }
     ]
 }
