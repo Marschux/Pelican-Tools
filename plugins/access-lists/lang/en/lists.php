@@ -26,12 +26,14 @@ return [
         'entry_template' => 'Template for new entries',
         'entry_template_hint' => 'JSON object for a new entry. Placeholders: {name}, {uuid}, {ip}, {now}. When the template contains {uuid}, the panel looks the uuid up (Mojang, or derived locally in offline mode).',
         'entry_template_lines_hint' => 'Optional: the shape a line has in the file, with {value} for the typed value, e.g. "banid 0 {value}". Without a template a line is written exactly as typed.',
+        'entry_template_pairs_hint' => 'Optional: the shape one setting has in the file, with {key} and {value}, e.g. {key}={value} for server.properties or {key} "{value}" for cvar configs. Without a template {key}={value} is used.',
         'eggs' => 'Eggs',
     ],
 
     'formats' => [
         'lines' => 'Text lines',
         'json' => 'JSON',
+        'pairs' => 'Settings (key = value)',
     ],
 
     'page' => [
@@ -39,6 +41,10 @@ return [
         'entries' => 'Entries',
         'entry' => 'Entry',
         'add' => 'Add entry',
+        'settings' => 'Settings',
+        'setting_key' => 'Key',
+        'setting_value' => 'Value',
+        'add_setting' => 'Add setting',
         'raw' => 'Edit as text',
         'raw_hint' => 'Edits the file as it is. Saving only checks whether json is valid.',
         'text' => 'File contents',

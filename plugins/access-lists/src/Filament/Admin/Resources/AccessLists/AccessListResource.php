@@ -131,6 +131,7 @@ class AccessListResource extends Resource
                         ->options([
                             ListDefinition::FORMAT_LINES => trans('access-lists::lists.formats.lines'),
                             ListDefinition::FORMAT_JSON => trans('access-lists::lists.formats.json'),
+                            ListDefinition::FORMAT_PAIRS => trans('access-lists::lists.formats.pairs'),
                         ])
                         ->default(ListDefinition::FORMAT_LINES)
                         ->selectablePlaceholder(false)
@@ -152,8 +153,16 @@ class AccessListResource extends Resource
                         ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON),
                     Textarea::make('entry_template')
                         ->label(trans('access-lists::lists.fields.entry_template'))
-                        ->placeholder(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON ? '{"uuid": "{uuid}", "name": "{name}"}' : 'banid 0 {value}')
-                        ->helperText(fn (Get $get) => trans($get('format') === ListDefinition::FORMAT_JSON ? 'access-lists::lists.fields.entry_template_hint' : 'access-lists::lists.fields.entry_template_lines_hint'))
+                        ->placeholder(fn (Get $get) => match ($get('format')) {
+                            ListDefinition::FORMAT_JSON => '{"uuid": "{uuid}", "name": "{name}"}',
+                            ListDefinition::FORMAT_PAIRS => ListDefinition::DEFAULT_PAIR_TEMPLATE,
+                            default => 'banid 0 {value}',
+                        })
+                        ->helperText(fn (Get $get) => trans(match ($get('format')) {
+                            ListDefinition::FORMAT_JSON => 'access-lists::lists.fields.entry_template_hint',
+                            ListDefinition::FORMAT_PAIRS => 'access-lists::lists.fields.entry_template_pairs_hint',
+                            default => 'access-lists::lists.fields.entry_template_lines_hint',
+                        }))
                         ->rows(3)
                         ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
                         ->rule(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON ? 'json' : null)

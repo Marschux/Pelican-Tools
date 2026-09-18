@@ -9,6 +9,7 @@ use App\Repositories\Daemon\DaemonFileRepository;
 use App\Traits\Filament\BlockAccessInConflict;
 use BackedEnum;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -100,7 +101,16 @@ class AccessListsPage extends Page implements HasForms
                     ->label(trans('access-lists::lists.page.entries'))
                     ->helperText(fn () => $this->definition()?->hint)
                     ->placeholder(trans('access-lists::lists.page.add'))
-                    ->visible(fn (Get $get) => !$get('raw'))
+                    ->visible(fn (Get $get) => !$get('raw') && !$this->definition()?->isPairs())
+                    ->columnSpanFull(),
+                KeyValue::make('pairs')
+                    ->label(trans('access-lists::lists.page.settings'))
+                    ->helperText(fn () => $this->definition()?->hint)
+                    ->keyLabel(trans('access-lists::lists.page.setting_key'))
+                    ->valueLabel(trans('access-lists::lists.page.setting_value'))
+                    ->addActionLabel(trans('access-lists::lists.page.add_setting'))
+                    ->reorderable(false)
+                    ->visible(fn (Get $get) => !$get('raw') && (bool) $this->definition()?->isPairs())
                     ->columnSpanFull(),
                 Textarea::make('text')
                     ->helperText(fn () => $this->definition()?->hint)
@@ -152,9 +162,15 @@ class AccessListsPage extends Page implements HasForms
         $state = $this->form->getState();
 
         try {
-            $content = ($state['raw'] ?? false)
-                ? $this->rawContent($definition, (string) ($state['text'] ?? ''))
-                : $this->builtContent($definition, array_map(strval(...), $state['entries'] ?? []));
+            $content = match (true) {
+                (bool) ($state['raw'] ?? false) => $this->rawContent($definition, (string) ($state['text'] ?? '')),
+                $definition->isPairs() => ListFile::buildPairs(
+                    $this->readFile($definition->path) ?? '',
+                    array_map(strval(...), $state['pairs'] ?? []),
+                    $definition->pairTemplate(),
+                ),
+                default => $this->builtContent($definition, array_map(strval(...), $state['entries'] ?? [])),
+            };
         } catch (ListEditException $exception) {
             Notification::make()->title($exception->getMessage())->danger()->send();
 
@@ -300,6 +316,10 @@ class AccessListsPage extends Page implements HasForms
             ? ListFile::displayValues(ListFile::jsonEntries($content ?? '') ?? [], $definition->valueField())
             : ListFile::lineEntries($content ?? '');
 
+        if ($definition->isPairs()) {
+            $entries = [];
+        }
+
         // a line list with a template shows the bare value, the shape around it stays in the file
         if (!$definition->isJson() && $definition->lineTemplate() !== null) {
             $entries = array_map(fn (string $entry) => ListFile::unwrapLine($definition->lineTemplate(), $entry), $entries);
@@ -309,6 +329,7 @@ class AccessListsPage extends Page implements HasForms
             'file' => $definition->key,
             'raw' => (bool) ($this->data['raw'] ?? false),
             'entries' => $entries,
+            'pairs' => $definition->isPairs() ? ListFile::pairEntries($content ?? '', $definition->pairTemplate()) : [],
             'text' => $content ?? '',
         ]);
 

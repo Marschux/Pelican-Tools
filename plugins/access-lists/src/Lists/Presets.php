@@ -49,6 +49,13 @@ class Presets
                         'hint' => 'Spielernamen oder UUID eintragen, das jeweils andere sucht das Panel selbst. Greift nach einem Neustart.',
                     ],
                     [
+                        'label' => 'Einstellungen',
+                        'path' => 'server.properties',
+                        'format' => ListDefinition::FORMAT_PAIRS,
+                        'entry_template' => ListDefinition::DEFAULT_PAIR_TEMPLATE,
+                        'hint' => 'Die Einstellungen aus server.properties. Kommentarzeilen der Datei bleiben erhalten. Ein laufender Server liest sie erst beim nächsten Start.',
+                    ],
+                    [
                         'label' => 'IP bans',
                         'path' => 'banned-ips.json',
                         'format' => ListDefinition::FORMAT_JSON,
@@ -83,6 +90,13 @@ class Presets
                         'path' => 'game/csgo/cfg/banned_ip.cfg',
                         'entry_template' => 'addip 0 {value}',
                         'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'server.cfg',
+                        'path' => 'game/csgo/cfg/server.cfg',
+                        'format' => ListDefinition::FORMAT_PAIRS,
+                        'entry_template' => '{key} "{value}"',
+                        'hint' => 'Die cvars aus server.cfg, z. B. mp_maxrounds oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
                     ],
                 ],
             ],

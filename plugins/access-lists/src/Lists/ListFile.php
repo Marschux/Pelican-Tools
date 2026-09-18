@@ -148,6 +148,130 @@ class ListFile
     }
 
     /**
+     * The settings of a key = value file, in file order.
+     *
+     * @return array<string, string>
+     */
+    public static function pairEntries(string $content, string $template): array
+    {
+        $pairs = [];
+
+        foreach (self::lines($content) as $line) {
+            $pair = self::parsePair($line, $template);
+
+            if ($pair !== null) {
+                $pairs[$pair[0]] = $pair[1];
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * Rebuilds a key = value file: every line that is not a setting stays where it is - comments
+     * in server.properties explain what the settings below them do, and a rewrite that drops them
+     * loses that. Changed settings are written in place, removed ones disappear, new ones are
+     * appended.
+     *
+     * @param  array<string, string>  $pairs
+     */
+    public static function buildPairs(string $original, array $pairs, string $template): string
+    {
+        $out = [];
+
+        foreach (self::lines($original) as $line) {
+            $pair = self::parsePair($line, $template);
+
+            if ($pair === null) {
+                $out[] = $line;
+
+                continue;
+            }
+
+            // a key the editor no longer holds was deleted there
+            if (array_key_exists($pair[0], $pairs)) {
+                $out[] = self::buildPair($pair[0], $pairs[$pair[0]], $template);
+                unset($pairs[$pair[0]]);
+            }
+        }
+
+        // trailing blank lines of the original, or a gap left where a setting was removed, would
+        // otherwise sit between the kept lines and the appended ones
+        while ($out !== [] && end($out) === '') {
+            array_pop($out);
+        }
+
+        foreach ($pairs as $key => $value) {
+            $out[] = self::buildPair((string) $key, (string) $value, $template);
+        }
+
+        return $out === [] ? '' : implode("
+", $out) . "
+";
+    }
+
+    public static function buildPair(string $key, string $value, string $template): string
+    {
+        return strtr($template, ['{key}' => $key, '{value}' => $value]);
+    }
+
+    /**
+     * Splits one line into key and value along the template, or null when the line is a comment,
+     * empty, or simply not a setting.
+     *
+     * @return ?array{0: string, 1: string}
+     */
+    public static function parsePair(string $line, string $template): ?array
+    {
+        if ($line === '' || self::isComment($line)) {
+            return null;
+        }
+
+        [$before, $between, $after] = self::pairParts($template);
+
+        if ($before !== '' && !str_starts_with($line, $before)) {
+            return null;
+        }
+
+        $rest = substr($line, strlen($before));
+        $split = strpos($rest, $between);
+
+        if ($between === '' || $split === false || $split === 0) {
+            return null;
+        }
+
+        $key = trim(substr($rest, 0, $split));
+        $value = substr($rest, $split + strlen($between));
+
+        if ($after !== '') {
+            if (!str_ends_with($value, $after)) {
+                return null;
+            }
+
+            $value = substr($value, 0, strlen($value) - strlen($after));
+        }
+
+        return $key === '' ? null : [$key, trim($value)];
+    }
+
+    /** @return array{0: string, 1: string, 2: string} text before the key, between key and value, after the value */
+    private static function pairParts(string $template): array
+    {
+        $key = strpos($template, '{key}');
+        $value = strpos($template, '{value}');
+
+        if ($key === false || $value === false || $value < $key) {
+            return ['', '=', ''];
+        }
+
+        return [
+            substr($template, 0, $key),
+            substr($template, $key + strlen('{key}'), $value - $key - strlen('{key}')),
+            substr($template, $value + strlen('{value}')),
+        ];
+    }
+
+    /**
      * Wraps a typed value into a configured line shape, e.g. "76561..." into
      * "banid 0 76561..." for a source engine ban list. A value that already carries the shape is
      * left as it is, so editing an entry twice does not nest it.

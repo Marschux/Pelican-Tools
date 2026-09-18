@@ -12,6 +12,11 @@ readonly class ListDefinition
 
     public const FORMAT_JSON = 'json';
 
+    /** key = value settings, e.g. server.properties or a cvar config */
+    public const FORMAT_PAIRS = 'pairs';
+
+    public const DEFAULT_PAIR_TEMPLATE = '{key}={value}';
+
     public function __construct(
         public string $key,
         public string $label,
@@ -39,7 +44,11 @@ readonly class ListDefinition
             key: $key,
             label: trim((string) ($file['label'] ?? '')) ?: $path,
             path: $path,
-            format: ($file['format'] ?? self::FORMAT_LINES) === self::FORMAT_JSON ? self::FORMAT_JSON : self::FORMAT_LINES,
+            format: match ($file['format'] ?? self::FORMAT_LINES) {
+                self::FORMAT_JSON => self::FORMAT_JSON,
+                self::FORMAT_PAIRS => self::FORMAT_PAIRS,
+                default => self::FORMAT_LINES,
+            },
             keyField: self::nullable($file['key_field'] ?? null),
             displayField: self::nullable($file['display_field'] ?? null),
             template: self::nullable($file['entry_template'] ?? null),
@@ -52,13 +61,26 @@ readonly class ListDefinition
         return $this->format === self::FORMAT_JSON;
     }
 
+    public function isPairs(): bool
+    {
+        return $this->format === self::FORMAT_PAIRS;
+    }
+
+    /** The shape one setting has in the file, e.g. "{key}={value}" or '{key} "{value}"'. */
+    public function pairTemplate(): string
+    {
+        return $this->isPairs() && str_contains((string) $this->template, '{key}') && str_contains((string) $this->template, '{value}')
+            ? (string) $this->template
+            : self::DEFAULT_PAIR_TEMPLATE;
+    }
+
     /**
      * The shape entries of a line list have around the typed value, e.g. "banid 0 {value}".
      * Without it a line list holds whatever was typed, verbatim.
      */
     public function lineTemplate(): ?string
     {
-        return !$this->isJson() && str_contains((string) $this->template, '{value}') ? $this->template : null;
+        return $this->format === self::FORMAT_LINES && str_contains((string) $this->template, '{value}') ? $this->template : null;
     }
 
     /** The field shown and typed in the editor; falls back to the key field. */

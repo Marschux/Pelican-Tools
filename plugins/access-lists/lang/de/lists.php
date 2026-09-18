@@ -26,12 +26,14 @@ return [
         'entry_template' => 'Vorlage für neue Einträge',
         'entry_template_hint' => 'JSON-Objekt für einen neuen Eintrag. Platzhalter: {name}, {uuid}, {ip}, {now}. Enthält die Vorlage {uuid}, sucht das Panel die UUID zum Namen (Mojang, oder lokal berechnet im Offline-Modus).',
         'entry_template_lines_hint' => 'Optional: die Form, in der eine Zeile in der Datei steht, mit {value} für den eingegebenen Wert, z. B. "banid 0 {value}". Ohne Vorlage landet die Zeile so in der Datei, wie sie eingetippt wurde.',
+        'entry_template_pairs_hint' => 'Optional: die Form einer Einstellung in der Datei, mit {key} und {value}, z. B. {key}={value} für server.properties oder {key} "{value}" für cvar-Configs. Ohne Vorlage gilt {key}={value}.',
         'eggs' => 'Eggs',
     ],
 
     'formats' => [
         'lines' => 'Textzeilen',
         'json' => 'JSON',
+        'pairs' => 'Einstellungen (Schlüssel = Wert)',
     ],
 
     'page' => [
@@ -39,6 +41,10 @@ return [
         'entries' => 'Einträge',
         'entry' => 'Eintrag',
         'add' => 'Eintrag hinzufügen',
+        'settings' => 'Einstellungen',
+        'setting_key' => 'Schlüssel',
+        'setting_value' => 'Wert',
+        'add_setting' => 'Einstellung hinzufügen',
         'raw' => 'Als Text bearbeiten',
         'raw_hint' => 'Bearbeitet die Datei unverändert. Beim Speichern wird nur geprüft, ob JSON gültig ist.',
         'text' => 'Dateiinhalt',

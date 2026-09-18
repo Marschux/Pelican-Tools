@@ -21,7 +21,7 @@ use Marschux\AccessLists\Lists\Presets;
 
 $presets = Presets::all();
 
-assert(count($presets['minecraft']['files']) === 4 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2 && count($presets['cs2']['files']) === 2);
+assert(count($presets['minecraft']['files']) === 5 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2 && count($presets['cs2']['files']) === 3);
 
 foreach ($presets as $game => $preset) {
     assert(Presets::options()[$game] === $preset['name']);
@@ -37,6 +37,12 @@ foreach ($presets as $game => $preset) {
         assert($definition !== null, "$game/$index: every shipped preset has to build");
         assert($definition->label !== $definition->path, "$game/$index: a preset without a real label would show its path");
         assert($definition->hint !== null, "$game/$index: a shipped preset tells the editor what goes in");
+
+        if ($definition->isPairs()) {
+            assert(str_contains($definition->pairTemplate(), '{key}') && str_contains($definition->pairTemplate(), '{value}'), "$game/$index: a settings file needs both placeholders");
+
+            continue;
+        }
 
         if (!$definition->isJson()) {
             continue;
@@ -61,13 +67,49 @@ assert(ListFile::unwrapLine($bans->lineTemplate(), 'banid 0 ') === 'banid 0 ', '
 $whitelist = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);
 assert($whitelist->lineTemplate() === null, 'a json list has no line shape');
 
+// --- key = value settings ------------------------------------------------------------------------
+
+$properties = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
+assert($properties->isPairs() && $properties->pairTemplate() === '{key}={value}');
+assert($properties->lineTemplate() === null, 'a settings file is not a templated line list');
+
+$file = "# Minecraft server properties
+# Sat Sep 12
+max-players=20
+motd=A Minecraft Server
+white-list=false
+";
+$pairs = ListFile::pairEntries($file, $properties->pairTemplate());
+assert($pairs === ['max-players' => '20', 'motd' => 'A Minecraft Server', 'white-list' => 'false']);
+
+$saved = ListFile::buildPairs($file, ['max-players' => '30', 'motd' => 'A Minecraft Server', 'pvp' => 'true'], $properties->pairTemplate());
+assert(str_contains($saved, "# Minecraft server properties
+"), 'the comments of the file survive a save');
+assert(str_contains($saved, 'max-players=30'), 'a changed setting is written in place');
+assert(!str_contains($saved, 'white-list'), 'a setting removed in the editor is gone');
+assert(str_ends_with($saved, "motd=A Minecraft Server
+pvp=true
+"), 'a new setting is appended, with no gap left by the removed one');
+assert(ListFile::pairEntries($saved, '{key}={value}') === ['max-players' => '30', 'motd' => 'A Minecraft Server', 'pvp' => 'true']);
+
+// a cvar config quotes its values
+$cvars = ListDefinition::fromArray('preset:cs2:2', $presets['cs2']['files'][2]);
+assert($cvars->pairTemplate() === '{key} "{value}"');
+assert(ListFile::pairEntries("// server
+hostname \"Mein Server\"
+mp_maxrounds \"24\"
+", $cvars->pairTemplate())
+    === ['hostname' => 'Mein Server', 'mp_maxrounds' => '24']);
+assert(ListFile::buildPair('sv_alltalk', '1', $cvars->pairTemplate()) === 'sv_alltalk "1"');
+assert(ListFile::parsePair('exec banned_user.cfg', '{key}={value}') === null, 'a line without the separator is no setting');
+
 // a whitelist entry has to end up with a real uuid, not the placeholder
 $whitelistPreset = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);
 assert($whitelistPreset->needsUuid());
 assert(ListFile::fillTemplate($whitelistPreset->templateArray(), ['{uuid}' => 'u', '{name}' => 'Notch']) === ['uuid' => 'u', 'name' => 'Notch']);
 
 // the ip ban list must not ask for a uuid - there is no player behind an address
-$ipPreset = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
+$ipPreset = ListDefinition::fromArray('preset:minecraft:4', $presets['minecraft']['files'][4]);
 assert(!$ipPreset->needsUuid() && $ipPreset->valueField() === 'ip');
 
 // a typed uuid is taken as one, dashed or not; a name never is
