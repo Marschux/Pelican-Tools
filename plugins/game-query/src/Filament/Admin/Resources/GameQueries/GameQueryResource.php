@@ -121,8 +121,10 @@ class GameQueryResource extends Resource
                     ->color('gray')
                     ->action(fn (GameQuery $record) => static::test($record)),
                 ViewAction::make()
-                    ->hidden(fn ($record) => static::getEditAuthorizationResponse($record)->allowed()),
-                EditAction::make(),
+                    ->hidden(fn ($record) => static::getEditAuthorizationResponse($record)->allowed())
+                    ->mutateRecordDataUsing(static::withFieldRows(...)),
+                EditAction::make()
+                    ->mutateRecordDataUsing(static::withFieldRows(...)),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -230,6 +232,19 @@ class GameQueryResource extends Resource
         return $fields;
     }
 
+    /**
+     * Turns the stored list into repeater rows before the edit form is filled. Done on the record
+     * data, not in formatStateUsing: by then the repeater has already hydrated its rows from the
+     * plain names, which leaves nothing to tick.
+     */
+    private static function withFieldRows(array $data): array
+    {
+        $allowed = app(QueryTypeService::class)->get($data['query_type'] ?? null)?->supportedFields() ?? QueryResult::FIELDS;
+        $data['visible_fields'] = static::fieldRows($data['visible_fields'] ?? [], $allowed);
+
+        return $data;
+    }
+
     /** Rebuilds the field list for a newly selected type, keeping what is still shown in its order. */
     private static function pruneVisibleFields(Set $set, Get $get, QueryTypeService $service): void
     {
@@ -322,9 +337,6 @@ class GameQueryResource extends Resource
                     // select then narrows the list
                     ->defaultItems(0)
                     ->default(fn () => static::fieldRows([], QueryResult::FIELDS))
-                    // formatStateUsing, not afterStateHydrated: that would replace the repeater's
-                    // own hook which gives every item its key
-                    ->formatStateUsing(fn (?array $state, Get $get, QueryTypeService $service) => static::fieldRows($state ?? [], static::allowedFields($get, $service)))
                     ->dehydrateStateUsing(fn (?array $state) => static::visibleFromRows($state))
                     ->columnSpanFull(),
                 Select::make('eggs')

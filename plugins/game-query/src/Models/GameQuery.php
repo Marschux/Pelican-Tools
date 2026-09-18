@@ -88,9 +88,7 @@ class GameQuery extends Model
      * from a protocol (or the protocol changing) would otherwise leave old rows with a stored
      * selection that no longer makes sense - reading it fresh here means that can't happen.
      *
-     * The intersection is taken in supportedFields() order, so each protocol decides how its
-     * own tiles are arranged; taking it in the stored order instead would leave the layout at
-     * the mercy of whatever sequence the checkbox list happened to save.
+     * The intersection keeps the stored order - that is the order set in the admin field list.
      */
     protected function visibleFields(): Attribute
     {
@@ -98,7 +96,7 @@ class GameQuery extends Model
             get: function (?string $value): array {
                 $stored = json_decode($value ?? '[]', true);
                 $allowed = $this->supportedFields();
-                $valid = array_values(array_intersect($allowed, is_array($stored) ? $stored : []));
+                $valid = array_values(array_intersect(is_array($stored) ? $stored : [], $allowed));
 
                 return $valid ?: $allowed;
             },
