@@ -3,7 +3,7 @@
   "meta": {"version": "PTDL_v2", "update_url": null},
   "exported_at": "2026-08-10T00:00:00+02:00",
   "name": "Counter-Strike 1.6",
-  "author": "GrassNotFound",
+  "author": "maximilian.rade@gmail.com",
   "description": "Counter-Strike 1.6 dedicated server.",
   "features": ["steam_disk_space"],
   "docker_images": {"ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"},

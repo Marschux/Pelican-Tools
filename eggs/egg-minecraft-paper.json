@@ -6,7 +6,7 @@
     },
     "exported_at": "2026-09-14T00:00:00+02:00",
     "name": "Minecraft Paper",
-    "author": "GrassNotFound",
+    "author": "maximilian.rade@gmail.com",
     "description": "High-performance Minecraft Java server based on Paper. The settings below are written into server.properties on every start.",
     "features": [
         "eula",
