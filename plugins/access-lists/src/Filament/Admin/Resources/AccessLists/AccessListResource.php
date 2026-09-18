@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -164,7 +165,15 @@ class AccessListResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // eggs are read per row for the icon, so they come along with the query
+            ->modifyQueryUsing(fn ($query) => $query->with('eggs'))
             ->columns([
+                // whatever the first linked egg shows in the panel - a list without an egg has
+                // no game to take an icon from
+                ImageColumn::make('icon')
+                    ->label('')
+                    ->size(32)
+                    ->state(fn (AccessList $record) => $record->eggs->first()?->icon),
                 TextColumn::make('name')
                     ->label(trans('access-lists::lists.fields.name'))
                     ->searchable()
