@@ -92,19 +92,13 @@ class ServerInfoWidget extends StatsOverviewWidget
     }
 
     /**
-     * "3 / 32", widened by the bots a game counts towards that number and by the slots a server
-     * keeps reserved - each only when the protocol reports it. Reserved slots share this tile
-     * instead of getting their own: on their own they are a number without a reference point.
+     * "3 / 32" humans only - the bots have their own tile here. Widened by the slots a server
+     * keeps reserved when the protocol reports them: on their own they are a number without a
+     * reference point.
      */
     private function playerCount(QueryResult $result): string
     {
-        $count = $result->bots
-            ? trans('game-query::query.players_with_bots', [
-                'players' => $result->humanPlayers(),
-                'max' => $result->maxPlayers,
-                'bots' => $result->bots,
-            ])
-            : $result->players . ' / ' . $result->maxPlayers;
+        $count = $result->humanPlayers() . ' / ' . $result->maxPlayers;
 
         return $result->reservedSlots === null ? $count : $count . ' (' . $result->reservedSlots . ')';
     }
