@@ -36,7 +36,27 @@ class SourceSchema implements QueryTypeSchemaInterface
             $result = $result->withCounts($humans + $bots, $bots);
         }
 
+        // CS2 puts only "secure" into its A2S keywords, the mode itself comes from the egg
+        $variables = $server->variables()->whereIn('env_variable', ['GAME_TYPE', 'GAME_MODE'])->get()->pluck('server_value', 'env_variable');
+
+        if ($result && ($mode = self::cs2Mode($variables['GAME_TYPE'] ?? null, $variables['GAME_MODE'] ?? null))) {
+            $result = $result->withGameMode($mode);
+        }
+
         return $result;
+    }
+
+    public static function cs2Mode(?string $type, ?string $mode): ?string
+    {
+        return match ("$type/$mode") {
+            '0/0' => 'Casual',
+            '0/1' => 'Competitive',
+            '0/2' => 'Wingman',
+            '1/0' => 'Arms Race',
+            '1/2' => 'Deathmatch',
+            '3/0' => 'Custom',
+            default => null,
+        };
     }
 
     /** @return ?array{int, int} humans and bots, null when RCON is off, refused or unreadable */

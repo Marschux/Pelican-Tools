@@ -138,6 +138,10 @@ assert(SourceSchema::parseStatusCounts("Bad rcon_password.") === null);
 $counted = (new QueryResult('x', 10, 16, bots: 8))->withCounts(10, 9);
 assert($counted->players === 10 && $counted->bots === 9 && $counted->maxPlayers === 16);
 
+// cs2 only advertises "secure" as keyword, the mode comes from the egg's variables
+assert(SourceSchema::cs2Mode('0', '1') === 'Competitive' && SourceSchema::cs2Mode('1', '2') === 'Deathmatch');
+assert(SourceSchema::cs2Mode(null, null) === null, 'other source games keep what A2S reports');
+
 // goldsrc inherits source's field list rather than redeclaring it
 assert((new GoldSourceSchema())->supportedFields() === $sourceFields);
 
