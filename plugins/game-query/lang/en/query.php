@@ -52,6 +52,7 @@ return [
         'spectator' => 'Spectator',
     ],
 
+    'bots_count' => ':count bots',
     'click_to_reveal' => 'Click to reveal',
 
     'notifications' => [

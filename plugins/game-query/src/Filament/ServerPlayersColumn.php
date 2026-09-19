@@ -20,6 +20,8 @@ class ServerPlayersColumn
             ->label(trans('game-query::query.field.players'))
             ->placeholder('-')
             ->badge()
+            // an array state renders one badge per entry: players in blue, the bots next to it in gray
+            ->color(fn (string $state) => str_contains($state, '/') ? 'info' : 'gray')
             // the parameter has to be named $record - that is the name filament injects the
             // row under; any other name falls through to container resolution
             ->state(function (Server $record) {
@@ -37,7 +39,11 @@ class ServerPlayersColumn
                     return null;
                 }
 
-                return $result->humanPlayers() . ' / ' . $result->maxPlayers;
+                $players = $result->humanPlayers() . ' / ' . $result->maxPlayers;
+
+                return $result->bots
+                    ? [$players, trans('game-query::query.bots_count', ['count' => $result->bots])]
+                    : $players;
             });
     }
 }

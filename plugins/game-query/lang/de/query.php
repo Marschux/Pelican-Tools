@@ -52,6 +52,7 @@ return [
         'spectator' => 'Zuschauer',
     ],
 
+    'bots_count' => ':count Bots',
     'click_to_reveal' => 'Zum Anzeigen klicken',
 
     'notifications' => [
