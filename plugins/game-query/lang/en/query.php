@@ -54,6 +54,8 @@ return [
 
     'click_to_reveal' => 'Click to reveal',
 
+    'players_with_bots' => ':players / :max (+:bots bots)',
+
     'notifications' => [
         'test_no_server' => 'No server uses one of the linked eggs',
         'test_failed' => 'Query failed',

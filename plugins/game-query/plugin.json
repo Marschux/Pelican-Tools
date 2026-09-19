@@ -2,7 +2,7 @@
     "id": "game-query",
     "name": "Game Query",
     "author": "Marschux",
-    "version": "1.21.5",
+    "version": "1.21.6",
     "description": "Query game servers for players, map and server info",
     "category": "plugin",
     "url": null,
