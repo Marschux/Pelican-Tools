@@ -41,6 +41,7 @@ return [
         'egg' => 'Egg',
         'port' => 'Port',
         'status' => 'Status',
+        'bots' => ':count Bots',
         'players' => 'Spieler',
     ],
 ];

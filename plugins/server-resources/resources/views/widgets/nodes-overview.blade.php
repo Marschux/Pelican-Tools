@@ -85,7 +85,12 @@
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">{{ $server['disk'] ?? '-' }}</td>
                                         <td style="padding: .375rem .5rem; white-space: nowrap;">
                                             @if ($server['players'] !== null)
-                                                <x-filament::badge color="info">{{ $server['players'] }}</x-filament::badge>
+                                                <span style="display: inline-flex; gap: .375rem;">
+                                                    <x-filament::badge color="info">{{ $server['players'] }}</x-filament::badge>
+                                                    @if ($server['bots'])
+                                                        <x-filament::badge color="gray">{{ trans('server-resources::resources.server.bots', ['count' => $server['bots']]) }}</x-filament::badge>
+                                                    @endif
+                                                </span>
                                             @else
                                                 -
                                             @endif

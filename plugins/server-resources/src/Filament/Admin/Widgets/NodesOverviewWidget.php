@@ -166,6 +166,7 @@ class NodesOverviewWidget extends Widget
             'memory' => null,
             'disk' => null,
             'players' => null,
+            'bots' => null,
             'id' => $server->id,
             // which power buttons are offered, and which of them the current state allows
             'power' => [],
@@ -191,7 +192,7 @@ class NodesOverviewWidget extends Widget
             $row['cpu'] = $server->formatResource(ServerResourceType::CPU, 0) . ' / ' . $server->formatResource(ServerResourceType::CPULimit, 0);
             $row['memory'] = $server->formatResource(ServerResourceType::Memory) . ' / ' . $server->formatResource(ServerResourceType::MemoryLimit);
             $row['disk'] = $server->formatResource(ServerResourceType::Disk) . ' / ' . $server->formatResource(ServerResourceType::DiskLimit);
-            $row['players'] = $this->players($server);
+            [$row['players'], $row['bots']] = $this->players($server);
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -202,28 +203,28 @@ class NodesOverviewWidget extends Widget
     /**
      * The player count from the game-query plugin, when it is installed - the same query its own
      * server list column runs, cached there, and skipped for a stopped server so it costs no
-     * query timeout.
+     * query timeout. Humans and bots separately, each null when there is nothing to show.
+     *
+     * @return array{?string, ?int}
      */
-    private function players(Server $server): ?string
+    private function players(Server $server): array
     {
         if (!class_exists(GameQuery::class)) {
-            return null;
+            return [null, null];
         }
 
         $gameQuery = GameQuery::forServer($server);
 
         if (!$gameQuery || !GameQuery::canRunQuery($server->allocation) || $server->retrieveStatus()->isOffline()) {
-            return null;
+            return [null, null];
         }
 
         $result = $gameQuery->runQuery($server);
 
         if (!$result) {
-            return null;
+            return [null, null];
         }
 
-        return $result->bots
-            ? trans('game-query::query.players_with_bots', ['players' => $result->humanPlayers(), 'max' => $result->maxPlayers, 'bots' => $result->bots])
-            : $result->players . ' / ' . $result->maxPlayers;
+        return [$result->humanPlayers() . ' / ' . $result->maxPlayers, $result->bots ?: null];
     }
 }
