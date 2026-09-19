@@ -15,6 +15,13 @@ class ServerInfoWidget extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
 
+    // fixed, so every game gets the same grid - filament's default switches between 3 and 4
+    // columns depending on how many fields a game shows
+    protected function getColumns(): int
+    {
+        return 4;
+    }
+
     public static function canView(): bool
     {
         /** @var Server $server */
