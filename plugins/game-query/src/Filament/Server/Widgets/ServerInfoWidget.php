@@ -20,7 +20,7 @@ class ServerInfoWidget extends StatsOverviewWidget
     // a long hostname into two lines
     protected function getColumns(): int
     {
-        return 5;
+        return 4;
     }
 
     public static function canView(): bool
