@@ -37,13 +37,7 @@ class ServerPlayersColumn
                     return null;
                 }
 
-                return $result->bots
-                    ? trans('game-query::query.players_with_bots', [
-                        'players' => $result->humanPlayers(),
-                        'max' => $result->maxPlayers,
-                        'bots' => $result->bots,
-                    ])
-                    : $result->players . ' / ' . $result->maxPlayers;
+                return $result->humanPlayers() . ' / ' . $result->maxPlayers;
             });
     }
 }

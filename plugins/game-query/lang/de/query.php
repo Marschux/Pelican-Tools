@@ -54,7 +54,6 @@ return [
 
     'click_to_reveal' => 'Zum Anzeigen klicken',
 
-    'players_with_bots' => ':players / :max (+:bots Bots)',
 
     'notifications' => [
         'test_no_server' => 'Kein Server verwendet eines der verknüpften Eggs',
