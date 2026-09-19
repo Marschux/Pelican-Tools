@@ -92,6 +92,11 @@ readonly class QueryResult
         return new self(...array_merge(get_object_vars($this), $overrides));
     }
 
+    public function withCounts(int $players, int $bots): self
+    {
+        return $this->with(['players' => $players, 'bots' => $bots]);
+    }
+
     public function withWorld(?string $world): self
     {
         return $this->with(['world' => $world]);

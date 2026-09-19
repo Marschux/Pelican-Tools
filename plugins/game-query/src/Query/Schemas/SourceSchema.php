@@ -24,7 +24,46 @@ class SourceSchema implements QueryTypeSchemaInterface
 
     public function process(Server $server, string $ip, int $port): ?QueryResult
     {
-        return $this->run($ip, $port, SourceQuery::SOURCE);
+        $result = $this->run($ip, $port, SourceQuery::SOURCE);
+
+        // CS2's A2S reports one bot too few, so players minus bots shows a phantom human, and
+        // its player list has no names to tell them apart. RCON status counts correctly - used
+        // whenever the egg has an RCON password, A2S alone otherwise.
+        $password = $server->variables()->where('env_variable', 'RCON_PASSWORD')->first()?->server_value;
+
+        if ($result && $password && ($counts = $this->rconCounts($ip, $port, $password))) {
+            [$humans, $bots] = $counts;
+            $result = $result->withCounts($humans + $bots, $bots);
+        }
+
+        return $result;
+    }
+
+    /** @return ?array{int, int} humans and bots, null when RCON is off, refused or unreadable */
+    private function rconCounts(string $ip, int $port, string $password): ?array
+    {
+        $query = new SourceQuery();
+
+        try {
+            $query->Connect($ip, $port, QueryTypeService::timeout(), SourceQuery::SOURCE);
+            $query->SetRconPassword($password);
+
+            return self::parseStatusCounts((string) $query->Rcon('status'));
+        } catch (Throwable $exception) {
+            QueryTypeService::reportFailure($exception);
+
+            return null;
+        } finally {
+            $query->Disconnect();
+        }
+    }
+
+    /** "players  : 1 humans, 9 bots (0 max) ..." from CS2's status. @return ?array{int, int} */
+    public static function parseStatusCounts(string $status): ?array
+    {
+        return preg_match('/players\s*:\s*(\d+) humans?, (\d+) bots?/', $status, $match)
+            ? [(int) $match[1], (int) $match[2]]
+            : null;
     }
 
     public function supportedFields(): array

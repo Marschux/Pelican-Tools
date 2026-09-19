@@ -131,6 +131,13 @@ $sourceFields = (new SourceSchema())->supportedFields();
 assert(in_array('map', $sourceFields, true) && in_array('secure', $sourceFields, true));
 assert(!in_array('seed', $sourceFields, true), 'source games have no readable seed');
 
+// cs2 rcon status gives the real counts, A2S is one bot short
+assert(SourceSchema::parseStatusCounts("[Client] players  : 1 humans, 9 bots (0 max) (not hibernating)") === [1, 9]);
+assert(SourceSchema::parseStatusCounts("players  : 0 humans, 1 bot (16 max)") === [0, 1]);
+assert(SourceSchema::parseStatusCounts("Bad rcon_password.") === null);
+$counted = (new QueryResult('x', 10, 16, bots: 8))->withCounts(10, 9);
+assert($counted->players === 10 && $counted->bots === 9 && $counted->maxPlayers === 16);
+
 // goldsrc inherits source's field list rather than redeclaring it
 assert((new GoldSourceSchema())->supportedFields() === $sourceFields);
 
