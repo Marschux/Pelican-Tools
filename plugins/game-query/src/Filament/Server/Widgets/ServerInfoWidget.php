@@ -15,11 +15,12 @@ class ServerInfoWidget extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
 
-    // all fields in one row, however many a game shows - filament's default wraps them into rows
-    // of 3 or 4
+    // fixed, so every game gets the same grid - filament's default switches between 3 and 4
+    // columns depending on how many fields a game shows, and one row for all of them squeezes
+    // a long hostname into two lines
     protected function getColumns(): int
     {
-        return max(1, count($this->getCachedStats()));
+        return 5;
     }
 
     public static function canView(): bool
