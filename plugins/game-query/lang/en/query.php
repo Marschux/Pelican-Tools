@@ -8,7 +8,6 @@ return [
     'name_hint' => 'Optional. Only used to tell the entries in this list apart.',
     'type' => 'Type',
     'query_label' => 'Query',
-    'query_failed' => 'No answer',
     'no_query' => 'Not configured',
     'test' => 'Test',
     'eggs' => 'Eggs',

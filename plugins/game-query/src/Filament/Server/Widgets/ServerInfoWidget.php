@@ -15,6 +15,8 @@ class ServerInfoWidget extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
 
+    private const NONE = '–';
+
     // fixed, so every game gets the same grid - filament's default switches between 3 and 4
     // columns depending on how many fields a game shows, and one row for all of them squeezes
     // a long hostname into two lines
@@ -32,11 +34,9 @@ class ServerInfoWidget extends StatsOverviewWidget
             return false;
         }
 
-        if (!GameQuery::forServer($server)) {
-            return false;
-        }
-
-        return !$server->retrieveStatus()->isOffline();
+        // shown for a stopped server too: its tiles stay in place with a dash, so the layout
+        // does not jump around when the server starts or stops
+        return GameQuery::forServer($server) !== null;
     }
 
     protected function getStats(): array
@@ -51,32 +51,25 @@ class ServerInfoWidget extends StatsOverviewWidget
             return [SmallStatBlock::make(trans('game-query::query.query_label'), trans('game-query::query.no_query'))];
         }
 
-        $result = $gameQuery->runQuery($server);
-
-        if (!$result) {
-            // silently rendering nothing here is what makes a misconfigured port or an
-            // unreachable address look like "the plugin is not installed"
-            return [SmallStatBlock::make(trans('game-query::query.query_label'), trans('game-query::query.query_failed'))];
-        }
+        // a stopped server is not queried at all - that would only cost a full timeout
+        $result = $server->retrieveStatus()->isOffline() ? null : $gameQuery->runQuery($server);
 
         $stats = [];
 
+        // every ticked field keeps its tile; offline, a failed query or a value the server did
+        // not report all show as a dash instead of making the tile disappear
         foreach ($gameQuery->visible_fields as $field) {
             if ($field === 'password') {
-                if ($stat = $this->passwordStat($server, $result)) {
+                // the password comes from a startup variable, so it is known without any query
+                if ($stat = $this->passwordStat($server, $result?->password ?? $gameQuery->plainPassword($server))) {
                     $stats[] = $stat;
                 }
 
                 continue;
             }
 
-            $value = $this->format($field, $result);
-
-            // null means the protocol cannot report this field - show nothing rather than
-            // a row of "unknown" for every field the game does not support
-            if ($value !== null) {
-                $stats[] = SmallStatBlock::make(trans("game-query::query.field.$field"), $value);
-            }
+            $value = $result ? $this->format($field, $result) : null;
+            $stats[] = SmallStatBlock::make(trans("game-query::query.field.$field"), $value ?? self::NONE);
         }
 
         return $stats;
@@ -90,13 +83,15 @@ class ServerInfoWidget extends StatsOverviewWidget
      * showing any variable at all - a viewer without it must not see this either, even though
      * the value technically already made it into the (shared, cached) query result.
      */
-    private function passwordStat(Server $server, QueryResult $result): ?MaskedStatBlock
+    private function passwordStat(Server $server, ?string $password): SmallStatBlock|MaskedStatBlock|null
     {
-        if ($result->password === null || !auth()->user()?->can('startup.read', $server)) {
+        if (!auth()->user()?->can('startup.read', $server)) {
             return null;
         }
 
-        return MaskedStatBlock::make(trans('game-query::query.field.password'), $result->password);
+        return $password === null
+            ? SmallStatBlock::make(trans('game-query::query.field.password'), self::NONE)
+            : MaskedStatBlock::make(trans('game-query::query.field.password'), $password);
     }
 
     /**
