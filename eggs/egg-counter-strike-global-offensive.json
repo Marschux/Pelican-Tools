@@ -1,0 +1,318 @@
+{
+    "_comment": "Counter-Strike: Global Offensive (legacy) dedicated server, app 740.",
+    "meta": {
+        "version": "PLCN_v3",
+        "update_url": null
+    },
+    "exported_at": "2026-09-20T00:00:00+00:00",
+    "name": "Counter-Strike: Global Offensive",
+    "author": "maximilian.rade@gmail.com",
+    "uuid": "0d3f2a1c-6b8e-4f27-9a55-3c7d41e0b912",
+    "description": "Counter-Strike: Global Offensive dedicated server (app 740). Clients from the standalone CS:GO Legacy app 4465480 need the SourceMod plugins CSGOEngineFix and NoLobbyReservation on the server before they can join.",
+    "tags": [
+        "steamcmd"
+    ],
+    "features": [
+        "steam_disk_space",
+        "gsl_token"
+    ],
+    "docker_images": {
+        "Source": "ghcr.io/parkervcp/games:source"
+    },
+    "file_denylist": [],
+    "startup_commands": {
+        "Default": "./srcds_run -game csgo -console -usercon -port {{SERVER_PORT}} +ip 0.0.0.0 -strictportbind -norestart -maxplayers_override {{MAX_PLAYERS}} -tickrate {{TICKRATE}} +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} +mapgroup {{MAPGROUP}} +hostname \"{{SERVER_NAME}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_password \"{{SRV_PASSWORD}}\" +sv_lan {{SV_LAN}} +sv_region {{SV_REGION}} +servercfgfile \"{{EXEC_CFG}}\" +tv_enable {{TV_ENABLE}} +tv_port {{TV_PORT}} +tv_delay {{TV_DELAY}} +tv_maxclients {{TV_MAXCLIENTS}} +tv_password \"{{TV_PASSWORD}}\" +map {{SRCDS_MAP}} +sv_setsteamaccount \"{{STEAM_TOKEN}}\" {{EXTRA_ARGS}}"
+    },
+    "config": {
+        "files": "{}",
+        "startup": "{\n    \"done\": \"Connection to Steam servers successful\"\n}",
+        "logs": "{}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\nset -euo pipefail\n\nROOT=/mnt/server\nmkdir -p \"$ROOT/steamcmd\" \"$ROOT/steamapps\"\n\necho \"> Installing steamcmd ...\"\ncurl -sSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar -xzf - -C \"$ROOT/steamcmd\"\n\necho \"> Installing app ${SRCDS_APPID} ...\"\nexport HOME=\"$ROOT\"\n(cd \"$ROOT/steamcmd\" && ./steamcmd.sh +force_install_dir \"$ROOT\" +login anonymous +app_update \"${SRCDS_APPID}\" validate +quit)\n\nmkdir -p \"$ROOT/.steam/sdk32\" \"$ROOT/.steam/sdk64\"\ncp -v \"$ROOT/steamcmd/linux32/steamclient.so\" \"$ROOT/.steam/sdk32/steamclient.so\"\ncp -v \"$ROOT/steamcmd/linux64/steamclient.so\" \"$ROOT/.steam/sdk64/steamclient.so\"\n\n# a place for own cvars; never overwritten, so a reinstall keeps it\nif [[ ! -f \"$ROOT/csgo/cfg/server.cfg\" ]]; then\n    echo \"> Creating an empty server.cfg ...\"\n    mkdir -p \"$ROOT/csgo/cfg\"\n    echo '// Own cvars go here, executed via the \"Config to Execute\" variable.' > \"$ROOT/csgo/cfg/server.cfg\"\nfi\n\necho \"> Done.\"\n",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "sort": 0,
+            "name": "Hostname",
+            "description": "The server name shown in the server browser.",
+            "env_variable": "SERVER_NAME",
+            "default_value": "Counter-Strike: Global Offensive Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 1,
+            "name": "Map",
+            "description": "The map loaded at start.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "de_dust2",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "alpha_dash"
+            ]
+        },
+        {
+            "sort": 2,
+            "name": "Max Players",
+            "description": "Player slots.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "16",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:1,64"
+            ]
+        },
+        {
+            "sort": 3,
+            "name": "Server Password",
+            "description": "Password players need to join. Empty means open.",
+            "env_variable": "SRV_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 4,
+            "name": "RCON Password",
+            "description": "Password for remote console. Empty means RCON off.",
+            "env_variable": "RCON_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 5,
+            "name": "Game Type",
+            "description": "0 Classic, 1 Gun Game, 2 Training, 3 Custom, 4 Cooperative, 5 Skirmish. Goes together with the game mode.",
+            "env_variable": "GAME_TYPE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,5"
+            ]
+        },
+        {
+            "sort": 6,
+            "name": "Game Mode",
+            "description": "With game type 0: 0 Casual, 1 Competitive, 2 Wingman. With game type 1: 0 Arms Race, 1 Demolition, 2 Deathmatch.",
+            "env_variable": "GAME_MODE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,3"
+            ]
+        },
+        {
+            "sort": 7,
+            "name": "Map Group",
+            "description": "Map rotation, e.g. mg_active, mg_bomb, mg_hostage.",
+            "env_variable": "MAPGROUP",
+            "default_value": "mg_active",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 8,
+            "name": "Tickrate",
+            "description": "Server tickrate. 64 is the usual value, 128 costs noticeably more CPU.",
+            "env_variable": "TICKRATE",
+            "default_value": "64",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:33,128"
+            ]
+        },
+        {
+            "sort": 9,
+            "name": "Game Server Login Token",
+            "description": "GSLT from steamcommunity.com/dev/managegameservers, created with app id 730. Without one the server stays off the public list.",
+            "env_variable": "STEAM_TOKEN",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "alpha_num",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 10,
+            "name": "LAN Mode",
+            "description": "1 keeps the server off the public list and skips Steam authentication.",
+            "env_variable": "SV_LAN",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 11,
+            "name": "Region",
+            "description": "Server browser region: 0 US East, 1 US West, 2 South America, 3 Europe, 4 Asia, 5 Australia, 6 Middle East, 7 Africa, 255 World.",
+            "env_variable": "SV_REGION",
+            "default_value": "3",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "in:0,1,2,3,4,5,6,7,255"
+            ]
+        },
+        {
+            "sort": 12,
+            "name": "Config to Execute",
+            "description": "Config in csgo/cfg executed at start.",
+            "env_variable": "EXEC_CFG",
+            "default_value": "server.cfg",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 13,
+            "name": "Enable GOTV",
+            "description": "1 turns the spectator relay on. It needs its own port allocation.",
+            "env_variable": "TV_ENABLE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "boolean"
+            ]
+        },
+        {
+            "sort": 14,
+            "name": "GOTV Port",
+            "description": "Port for GOTV. Needs an allocation on this server.",
+            "env_variable": "TV_PORT",
+            "default_value": "27020",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:1024,65535"
+            ]
+        },
+        {
+            "sort": 15,
+            "name": "GOTV Delay",
+            "description": "Broadcast delay in seconds. 30 or more keeps spectators from spoiling the round.",
+            "env_variable": "TV_DELAY",
+            "default_value": "30",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,600"
+            ]
+        },
+        {
+            "sort": 16,
+            "name": "GOTV Max Clients",
+            "description": "How many spectators GOTV takes.",
+            "env_variable": "TV_MAXCLIENTS",
+            "default_value": "10",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,255"
+            ]
+        },
+        {
+            "sort": 17,
+            "name": "GOTV Password",
+            "description": "Password for GOTV spectators. Empty means open.",
+            "env_variable": "TV_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": 18,
+            "name": "Additional Arguments",
+            "description": "Appended to the start command, for example -insecure or +sv_alltalk 1.",
+            "env_variable": "EXTRA_ARGS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:256"
+            ]
+        },
+        {
+            "sort": 19,
+            "name": "App ID",
+            "description": "Steam app of the dedicated server. 740 is CS:GO, do not confuse it with the standalone client app 4465480.",
+            "env_variable": "SRCDS_APPID",
+            "default_value": "740",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": [
+                "required",
+                "numeric"
+            ]
+        }
+    ]
+}
