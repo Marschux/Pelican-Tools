@@ -100,6 +100,30 @@ class Presets
                     ],
                 ],
             ],
+            'css' => [
+                'name' => 'Counter-Strike: Source',
+                'files' => [
+                    [
+                        'label' => 'Bans',
+                        'path' => 'cstrike/cfg/banned_user.cfg',
+                        'entry_template' => 'banid 0 {value}',
+                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. Der Server schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'IP bans',
+                        'path' => 'cstrike/cfg/banned_ip.cfg',
+                        'entry_template' => 'addip 0 {value}',
+                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Der Server schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'server.cfg',
+                        'path' => 'cstrike/cfg/server.cfg',
+                        'format' => ListDefinition::FORMAT_PAIRS,
+                        'entry_template' => '{key} "{value}"',
+                        'hint' => 'Die cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                ],
+            ],
             'cs16' => [
                 'name' => 'Counter-Strike 1.6',
                 'files' => [

@@ -19,7 +19,7 @@ its egg. Nothing is switched on automatically, even when a game's files are ther
 
 ## Presets
 
-The admin form offers presets for Minecraft, Valheim, TeamSpeak, Counter-Strike 2 and Counter-Strike 1.6. Picking one fills the files
+The admin form offers presets for Minecraft, Valheim, TeamSpeak, Counter-Strike 2, Counter-Strike: Source and Counter-Strike 1.6. Picking one fills the files
 with these, each with a hint for whoever edits the list; they can then be removed, changed or added
 to:
 
@@ -29,6 +29,7 @@ to:
 | Valheim | `savegames/adminlist.txt`, `savegames/bannedlist.txt`, `savegames/permittedlist.txt` |
 | TeamSpeak | `query_ip_allowlist.txt`, `query_ip_denylist.txt` |
 | Counter-Strike 2 | `game/csgo/cfg/banned_user.cfg`, `game/csgo/cfg/banned_ip.cfg`, `game/csgo/cfg/server.cfg` |
+| Counter-Strike: Source | `cstrike/cfg/banned_user.cfg`, `cstrike/cfg/banned_ip.cfg`, `cstrike/cfg/server.cfg` |
 | Counter-Strike 1.6 | `cstrike/banned.cfg`, `cstrike/listip.cfg`, `cstrike/server.cfg` |
 
 The TeamSpeak lists only control who may reach ServerQuery. Client bans and server groups live in
