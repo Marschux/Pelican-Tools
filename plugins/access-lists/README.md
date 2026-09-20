@@ -19,7 +19,7 @@ its egg. Nothing is switched on automatically, even when a game's files are ther
 
 ## Presets
 
-The admin form offers presets for Minecraft, Valheim, TeamSpeak and Counter-Strike 2. Picking one fills the files
+The admin form offers presets for Minecraft, Valheim, TeamSpeak, Counter-Strike 2 and Counter-Strike 1.6. Picking one fills the files
 with these, each with a hint for whoever edits the list; they can then be removed, changed or added
 to:
 
@@ -28,12 +28,13 @@ to:
 | Minecraft | `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json` |
 | Valheim | `savegames/adminlist.txt`, `savegames/bannedlist.txt`, `savegames/permittedlist.txt` |
 | TeamSpeak | `query_ip_allowlist.txt`, `query_ip_denylist.txt` |
-| Counter-Strike 2 | `game/csgo/cfg/banned_user.cfg`, `game/csgo/cfg/banned_ip.cfg` |
+| Counter-Strike 2 | `game/csgo/cfg/banned_user.cfg`, `game/csgo/cfg/banned_ip.cfg`, `game/csgo/cfg/server.cfg` |
+| Counter-Strike 1.6 | `cstrike/banned.cfg`, `cstrike/listip.cfg`, `cstrike/server.cfg` |
 
 The TeamSpeak lists only control who may reach ServerQuery. Client bans and server groups live in
 its database and are not files, so they are not editable here.
 
-The Counter-Strike 2 lists use a line template (`banid 0 {value}` and `addip 0 {value}`), so the
+The Counter-Strike lists use a line template (`banid 0 {value}` and `addip 0 {value}`), so the
 editor only takes the SteamID or the address. The server rewrites both files itself on `writeid`
 and `writeip` - a ban issued in game overwrites what was edited here.
 

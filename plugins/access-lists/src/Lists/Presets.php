@@ -100,6 +100,30 @@ class Presets
                     ],
                 ],
             ],
+            'cs16' => [
+                'name' => 'Counter-Strike 1.6',
+                'files' => [
+                    [
+                        'label' => 'Bans',
+                        'path' => 'cstrike/banned.cfg',
+                        'entry_template' => 'banid 0 {value}',
+                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. HLDS schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'IP bans',
+                        'path' => 'cstrike/listip.cfg',
+                        'entry_template' => 'addip 0 {value}',
+                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. HLDS schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec listip.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                    [
+                        'label' => 'server.cfg',
+                        'path' => 'cstrike/server.cfg',
+                        'format' => ListDefinition::FORMAT_PAIRS,
+                        'entry_template' => '{key} "{value}"',
+                        'hint' => 'Die cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                    ],
+                ],
+            ],
             // only who may reach ServerQuery - client bans and groups live in the database
             'teamspeak' => [
                 'name' => 'TeamSpeak',
