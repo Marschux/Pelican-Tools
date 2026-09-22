@@ -1,0 +1,180 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
+    "meta": {
+        "version": "PLCN_v3",
+        "update_url": null
+    },
+    "exported_at": "2026-09-22T00:00:00+00:00",
+    "name": "Counter-Strike: Condition Zero",
+    "author": "maximilian.rade@gmail.com",
+    "uuid": "637aa67e-e083-474a-bcfb-7ae23bd6b3d3",
+    "description": "Counter-Strike: Condition Zero dedicated server, with the built-in CZ bots.",
+    "icon": null,
+    "tags": [],
+    "features": [
+        "steam_disk_space",
+        "gsl_token"
+    ],
+    "docker_images": {
+        "ghcr.io/parkervcp/games:source": "ghcr.io/parkervcp/games:source"
+    },
+    "file_denylist": [],
+    "startup_commands": {
+        "Default": "./hlds_run -console -game czero -port {{SERVER_PORT}} -sport {{VAC_PORT}} +ip 0.0.0.0 -strictportbind -norestart +maxplayers {{MAX_PLAYERS}} +hostname \"{{SERVER_NAME}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_password \"{{SRV_PASSWORD}}\" +sv_setsteamaccount \"{{STEAM_ACC}}\" +bot_quota {{BOT_QUOTA}} +bot_difficulty {{BOT_DIFFICULTY}} +map {{SRCDS_MAP}} {{EXTRA_ARGS}}"
+    },
+    "config": {
+        "files": "{}",
+        "startup": "{\n    \"done\": \"Connection to Steam servers successful\"\n}",
+        "logs": "{}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\ncd /tmp\nmkdir -p /mnt/server/steamcmd\ncurl -sSL -o steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz\ntar -xzf steamcmd.tar.gz -C /mnt/server/steamcmd\ncd /mnt/server/steamcmd\n\n# app 90 aborts halfway more often than not, so run it until the files are actually there\nfor try in 1 2 3 4 5; do\n    ./steamcmd.sh +force_install_dir /mnt/server +login anonymous +app_set_config 90 mod czero +app_update 90 validate +quit\n    [[ -f /mnt/server/hlds_run && -f /mnt/server/czero/liblist.gam ]] && break\n    echo \"> Install incomplete, attempt ${try} of 5 ...\"\ndone\n\nif [[ ! -f /mnt/server/hlds_run || ! -f /mnt/server/czero/liblist.gam ]]; then\n    echo \"> steamcmd did not get app 90 down in 5 attempts, aborting.\"\n    exit 1\nfi\n\nmkdir -p /mnt/server/.steam/sdk32 /mnt/server/.steam/sdk64\ncp -v linux32/steamclient.so ../.steam/sdk32/steamclient.so\ncp -v linux64/steamclient.so ../.steam/sdk64/steamclient.so",
+            "container": "ghcr.io/parkervcp/installers:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "sort": null,
+            "name": "Additional Arguments",
+            "description": "Appended to the start command, for example +sv_lan 1 -pingboost 3.",
+            "env_variable": "EXTRA_ARGS",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:256"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Max Players",
+            "description": "Player slots. HLDS tops out at 32.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "16",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:1,32"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "RCON Password",
+            "description": "Password for remote console. Empty means RCON off.",
+            "env_variable": "RCON_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Hostname",
+            "description": "The server name shown in the server browser.",
+            "env_variable": "SERVER_NAME",
+            "default_value": "Counter-Strike: Condition Zero Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Map",
+            "description": "The default map.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "de_dust2_cz",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "alpha_dash"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Server Password",
+            "description": "Password players need to join. Empty means open.",
+            "env_variable": "SRV_PASSWORD",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Game Server Login Token",
+            "description": "GSLT from steamcommunity.com/dev/managegameservers, app id 90. Without one the server stays off the public list.",
+            "env_variable": "STEAM_ACC",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:64"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "VAC Port",
+            "description": "VAC port. Default 26900.",
+            "env_variable": "VAC_PORT",
+            "default_value": "26900",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": [
+                "required",
+                "numeric",
+                "digits_between:1,5"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Bot Quota",
+            "description": "Number of CZ bots that fill the server. 0 means no bots.",
+            "env_variable": "BOT_QUOTA",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,31"
+            ]
+        },
+        {
+            "sort": null,
+            "name": "Bot Difficulty",
+            "description": "0 easy, 1 normal, 2 hard, 3 expert.",
+            "env_variable": "BOT_DIFFICULTY",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "numeric",
+                "between:0,3"
+            ]
+        }
+    ]
+}
