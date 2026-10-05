@@ -2,7 +2,9 @@
 
 Custom and modified eggs plus custom plugins for the Pelican panel.
 
-![Pelican Panel](assets/pelican-panel.png)
+<p align="center">
+  <img src="assets/pelican-panel.png" alt="Pelican Panel" width="160">
+</p>
 
 ## Eggs
 
