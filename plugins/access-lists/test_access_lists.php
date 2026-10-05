@@ -139,7 +139,7 @@ assert($lines->label === 'savegames/adminlist.txt', 'without a label the path ha
 assert(!$lines->needsUuid() && $lines->templateArray() === []);
 assert($lines->valueField() === 'name', 'a line list has no fields, but the editor still needs a key');
 
-assert(ListDefinition::fromArray('7:2', ['label' => 'Ohne Pfad']) === null, 'a file without a path is not a list');
+assert(ListDefinition::fromArray('7:2', ['label' => 'No path']) === null, 'a file without a path is not a list');
 assert(ListDefinition::fromArray('7:3', ['path' => 'x', 'format' => 'nonsense'])->format === 'lines', 'an unknown format falls back rather than blowing up');
 assert(ListDefinition::fromArray('7:4', ['path' => 'x', 'format' => 'json', 'display_field' => ''])->valueField() === 'name', 'empty fields count as unset');
 

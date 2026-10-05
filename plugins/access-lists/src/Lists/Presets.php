@@ -10,7 +10,7 @@ class Presets
 {
     private const REASON = 'Banned by an operator.';
 
-    private const VALHEIM_ID = 'Eine ID pro Eintrag, mit Plattform-Präfix, z. B. Steam_76561197960287930. Die ID steht im Server-Log, wenn sich der Spieler verbindet.';
+    private const VALHEIM_ID = 'One ID per entry, with the platform prefix, e.g. Steam_76561197960287930. The ID shows up in the server log when the player connects.';
 
     /**
      * @return array<string, array{name: string, files: array<int, array<string, mixed>>}>
@@ -28,7 +28,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}"}',
-                        'hint' => 'Spielernamen oder UUID eintragen, das jeweils andere sucht das Panel selbst. Wirkt nur mit white-list=true in server.properties; ein laufender Server übernimmt Änderungen erst nach "whitelist reload" oder einem Neustart.',
+                        'hint' => 'Enter a player name or a UUID, the panel looks up the other one itself. Only applies with white-list=true in server.properties; a running server picks up changes only after "whitelist reload" or a restart.',
                     ],
                     [
                         'label' => 'Admins',
@@ -37,7 +37,7 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "level": 4, "bypassesPlayerLimit": false}',
-                        'hint' => 'Spielernamen oder UUID eintragen. Neue Admins bekommen Level 4, also volle Rechte. Greift nach einem Neustart.',
+                        'hint' => 'Enter a player name or a UUID. New admins get level 4, i.e. full permissions. Takes effect after a restart.',
                     ],
                     [
                         'label' => 'Bans',
@@ -46,14 +46,14 @@ class Presets
                         'key_field' => 'uuid',
                         'display_field' => 'name',
                         'entry_template' => '{"uuid": "{uuid}", "name": "{name}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
-                        'hint' => 'Spielernamen oder UUID eintragen, das jeweils andere sucht das Panel selbst. Greift nach einem Neustart.',
+                        'hint' => 'Enter a player name or a UUID, the panel looks up the other one itself. Takes effect after a restart.',
                     ],
                     [
-                        'label' => 'Einstellungen',
+                        'label' => 'Settings',
                         'path' => 'server.properties',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => ListDefinition::DEFAULT_PAIR_TEMPLATE,
-                        'hint' => 'Die Einstellungen aus server.properties. Kommentarzeilen der Datei bleiben erhalten. Ein laufender Server liest sie erst beim nächsten Start.',
+                        'hint' => 'The settings from server.properties. Comment lines in the file are kept. A running server only reads them on its next start.',
                     ],
                     [
                         'label' => 'IP bans',
@@ -62,7 +62,7 @@ class Presets
                         'key_field' => 'ip',
                         'display_field' => 'ip',
                         'entry_template' => '{"ip": "{ip}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Greift nach einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. Takes effect after a restart.',
                     ],
                 ],
             ],
@@ -71,7 +71,7 @@ class Presets
                 'files' => [
                     ['label' => 'Admins', 'path' => 'savegames/adminlist.txt', 'hint' => self::VALHEIM_ID],
                     ['label' => 'Bans', 'path' => 'savegames/bannedlist.txt', 'hint' => self::VALHEIM_ID],
-                    ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt', 'hint' => self::VALHEIM_ID . ' Steht hier mindestens ein Eintrag, dürfen nur diese Spieler beitreten.'],
+                    ['label' => 'Whitelist', 'path' => 'savegames/permittedlist.txt', 'hint' => self::VALHEIM_ID . ' Once there is at least one entry, only these players may join.'],
                 ],
             ],
             // the server rewrites both files itself on "writeid"/"writeip", so an edit here is
@@ -83,20 +83,20 @@ class Presets
                         'label' => 'Bans',
                         'path' => 'game/csgo/cfg/banned_user.cfg',
                         'entry_template' => 'banid 0 {value}',
-                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_1:0:12345678. Ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One SteamID per entry, e.g. STEAM_1:0:12345678. A running server picks up changes only after "exec banned_user.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'IP bans',
                         'path' => 'game/csgo/cfg/banned_ip.cfg',
                         'entry_template' => 'addip 0 {value}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. A running server picks up changes only after "exec banned_ip.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'server.cfg',
                         'path' => 'game/csgo/cfg/server.cfg',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => '{key} "{value}"',
-                        'hint' => 'Die cvars aus server.cfg, z. B. mp_maxrounds oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'The cvars from server.cfg, e.g. mp_maxrounds or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
                     ],
                 ],
             ],
@@ -107,20 +107,20 @@ class Presets
                         'label' => 'Bans',
                         'path' => 'csgo/cfg/banned_user.cfg',
                         'entry_template' => 'banid 0 {value}',
-                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. Der Server schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. The server writes this file itself on "writeid", a running server picks up changes only after "exec banned_user.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'IP bans',
                         'path' => 'csgo/cfg/banned_ip.cfg',
                         'entry_template' => 'addip 0 {value}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Der Server schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. The server writes this file itself on "writeip", a running server picks up changes only after "exec banned_ip.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'server.cfg',
                         'path' => 'csgo/cfg/server.cfg',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => '{key} "{value}"',
-                        'hint' => 'Die cvars aus server.cfg, z. B. mp_maxrounds oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'The cvars from server.cfg, e.g. mp_maxrounds or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
                     ],
                 ],
             ],
@@ -131,20 +131,20 @@ class Presets
                         'label' => 'Bans',
                         'path' => 'cstrike/cfg/banned_user.cfg',
                         'entry_template' => 'banid 0 {value}',
-                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. Der Server schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. The server writes this file itself on "writeid", a running server picks up changes only after "exec banned_user.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'IP bans',
                         'path' => 'cstrike/cfg/banned_ip.cfg',
                         'entry_template' => 'addip 0 {value}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Der Server schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. The server writes this file itself on "writeip", a running server picks up changes only after "exec banned_ip.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'server.cfg',
                         'path' => 'cstrike/cfg/server.cfg',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => '{key} "{value}"',
-                        'hint' => 'Die cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'The cvars from server.cfg, e.g. mp_timelimit or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
                     ],
                 ],
             ],
@@ -155,20 +155,20 @@ class Presets
                         'label' => 'Bans',
                         'path' => 'cstrike/banned.cfg',
                         'entry_template' => 'banid 0 {value}',
-                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. HLDS schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. HLDS writes this file itself on "writeid", a running server picks up changes only after "exec banned.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'IP bans',
                         'path' => 'cstrike/listip.cfg',
                         'entry_template' => 'addip 0 {value}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. HLDS schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec listip.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. HLDS writes this file itself on "writeip", a running server picks up changes only after "exec listip.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'server.cfg',
                         'path' => 'cstrike/server.cfg',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => '{key} "{value}"',
-                        'hint' => 'Die cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'The cvars from server.cfg, e.g. mp_timelimit or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
                     ],
                 ],
             ],
@@ -179,20 +179,20 @@ class Presets
                         'label' => 'Bans',
                         'path' => 'czero/banned.cfg',
                         'entry_template' => 'banid 0 {value}',
-                        'hint' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. HLDS schreibt diese Datei bei "writeid" selbst, ein laufender Server übernimmt Änderungen erst nach "exec banned.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. HLDS writes this file itself on "writeid", a running server picks up changes only after "exec banned.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'IP bans',
                         'path' => 'czero/listip.cfg',
                         'entry_template' => 'addip 0 {value}',
-                        'hint' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. HLDS schreibt diese Datei bei "writeip" selbst, ein laufender Server übernimmt Änderungen erst nach "exec listip.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'One IP address per entry, e.g. 203.0.113.7. HLDS writes this file itself on "writeip", a running server picks up changes only after "exec listip.cfg" in the console or a restart.',
                     ],
                     [
                         'label' => 'server.cfg',
                         'path' => 'czero/server.cfg',
                         'format' => ListDefinition::FORMAT_PAIRS,
                         'entry_template' => '{key} "{value}"',
-                        'hint' => 'Die cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirksam nach "exec server.cfg" in der Konsole oder einem Neustart.',
+                        'hint' => 'The cvars from server.cfg, e.g. mp_timelimit or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
                     ],
                 ],
             ],
@@ -200,8 +200,8 @@ class Presets
             'teamspeak' => [
                 'name' => 'TeamSpeak',
                 'files' => [
-                    ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen dürfen auf ServerQuery und sind vom Flood-Schutz ausgenommen. Betrifft nicht, wer auf den Voice-Server darf.'],
-                    ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt', 'hint' => 'Eine IP-Adresse pro Eintrag. Diese Adressen werden von ServerQuery ausgesperrt. Betrifft nicht, wer auf den Voice-Server darf.'],
+                    ['label' => 'Query allowlist', 'path' => 'query_ip_allowlist.txt', 'hint' => 'One IP address per entry. These addresses may reach ServerQuery and are exempt from flood protection. Does not affect who may join the voice server.'],
+                    ['label' => 'Query denylist', 'path' => 'query_ip_denylist.txt', 'hint' => 'One IP address per entry. These addresses are locked out of ServerQuery. Does not affect who may join the voice server.'],
                 ],
             ],
         ];

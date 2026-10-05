@@ -1,14 +1,14 @@
 # Pelican Eggs & Plugins
 
-Eigene und angepasste Eggs sowie eigene Plugins fuer das Pelican-Panel.
+Custom and modified eggs plus custom plugins for the Pelican panel.
 
 ![Pelican Panel](assets/pelican-panel.png)
 
 ## Eggs
 
-Alle Eggs liegen flach in `eggs/`.
+All eggs sit flat in `eggs/`.
 
-| Gamename | Egg-Datei | Serverart |
+| Game | Egg file | Server type |
 |---|---|---|
 | Counter-Strike 1.6 | `eggs/egg-counter-strike-16.json` | Source |
 | Counter-Strike: Condition Zero | `eggs/egg-counter-strike-condition-zero.json` | Source |
@@ -19,22 +19,22 @@ Alle Eggs liegen flach in `eggs/`.
 
 ## Plugins
 
-Quellcode unter `plugins/<name>/`, das Deploy-Artefakt ist `plugins/<name>.zip`.
+Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.zip`.
 
-| Plugin | Zweck | Panel |
+| Plugin | Purpose | Panel |
 |---|---|---|
-| Access Lists | Admin-, Bann- und Whitelist-Dateien eines Servers im Panel bearbeiten | Admin + Server |
-| Game Query | Spieler, Map und Serverinfos abfragen | Admin + Server |
-| Server Navigation | Seitenleisten-Eintraege pro Server ausblenden | Admin + Server |
-| Server Resources | Ressourcen von Host, Nodes und Servern auf dem Admin-Dashboard | Admin |
+| Access Lists | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
+| Game Query | Query players, map and server info | Admin + Server |
+| Server Navigation | Hide sidebar entries per server | Admin + Server |
+| Server Resources | Resources of host, nodes and servers on the admin dashboard | Admin |
 
-Nach jeder Plugin-Aenderung Version in `plugin.json` hochzaehlen und die ZIP neu bauen:
+After every plugin change, bump the version in `plugin.json` and rebuild the ZIP:
 
 ```
 python build.py game-query
 ```
 
-## Quellen
+## Sources
 
 - [Pelican Project](https://pelican.dev/)
 - [Pelican Eggs](https://github.com/pelican-eggs)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Baut plugins/<name>.zip aus plugins/<name>/ neu.
+"""Rebuilds plugins/<name>.zip from plugins/<name>/.
 
-Die ZIP ist das Deploy-Artefakt und wird mit eingecheckt. Weicht sie vom Quellstand ab,
-laedt man eine alte Version hoch und sucht den Fehler anschliessend im Code - genau das
-ist beim Vorgaenger-Plugin passiert. Also immer hierueber bauen, nie von Hand.
+The ZIP is the deploy artifact and is checked in. If it drifts from the source, you upload
+an old version and then hunt for the bug in the code - exactly what happened with the
+predecessor plugin. So always build through this script, never by hand.
 
     python build.py game-query
 """
@@ -21,7 +21,7 @@ def build(name: str) -> None:
     source = root / name
 
     if not source.is_dir():
-        sys.exit(f'{source} gibt es nicht')
+        sys.exit(f'{source} does not exist')
 
     version = json.loads((source / 'plugin.json').read_text(encoding='utf-8'))['version']
     target = root / f'{name}.zip'
@@ -33,7 +33,7 @@ def build(name: str) -> None:
         and not SKIP_DIRS & set(p.relative_to(source).parts)
     )
 
-    # deterministisch schreiben, damit eine unveraenderte Quelle keinen Diff erzeugt
+    # write deterministically, so an unchanged source produces no diff
     with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as zf:
         for path in files:
             info = zipfile.ZipInfo(f'{name}/{path.relative_to(source).as_posix()}')
@@ -42,7 +42,7 @@ def build(name: str) -> None:
             info.compress_type = zipfile.ZIP_DEFLATED
             zf.writestr(info, path.read_bytes())
 
-    print(f'{target.name}: {len(files)} Dateien, Version {version}')
+    print(f'{target.name}: {len(files)} files, version {version}')
 
 
 if __name__ == '__main__':

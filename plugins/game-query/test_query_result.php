@@ -114,7 +114,7 @@ assert(NbtReader::find(substr(gzdecode($legacy), 0, 40), ['Data', 'WorldGenSetti
 // server names carry markup the panel cannot render, and it must not leak into the ui
 assert((new QueryResult(hostname: '<color=lime>Tormax</color>', players: 0, maxPlayers: 10))->hostname === 'Tormax');
 assert(QueryResult::plain('<color=#ff0000>Rot</color> Server') === 'Rot Server');
-assert(QueryResult::plain('<b>Fett</b> und <i>kursiv</i>') === 'Fett und kursiv');
+assert(QueryResult::plain('<b>Bold</b> and <i>italic</i>') === 'Bold and italic');
 assert(QueryResult::plain("\u{00a7}aGruen\u{00a7}r Server") === 'Gruen Server', 'minecraft colour codes');
 assert(QueryResult::plain('Ganz normal') === 'Ganz normal', 'untouched when there is no markup');
 assert(QueryResult::plain('A <bogus>tag</bogus> stays') === 'A <bogus>tag</bogus> stays', 'only known tags are stripped');
