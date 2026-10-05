@@ -12,6 +12,8 @@ All eggs sit flat in `eggs/`.
 |---|---|---|
 | Counter-Strike 1.6 | `eggs/egg-counter-strike-16.json` | Source |
 | Counter-Strike: Condition Zero | `eggs/egg-counter-strike-condition-zero.json` | Source |
+| Counter-Strike: Source | `eggs/egg-counter-strike-source.json` | Source |
+| Counter-Strike: Global Offensive | `eggs/egg-counter-strike-global-offensive.json` | Source |
 | Counter-Strike 2 | `eggs/egg-counter-strike-2.json` | Source |
 | Minecraft Paper | `eggs/egg-minecraft-paper.json` | Minecraft |
 | TeamSpeak-6 Server | `eggs/egg-teamspeak-6-server.json` | Voice |
