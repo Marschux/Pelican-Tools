@@ -2,7 +2,7 @@
     "id": "server-resources",
     "name": "Server Resources",
     "author": "Marschux",
-    "version": "1.8.5",
+    "version": "1.9.0",
     "description": "Resources of the panel host, every node and its servers on the admin dashboard",
     "category": "plugin",
     "url": null,

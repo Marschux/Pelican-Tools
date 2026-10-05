@@ -1,0 +1,66 @@
+<?php
+
+return [
+    'list' => 'Lista de acceso|Listas de acceso',
+    'no_lists' => 'No hay listas de acceso',
+
+    'fields' => [
+        'preset' => 'Plantilla',
+        'preset_hint' => 'Rellena los archivos de abajo con un juego integrado, que luego puedes modificar. Sustituye los archivos ya indicados.',
+        'name' => 'Nombre',
+        'name_placeholder' => 'p. ej. Minecraft',
+        'files' => 'Archivos',
+        'add_file' => 'Añadir archivo',
+        'label' => 'Nombre del archivo',
+        'label_placeholder' => 'p. ej. Admins',
+        'path' => 'Ruta del archivo',
+        'path_hint' => 'Ruta relativa al directorio del servidor, p. ej. "savegames/adminlist.txt" o "whitelist.json".',
+        'hint' => 'Indicación',
+        'hint_placeholder' => 'p. ej. Un SteamID por línea',
+        'hint_help' => 'Se muestra debajo del campo al editar la lista.',
+        'format' => 'Formato',
+        'key_field' => 'Campo clave',
+        'key_field_hint' => 'Campo que identifica una entrada, p. ej. "uuid" o "ip".',
+        'display_field' => 'Campo visible',
+        'display_field_hint' => 'Campo que se muestra y se introduce en el editor, p. ej. "name".',
+        'entry_template' => 'Plantilla para entradas nuevas',
+        'entry_template_hint' => 'Objeto JSON para una entrada nueva. Marcadores: {name}, {uuid}, {ip}, {now}. Si la plantilla contiene {uuid}, el panel busca el UUID (en Mojang, o lo calcula localmente en modo offline).',
+        'entry_template_lines_hint' => 'Opcional: la forma que tiene una línea en el archivo, con {value} para el valor escrito, p. ej. "banid 0 {value}". Sin plantilla, la línea se escribe tal como se ha introducido.',
+        'entry_template_pairs_hint' => 'Opcional: la forma que tiene un ajuste en el archivo, con {key} y {value}, p. ej. {key}={value} para server.properties o {key} "{value}" para configuraciones de cvars. Sin plantilla se usa {key}={value}.',
+        'eggs' => 'Eggs',
+    ],
+
+    'formats' => [
+        'lines' => 'Líneas de texto',
+        'json' => 'JSON',
+        'pairs' => 'Ajustes (clave = valor)',
+    ],
+
+    'page' => [
+        'navigation' => 'Listas de acceso',
+        'entries' => 'Entradas',
+        'entry' => 'Entrada',
+        'add' => 'Añadir entrada',
+        'settings' => 'Ajustes',
+        'setting_key' => 'Clave',
+        'setting_value' => 'Valor',
+        'add_setting' => 'Añadir ajuste',
+        'raw' => 'Editar como texto',
+        'raw_hint' => 'Edita el archivo tal cual. Al guardar solo se comprueba que el JSON sea válido.',
+        'text' => 'Contenido del archivo',
+        'save' => 'Guardar',
+        'reload' => 'Recargar',
+    ],
+
+    'messages' => [
+        'saved' => 'Guardado',
+        'reloaded' => 'Recargado',
+        'failed' => 'Error al guardar',
+        'unreadable' => 'El archivo no es JSON válido y no se ha sobrescrito',
+        'invalid_json' => 'El texto introducido no es JSON válido',
+        'unknown_player' => 'Jugador no encontrado en Mojang: :name',
+        'mojang_unreachable' => 'No se puede contactar con Mojang',
+        'no_lists' => 'No hay ninguna lista de acceso configurada para este egg',
+        'missing_file' => 'El archivo aún no existe: se creará al guardar',
+    ],
+];
