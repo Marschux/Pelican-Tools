@@ -17,8 +17,6 @@ All eggs sit flat in `eggs/`.
 | Counter-Strike: Source | `eggs/egg-counter-strike-source.json` | Source |
 | Counter-Strike: Global Offensive | `eggs/egg-counter-strike-global-offensive.json` | Source |
 | Counter-Strike 2 | `eggs/egg-counter-strike-2.json` | Source |
-| Sons of the Forest | `eggs/egg-sons-of-the-forest.json` | SteamCMD |
-| The Forest | `eggs/egg-the-forest.json` | SteamCMD |
 | Minecraft Paper | `eggs/egg-minecraft-paper.json` | Minecraft |
 | TeamSpeak-6 Server | `eggs/egg-teamspeak-6-server.json` | Voice |
 | Valheim Server | `eggs/egg-valheim-server.json` | SteamCMD |

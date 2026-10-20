@@ -19,7 +19,7 @@ its egg. Nothing is switched on automatically, even when a game's files are ther
 
 ## Presets
 
-The admin form offers presets for Minecraft, Valheim, Sons of the Forest, TeamSpeak, Counter-Strike 2, Counter-Strike: Global Offensive, Counter-Strike: Source, Counter-Strike: Condition Zero and Counter-Strike 1.6. Picking one fills the files
+The admin form offers presets for Minecraft, Valheim, TeamSpeak, Counter-Strike 2, Counter-Strike: Global Offensive, Counter-Strike: Source, Counter-Strike: Condition Zero and Counter-Strike 1.6. Picking one fills the files
 with these, each with a hint for whoever edits the list; they can then be removed, changed or added
 to:
 
@@ -27,7 +27,6 @@ to:
 |---|---|
 | Minecraft | `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json` |
 | Valheim | `savegames/adminlist.txt`, `savegames/bannedlist.txt`, `savegames/permittedlist.txt` |
-| Sons of the Forest | `serverconfig/ownerswhitelist.txt` |
 | TeamSpeak | `query_ip_allowlist.txt`, `query_ip_denylist.txt` |
 | Counter-Strike 2 | `game/csgo/cfg/banned_user.cfg`, `game/csgo/cfg/banned_ip.cfg`, `game/csgo/cfg/server.cfg` |
 | Counter-Strike: Global Offensive | `csgo/cfg/banned_user.cfg`, `csgo/cfg/banned_ip.cfg`, `csgo/cfg/server.cfg` |

@@ -196,13 +196,6 @@ class Presets
                     ],
                 ],
             ],
-            // the egg points -userdatapath at serverconfig/; the game has no ban or whitelist file
-            'sotf' => [
-                'name' => 'Sons of the Forest',
-                'files' => [
-                    ['label' => 'Owners', 'path' => 'serverconfig/ownerswhitelist.txt', 'hint' => 'One SteamID64 per entry, e.g. 76561197960287930. Owners get the admin console commands in game. Takes effect after a restart.'],
-                ],
-            ],
             // only who may reach ServerQuery - client bans and groups live in the database
             'teamspeak' => [
                 'name' => 'TeamSpeak',
