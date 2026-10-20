@@ -17,6 +17,6 @@
     "composer_packages": {
         "xpaw/php-minecraft-query": "^5.0.0",
         "xpaw/php-source-query-class": "^6.0.0",
-        "phpseclib/phpseclib": "^3.0 || ^4.0"
+        "phpseclib/phpseclib": "^4.0"
     }
 }

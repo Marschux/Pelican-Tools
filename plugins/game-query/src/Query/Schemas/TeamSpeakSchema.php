@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Marschux\GameQuery\Query\QueryResult;
 use Marschux\GameQuery\Query\QueryTypeSchemaInterface;
 use Marschux\GameQuery\Query\QueryTypeService;
-use phpseclib3\Net\SSH2;
+use phpseclib4\Net\SSH2;
 use Throwable;
 
 class TeamSpeakSchema implements QueryTypeSchemaInterface
