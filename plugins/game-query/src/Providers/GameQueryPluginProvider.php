@@ -22,6 +22,20 @@ class GameQueryPluginProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // the xPaw query libraries ship inside the plugin instead of as composer_packages: every
+        // "composer require" the panel runs on install dumps the autoloader with autoload-dev,
+        // which points at tests/ - missing on a release install, so the whole panel 500s.
+        // Appended after composer's loader, so a composer-installed copy still wins
+        spl_autoload_register(function (string $class) {
+            if (str_starts_with($class, 'xPaw\\')) {
+                $file = plugin_path('game-query', 'lib/' . str_replace('\\', '/', substr($class, 5)) . '.php');
+
+                if (is_file($file)) {
+                    require $file;
+                }
+            }
+        });
+
         $this->mergeConfigFrom(plugin_path('game-query', 'config/game-query.php'), 'game-query');
 
         $this->app->singleton(QueryTypeService::class, function () {
