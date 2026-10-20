@@ -94,7 +94,8 @@ class ValheimSchema extends SourceSchema
                 return null;
             }
 
-            return FwlSeedParser::parse($repository->getContent($path, 4096));
+            // the metadata grows with the world (global keys etc.), 4 KB was already too small
+            return FwlSeedParser::parse($repository->getContent($path, 65536));
         } catch (Throwable $exception) {
             QueryTypeService::reportFailure($exception);
 
