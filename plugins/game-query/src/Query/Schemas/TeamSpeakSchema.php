@@ -100,10 +100,12 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
             return null;
         }
 
-        $ssh = new SSH2($ip, (int) $sshPort, self::SSH_TIMEOUT);
-        $ssh->setTimeout(self::SSH_TIMEOUT);
+        $ssh = null;
 
         try {
+            $ssh = new SSH2($ip, (int) $sshPort, self::SSH_TIMEOUT);
+            $ssh->setTimeout(self::SSH_TIMEOUT);
+
             if (!$ssh->login('serveradmin', $server->uuid)) {
                 return null;
             }
@@ -125,7 +127,7 @@ class TeamSpeakSchema implements QueryTypeSchemaInterface
 
             return null;
         } finally {
-            $ssh->disconnect();
+            $ssh?->disconnect();
         }
     }
 }
