@@ -92,7 +92,7 @@
                                 <th style="padding:.4rem .5rem .4rem 0;font-weight:500">{{ trans('mod-manager::mods.columns.mod') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.version') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('mod-manager::mods.columns.size') }}</th>
-                                <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
+                                <th style="padding:.4rem .5rem .4rem 2rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.status') }}</th>
                                 <th></th>
                             </tr>
@@ -126,7 +126,7 @@
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
                                     </td>
-                                    <td style="padding:.6rem .5rem;{{ $muted }};min-width:10rem">
+                                    <td style="padding:.6rem .5rem .6rem 2rem;{{ $muted }};min-width:10rem">
                                         @if ($relation['requires'])
                                             <div>{{ trans('mod-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
                                         @endif
