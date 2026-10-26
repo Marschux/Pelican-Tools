@@ -396,6 +396,32 @@ class ModsPage extends Page
         return $this->installer()->unmanaged();
     }
 
+    public function removeLoader(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->confirm = [
+            'type' => 'remove_loader',
+            'name' => (string) $this->profile()->setting('loader_name', 'Loader'),
+            'mods' => $this->installed()->count(),
+            'packages' => [],
+        ];
+        $this->dispatch('open-modal', id: 'mod-confirm');
+    }
+
+    public function confirmRemoveLoader(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+        // it also changes this server's start command back
+        $this->requirePermission(SubuserPermission::StartupUpdate);
+
+        if (($this->confirm['type'] ?? null) === 'remove_loader') {
+            $this->attempt(fn () => $this->installer()->uninstallLoader(), trans('mod-manager::mods.messages.removed', ['name' => $this->confirm['name']]));
+        }
+
+        $this->closeConfirm();
+    }
+
     /** The loader's own row in the installed table, null until it is installed through this page. */
     public function loaderInstall(): ?ModInstall
     {

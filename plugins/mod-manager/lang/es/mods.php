@@ -102,6 +102,7 @@ return [
     ],
 
     'confirm' => [
+        'loader_body' => 'Sin :name, los :count mods instalados ya no se cargan. Siguen instalados, igual que las configuraciones, y vuelven a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.',
         'install_heading' => ':name necesita más mods',
         'install_body' => 'Estos se instalan junto con :name:',
         'install_all' => 'Instalar todo',

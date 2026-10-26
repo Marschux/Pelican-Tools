@@ -102,6 +102,7 @@ return [
     ],
 
     'confirm' => [
+        'loader_body' => 'Without :name, the :count installed mods no longer load. They stay installed, as do all configs, and work again once :name is back. The start command of this server goes back to normal.',
         'install_heading' => ':name needs more mods',
         'install_body' => 'These are installed along with :name:',
         'install_all' => 'Install all',

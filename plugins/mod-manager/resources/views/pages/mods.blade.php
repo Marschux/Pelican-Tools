@@ -175,6 +175,8 @@
                                             @unless ($isLoader)
                                             <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
                                             <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
+                                            @else
+                                                <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="removeLoader" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
                                             @endunless
                                         </div>
                                     </td>
@@ -447,6 +449,10 @@
                 {{ trans($confirm['type'] === 'install' ? 'mod-manager::mods.confirm.install_heading' : 'mod-manager::mods.confirm.remove_heading', ['name' => $confirm['name']]) }}
             </x-slot>
 
+            @if ($confirm['type'] === 'remove_loader')
+                <div style="font-size:.875rem">{{ trans('mod-manager::mods.confirm.loader_body', ['name' => $confirm['name'], 'count' => $confirm['mods']]) }}</div>
+            @endif
+
             @if ($confirm['packages'])
                 <div style="{{ $muted }};font-size:.875rem">
                     {{ trans($confirm['type'] === 'install' ? 'mod-manager::mods.confirm.install_body' : 'mod-manager::mods.confirm.orphans', ['name' => $confirm['name']]) }}
@@ -466,6 +472,8 @@
             <x-slot name="footerActions">
                 @if ($confirm['type'] === 'install')
                     <x-filament::button icon="tabler-download" wire:click="confirmInstall">{{ trans('mod-manager::mods.confirm.install_all') }}</x-filament::button>
+                @elseif ($confirm['type'] === 'remove_loader')
+                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveLoader">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
                 @elseif ($confirm['packages'])
                     <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove(true)">{{ trans('mod-manager::mods.confirm.remove_with') }}</x-filament::button>
                     <x-filament::button color="danger" outlined wire:click="confirmRemove(false)">{{ trans('mod-manager::mods.confirm.remove_only', ['name' => $confirm['name']]) }}</x-filament::button>

@@ -44,4 +44,20 @@ foreach (['Jotunn', '../x-y', 'a-b/c', 'a-', '-b', ''] as $bad) {
     }
 }
 
+// --- what removing the loader deletes ------------------------------------------------------------
+
+$kept = ['BepInEx/plugins', 'BepInEx/plugins_disabled', 'BepInEx/config'];
+$paths = Installer::loaderPaths([
+    'BepInEx/core/BepInEx.dll',
+    'BepInEx/core/BepInEx.Preloader.dll',
+    'BepInEx/config/BepInEx.cfg',
+    'BepInEx/plugins/README.txt',
+    'doorstop_libs/libdoorstop_x64.so',
+    'winhttp.dll',
+    'start_server_bepinex.sh',
+], $kept);
+sort($paths);
+
+assert($paths === ['BepInEx/core', 'doorstop_libs', 'start_server_bepinex.sh', 'winhttp.dll'], json_encode($paths));
+
 echo "ok\n";

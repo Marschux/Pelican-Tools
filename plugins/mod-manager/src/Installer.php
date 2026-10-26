@@ -160,6 +160,72 @@ class Installer
         );
     }
 
+    /**
+     * Takes the loader off again: its files and the start command prefix. Mods and configs stay
+     * where they are - they only do nothing until the loader is back.
+     */
+    public function uninstallLoader(): void
+    {
+        $loader = $this->installs()->firstWhere('package', (string) $this->profile->setting('loader_package'));
+
+        if ($loader) {
+            $this->files->delete(self::loaderPaths($loader->files, $this->keptDirs()));
+            $loader->delete();
+        }
+
+        $prefix = trim((string) $this->profile->setting('start_prefix'));
+
+        if ($prefix !== '') {
+            $this->server->update(['startup' => trim(str_replace($prefix, '', (string) $this->server->startup))]);
+        }
+    }
+
+    /**
+     * What to delete for the loader's files: whole folders where nothing else lives
+     * (BepInEx/core, doorstop_libs), single files elsewhere. Folders that hold - or lead to - a
+     * kept folder (mods, configs) are never deleted whole, files inside a kept folder not at all.
+     *
+     * @param  string[]  $files
+     * @param  string[]  $kept
+     * @return string[]
+     */
+    public static function loaderPaths(array $files, array $kept): array
+    {
+        $paths = [];
+        // plain php, no collection helpers: the self-check runs this without laravel
+        $holds = fn (string $outer, string $inner) => str_starts_with("$inner/", "$outer/");
+
+        foreach ($files as $file) {
+            if (array_filter($kept, fn (string $dir) => $holds($dir, $file))) {
+                continue;
+            }
+
+            // the outermost folder of the file that has no kept folder below it
+            $path = $file;
+            $parts = explode('/', $file);
+
+            for ($depth = 1; $depth < count($parts); $depth++) {
+                $folder = implode('/', array_slice($parts, 0, $depth));
+
+                if (!array_filter($kept, fn (string $dir) => $holds($folder, $dir))) {
+                    $path = $folder;
+
+                    break;
+                }
+            }
+
+            $paths[$path] = true;
+        }
+
+        return array_keys($paths);
+    }
+
+    /** @return string[] */
+    private function keptDirs(): array
+    {
+        return array_values(array_filter([$this->modsDir(), $this->disabledDir(), trim((string) $this->profile->setting('config_dir'), '/')]));
+    }
+
     /** Only this server's start command changes, the egg stays as it is. */
     public function applyStartPrefix(): void
     {

@@ -102,6 +102,7 @@ return [
     ],
 
     'confirm' => [
+        'loader_body' => 'Ohne :name laden die :count installierten Mods nicht mehr. Sie bleiben installiert, ebenso alle Configs, und laufen wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.',
         'install_heading' => ':name braucht weitere Mods',
         'install_body' => 'Diese werden mit :name zusammen installiert:',
         'install_all' => 'Alle installieren',
