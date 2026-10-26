@@ -53,6 +53,14 @@ return [
     'current' => 'Instalada',
     'requires' => 'Necesita: :names',
     'needed_by' => 'Lo necesita: :names',
+    'active' => 'Activo',
+    'columns' => [
+        'mod' => 'Mod',
+        'version' => 'Versión',
+        'size' => 'Tamaño',
+        'dependencies' => 'Dependencias',
+        'status' => 'Estado',
+    ],
     'versions' => 'Versiones',
 
     'loader' => [
