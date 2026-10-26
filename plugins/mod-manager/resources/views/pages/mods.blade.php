@@ -85,7 +85,8 @@
                 <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
 
                 {{-- a table, scrolling sideways when the page gets narrow --}}
-                <div style="overflow-x:auto">
+                {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
+                <div style="overflow-x:auto;overflow-y:hidden">
                     <table style="width:100%;border-collapse:collapse;font-size:.875rem">
                         <thead>
                             <tr style="text-align:left;{{ $muted }}">
@@ -152,7 +153,7 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td style="padding:.6rem 0 .6rem .5rem">
+                                    <td style="padding:.6rem .5rem">
                                         <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
                                             @if (isset($updates[$install->package]))
                                                 {{-- shows the jump: from what is there to what is out --}}
@@ -366,18 +367,22 @@
                 </div>
                 <div>
                     <div style="font-weight:600;margin-bottom:.5rem">{{ trans('mod-manager::mods.versions') }}</div>
-                    <div style="max-height:12rem;overflow-y:auto">
-                        @foreach ($details['versions'] as $version)
-                            <div style="display:flex;gap:.5rem;align-items:center;padding:.2rem 0;font-size:.875rem">
-                                <span style="flex:1">{{ $version['number'] }}</span>
-                                <span style="{{ $muted }}">{{ \Illuminate\Support\Carbon::parse($version['date'])->isoFormat('L') }} · ⬇ {{ \Illuminate\Support\Number::abbreviate($version['downloads']) }}</span>
-                                @if (($versions[$details['id']] ?? null) === $version['number'])
-                                    <x-filament::badge color="success" size="sm">{{ trans('mod-manager::mods.current') }}</x-filament::badge>
-                                @else
-                                    <x-filament::link size="sm" tag="button" wire:click="install({{ $js($details['id']) }}, {{ $js($version['number']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::link>
-                                @endif
-                            </div>
-                        @endforeach
+                    {{-- one select instead of a long list; the button knows which version is picked --}}
+                    @php
+                        $current = $versions[$details['id']] ?? null;
+                    @endphp
+                    <div x-data="{ picked: {{ \Illuminate\Support\Js::from($details['versions'][0]['number'] ?? '') }}, current: {{ \Illuminate\Support\Js::from($current) }} }" wire:key="versions-{{ md5($details['id']) }}" style="display:flex;gap:.5rem;align-items:center">
+                        <x-filament::input.wrapper style="flex:1">
+                            <x-filament::input.select x-model="picked">
+                                @foreach ($details['versions'] as $version)
+                                    <option value="{{ $version['number'] }}">
+                                        {{ $version['number'] }} · {{ \Illuminate\Support\Carbon::parse($version['date'])->isoFormat('L') }} · ⬇ {{ \Illuminate\Support\Number::abbreviate($version['downloads']) }}{{ $version['number'] === $current ? ' · ' . trans('mod-manager::mods.current') : '' }}
+                                    </option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                        <x-filament::button icon="tabler-download" x-show="picked !== current" x-on:click="$wire.install({{ \Illuminate\Support\Js::from($details['id']) }}, picked)">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                        <x-filament::badge color="success" icon="tabler-check" x-show="picked === current" x-cloak>{{ trans('mod-manager::mods.current') }}</x-filament::badge>
                     </div>
                 </div>
             </div>
