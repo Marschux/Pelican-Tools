@@ -171,8 +171,8 @@ class Installer
     }
 
     /**
-     * Installed packages with a newer version out, the loader included. Pinned ones are left
-     * out: their version was picked on purpose.
+     * Installed packages with a newer version out, the loader included - pinned ones too, they
+     * only stay out of "update all".
      *
      * @return array<string, string> package => newest version
      */
@@ -180,7 +180,7 @@ class Installer
     {
         $updates = [];
 
-        foreach ($this->installs()->reject(fn (ModInstall $install) => $install->pinned) as $install) {
+        foreach ($this->installs() as $install) {
             try {
                 $latest = $this->source->latestVersion($install->package);
             } catch (\Throwable) {

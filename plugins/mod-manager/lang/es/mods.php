@@ -61,6 +61,7 @@ return [
         'dependencies' => 'Dependencias',
         'status' => 'Estado',
     ],
+    'update_from_to' => 'Actualizar de :from a :to',
     'versions' => 'Versiones',
 
     'loader' => [

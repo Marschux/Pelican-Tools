@@ -71,7 +71,7 @@
 
         @if ($installed->isNotEmpty())
             @php
-                $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]))->count();
+                $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
             @endphp
             <x-filament::section>
                 <x-slot name="afterHeader">
@@ -139,7 +139,7 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
-                                            @if (isset($updates[$install->package]))
+                                            @if (isset($updates[$install->package]) && !$install->pinned)
                                                 <x-filament::badge color="info" size="sm" icon="tabler-arrow-up">{{ trans('mod-manager::mods.update') }}</x-filament::badge>
                                             @endif
                                             @if ($install->pinned)
@@ -147,7 +147,7 @@
                                             @endif
                                             @if (!$install->enabled)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans('mod-manager::mods.off') }}</x-filament::badge>
-                                            @elseif (!isset($updates[$install->package]) && !$install->pinned)
+                                            @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
                                             @if ($install->dependency)
@@ -157,14 +157,18 @@
                                     </td>
                                     <td style="padding:.6rem 0 .6rem .5rem">
                                         <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
-                                            @if (isset($updates[$install->package]) || $install->pinned)
-                                                <x-filament::icon-button color="primary" icon="tabler-refresh" wire:click="updateMod({{ $install->id }})" :label="trans('mod-manager::mods.update')" :tooltip="trans('mod-manager::mods.update')" />
+                                            @if (isset($updates[$install->package]))
+                                                {{-- shows the jump: from what is there to what is out --}}
+                                                <x-filament::button size="xs" :color="$install->pinned ? 'gray' : 'primary'" icon="tabler-arrow-up" wire:click="updateMod({{ $install->id }})" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
+                                                    {{ $updates[$install->package] }}
+                                                </x-filament::button>
                                             @endif
                                             @if ($config)
-                                                <x-filament::icon-button color="gray" icon="tabler-settings" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
+                                                {{-- the text colour, so white on dark and dark on light --}}
+                                                <x-filament::icon-button icon="tabler-settings" size="lg" style="color:inherit" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
                                             @endif
-                                            <x-filament::icon-button color="gray" :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
-                                            <x-filament::icon-button color="danger" icon="tabler-trash" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
+                                            <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
+                                            <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
                                         </div>
                                     </td>
                                 </tr>

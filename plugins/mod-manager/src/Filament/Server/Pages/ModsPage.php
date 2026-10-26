@@ -266,7 +266,8 @@ class ModsPage extends Page
         $this->requirePermission(SubuserPermission::FileUpdate);
 
         $updates = array_intersect_key($this->installer()->updates(), $this->installedVersions());
-        $installs = $this->installed()->filter(fn (ModInstall $install) => isset($updates[$install->package]));
+        // a pinned version was picked on purpose, it is only updated one by one
+        $installs = $this->installed()->filter(fn (ModInstall $install) => isset($updates[$install->package]) && !$install->pinned);
 
         $this->attempt(
             fn () => $installs->each(fn (ModInstall $install) => $this->installer()->update($install)),
