@@ -106,6 +106,28 @@ class Thunderstore
         });
     }
 
+    /**
+     * The newest version of a package, as much as installing it needs.
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, download: string, requires: string[]}
+     */
+    public function latest(string $id): array
+    {
+        [$namespace, $name] = self::split($id);
+
+        $latest = $this->http()->get(self::SITE . "/api/experimental/package/$namespace/$name/")->json('latest');
+
+        return [
+            'id' => $id,
+            'name' => str_replace('_', ' ', $name),
+            'version' => $latest['version_number'],
+            'icon' => $latest['icon'] ?? null,
+            'download' => $latest['download_url'],
+            // "Namespace-Name-1.2.3" - the version is dropped, the newest is installed anyway
+            'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $latest['dependencies'] ?? [])),
+        ];
+    }
+
     /** Readmes and changelogs are written by anyone: raw html is stripped, unsafe links dropped. */
     private static function markdown(mixed $markdown): string
     {

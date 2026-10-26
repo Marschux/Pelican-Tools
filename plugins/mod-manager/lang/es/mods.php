@@ -40,6 +40,10 @@ return [
         'server' => 'Servidor',
         'client' => 'Solo cliente',
     ],
+    'installed_version' => 'Instalado :version',
+    'dependency' => 'Dependencia',
+    'remove' => 'Quitar',
+    'cancel' => 'Cancelar',
     'versions' => 'Versiones',
 
     'loader' => [
@@ -49,10 +53,25 @@ return [
         'hint' => 'Los mods solo se cargan a través de :loader.',
     ],
 
+    'confirm' => [
+        'install_heading' => ':name necesita más mods',
+        'install_body' => 'Estos se instalan junto con :name:',
+        'install_all' => 'Instalar todo',
+        'remove_heading' => '¿Quitar :name?',
+        'orphans' => 'Ningún otro mod necesita estas dependencias después:',
+        'remove_with' => 'Quitar con dependencias',
+        'remove_only' => 'Quitar solo :name',
+    ],
+
     'messages' => [
+        'installed' => ':name instalado',
+        'removed' => ':name quitado',
+        'restart' => 'Se aplica tras reiniciar el servidor.',
+        'failed' => 'No funcionó',
+        'unpack_failed' => 'Wings no pudo descomprimir :file.',
+        'loader_unknown' => 'El paquete del cargador tiene una estructura inesperada.',
         'search_failed' => 'La búsqueda falló, inténtalo más tarde.',
         'details_failed' => 'No se pudieron cargar los detalles, inténtalo más tarde.',
-        'not_yet' => 'La instalación llega en el siguiente paso.',
     ],
 
     'profile' => [

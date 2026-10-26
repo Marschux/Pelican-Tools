@@ -40,6 +40,10 @@ return [
         'server' => 'Server-side',
         'client' => 'Nur Client',
     ],
+    'installed_version' => 'Installiert :version',
+    'dependency' => 'Abhängigkeit',
+    'remove' => 'Entfernen',
+    'cancel' => 'Abbrechen',
     'versions' => 'Versionen',
 
     'loader' => [
@@ -49,10 +53,25 @@ return [
         'hint' => 'Mods laden nur über :loader.',
     ],
 
+    'confirm' => [
+        'install_heading' => ':name braucht weitere Mods',
+        'install_body' => 'Diese werden mit :name zusammen installiert:',
+        'install_all' => 'Alle installieren',
+        'remove_heading' => ':name entfernen?',
+        'orphans' => 'Diese Abhängigkeiten braucht danach kein anderer Mod mehr:',
+        'remove_with' => 'Mit Abhängigkeiten entfernen',
+        'remove_only' => 'Nur :name entfernen',
+    ],
+
     'messages' => [
+        'installed' => ':name installiert',
+        'removed' => ':name entfernt',
+        'restart' => 'Wirkt nach einem Neustart des Servers.',
+        'failed' => 'Das hat nicht geklappt',
+        'unpack_failed' => 'Wings konnte :file nicht entpacken.',
+        'loader_unknown' => 'Das Loader-Paket ist unerwartet aufgebaut.',
         'search_failed' => 'Die Suche ist fehlgeschlagen, später nochmal versuchen.',
         'details_failed' => 'Details konnten nicht geladen werden, später nochmal versuchen.',
-        'not_yet' => 'Installieren kommt im nächsten Schritt.',
     ],
 
     'profile' => [

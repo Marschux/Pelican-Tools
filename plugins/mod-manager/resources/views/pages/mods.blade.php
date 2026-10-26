@@ -4,6 +4,8 @@
 --}}
 @php
     $loader = $this->loader();
+    $installed = $this->installed();
+    $versions = $this->installedVersions();
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
@@ -11,7 +13,7 @@
 @endphp
 
 <x-filament-panels::page>
-    {{-- the mod loader: shown only, installing it is step 3 --}}
+    {{-- the mod loader: mods do nothing without it --}}
     @if ($loader)
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(127,127,127,.2)">
             <span style="font-weight:600">{{ $loader['name'] }}</span>
@@ -23,7 +25,7 @@
                 <x-filament::badge color="danger" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
             @endif
             <span style="{{ $muted }};flex:1">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
-            <x-filament::button size="sm" color="gray" icon="tabler-download" disabled>
+            <x-filament::button size="sm" :color="$loader['installed'] && $loader['started'] ? 'gray' : 'primary'" :icon="$loader['installed'] ? 'tabler-refresh' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
                 {{ trans($loader['installed'] ? 'mod-manager::mods.update' : 'mod-manager::mods.install') }}
             </x-filament::button>
         </div>
@@ -39,13 +41,35 @@
     </x-filament::tabs>
 
     @if ($tab === 'installed')
-        <x-filament::section>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
-                <x-filament::button color="gray" icon="tabler-search" wire:click="setTab('browse')">{{ trans('mod-manager::mods.tabs.browse') }}</x-filament::button>
-            </div>
-        </x-filament::section>
+        @if ($installed->isEmpty())
+            <x-filament::section>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
+                    <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
+                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
+                    <x-filament::button color="gray" icon="tabler-search" wire:click="setTab('browse')">{{ trans('mod-manager::mods.tabs.browse') }}</x-filament::button>
+                </div>
+            </x-filament::section>
+        @else
+            <x-filament::section>
+                @foreach ($installed as $install)
+                    <div wire:key="install-{{ $install->id }}" style="display:flex;gap:.75rem;align-items:center;padding:.6rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
+                        @if ($install->icon)
+                            <img src="{{ $install->icon }}" alt="" loading="lazy" style="{{ $icon }};width:2.5rem;height:2.5rem">
+                        @else
+                            <div style="{{ $icon }};width:2.5rem;height:2.5rem"></div>
+                        @endif
+                        <div style="flex:1;min-width:0">
+                            <div style="font-weight:600;cursor:pointer" wire:click="showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
+                            <div style="{{ $muted }}">{{ $install->version }} · {{ trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
+                        </div>
+                        @if ($install->dependency)
+                            <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.dependency') }}</x-filament::badge>
+                        @endif
+                        <x-filament::button size="sm" color="danger" outlined icon="tabler-trash" wire:click="remove({{ $install->id }})">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                    </div>
+                @endforeach
+            </x-filament::section>
+        @endif
     @else
         {{-- every change searches right away, typing waits for a short pause --}}
         <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
@@ -123,7 +147,11 @@
                     @endif
 
                     <div style="display:flex;gap:.5rem">
-                        <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                        @if (isset($versions[$item['id']]))
+                            <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
+                        @else
+                            <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                        @endif
                         <x-filament::button size="sm" color="gray" icon="tabler-info-circle" wire:click="showDetails({{ $js($item['id']) }})">{{ trans('mod-manager::mods.details') }}</x-filament::button>
                     </div>
                 </div>
@@ -170,7 +198,11 @@
             </x-slot>
 
             <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-                <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                @if (isset($versions[$details['id']]))
+                    <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
+                @else
+                    <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                @endif
                 <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">Thunderstore</x-filament::button>
                 @if ($details['website'])
                     <x-filament::button color="gray" icon="tabler-world" tag="a" :href="$details['website']" target="_blank">{{ trans('mod-manager::mods.website') }}</x-filament::button>
@@ -220,6 +252,42 @@
                     <div class="fi-prose mod-readme" style="max-width:none" x-show="show === 'changelog'" x-cloak>{!! $details['changelog'] !!}</div>
                 @endif
             </div>
+        @endif
+    </x-filament::modal>
+    {{-- asks before installing dependencies along and before removing --}}
+    <x-filament::modal id="mod-confirm" width="lg" :close-by-clicking-away="false">
+        @if ($confirm)
+            <x-slot name="heading">
+                {{ trans($confirm['type'] === 'install' ? 'mod-manager::mods.confirm.install_heading' : 'mod-manager::mods.confirm.remove_heading', ['name' => $confirm['name']]) }}
+            </x-slot>
+
+            @if ($confirm['packages'])
+                <div style="{{ $muted }};font-size:.875rem">
+                    {{ trans($confirm['type'] === 'install' ? 'mod-manager::mods.confirm.install_body' : 'mod-manager::mods.confirm.orphans', ['name' => $confirm['name']]) }}
+                </div>
+                <div>
+                    @foreach ($confirm['packages'] as $package)
+                        <div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
+                            @if ($package['icon'] ?? null)
+                                <img src="{{ $package['icon'] }}" alt="" style="{{ $icon }};width:1.75rem;height:1.75rem">
+                            @endif
+                            <span>{{ $package['name'] }} <span style="{{ $muted }}">{{ $package['version'] }}</span></span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            <x-slot name="footerActions">
+                @if ($confirm['type'] === 'install')
+                    <x-filament::button icon="tabler-download" wire:click="confirmInstall">{{ trans('mod-manager::mods.confirm.install_all') }}</x-filament::button>
+                @elseif ($confirm['packages'])
+                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove(true)">{{ trans('mod-manager::mods.confirm.remove_with') }}</x-filament::button>
+                    <x-filament::button color="danger" outlined wire:click="confirmRemove(false)">{{ trans('mod-manager::mods.confirm.remove_only', ['name' => $confirm['name']]) }}</x-filament::button>
+                @else
+                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove(false)">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                @endif
+                <x-filament::button color="gray" wire:click="closeConfirm">{{ trans('mod-manager::mods.cancel') }}</x-filament::button>
+            </x-slot>
         @endif
     </x-filament::modal>
 </x-filament-panels::page>
