@@ -150,7 +150,8 @@
                                             @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
-                                            @if ($install->dependency)
+                                            {{-- needed by another mod right now, however it got installed --}}
+                                            @if ($relation['needed_by'])
                                                 <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.dependency') }}</x-filament::badge>
                                             @endif
                                         </div>
