@@ -8,7 +8,9 @@
 
 require __DIR__ . '/src/Profiles/Presets.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
+require __DIR__ . '/src/Installer.php';
 
+use Marschux\ModManager\Installer;
 use Marschux\ModManager\Profiles\Presets;
 use Marschux\ModManager\Sources\Thunderstore;
 

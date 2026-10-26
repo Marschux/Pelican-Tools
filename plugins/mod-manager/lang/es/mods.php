@@ -67,6 +67,29 @@ return [
         'confirm_delete' => '¿Borrar :path del servidor?',
     ],
 
+    'restart' => [
+        'hint' => 'Los cambios se aplican tras reiniciar el servidor.',
+        'button' => 'Reiniciar ahora',
+        'dismiss' => 'Ocultar',
+    ],
+
+    'config' => [
+        'heading' => 'Configuraciones',
+        'hint' => 'Ajustes que los mods escribieron en su primer arranque. Un mod que nunca se ejecutó aún no tiene.',
+        'open' => 'Editar',
+        'edit' => 'Editar :file',
+        'save' => 'Guardar',
+        'restart_note' => 'La mayoría de los mods solo leen su configuración al arrancar.',
+    ],
+
+    'players' => [
+        'button' => 'Lista de mods para jugadores',
+        'heading' => 'Lista de mods para jugadores',
+        'hint' => 'Los jugadores necesitan los mismos mods. Lo más fácil es r2modman: instalar allí estos mods y arrancar el juego con él.',
+        'copy' => 'Copiar',
+        'copied' => 'Copiado',
+    ],
+
     'confirm' => [
         'install_heading' => ':name necesita más mods',
         'install_body' => 'Estos se instalan junto con :name:',
@@ -78,6 +101,9 @@ return [
     ],
 
     'messages' => [
+        'config_saved' => ':file guardado',
+        'restarting' => 'El servidor se está reiniciando',
+        'not_a_config' => 'No es una configuración de este servidor.',
         'updated' => ':name actualizado',
         'enabled' => ':name activado',
         'disabled' => ':name desactivado',

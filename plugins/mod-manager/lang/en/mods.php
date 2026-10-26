@@ -67,6 +67,29 @@ return [
         'confirm_delete' => 'Delete :path from the server?',
     ],
 
+    'restart' => [
+        'hint' => 'Changes take effect after the server restarts.',
+        'button' => 'Restart now',
+        'dismiss' => 'Hide',
+    ],
+
+    'config' => [
+        'heading' => 'Configs',
+        'hint' => 'Settings the mods wrote on their first start. A mod that never ran has none yet.',
+        'open' => 'Edit',
+        'edit' => 'Edit :file',
+        'save' => 'Save',
+        'restart_note' => 'Most mods read their config only on start.',
+    ],
+
+    'players' => [
+        'button' => 'Mod list for players',
+        'heading' => 'Mod list for players',
+        'hint' => 'Players need the same mods. Easiest with r2modman: install these mods there, then start the game through it.',
+        'copy' => 'Copy',
+        'copied' => 'Copied',
+    ],
+
     'confirm' => [
         'install_heading' => ':name needs more mods',
         'install_body' => 'These are installed along with :name:',
@@ -78,6 +101,9 @@ return [
     ],
 
     'messages' => [
+        'config_saved' => ':file saved',
+        'restarting' => 'Server is restarting',
+        'not_a_config' => 'That is not a config of this server.',
         'updated' => ':name updated',
         'enabled' => ':name switched on',
         'disabled' => ':name switched off',

@@ -17,6 +17,9 @@ use RuntimeException;
  */
 class Installer
 {
+    /** what the config editor opens: text, never a binary a mod keeps in the config folder */
+    private const CONFIG_TYPES = ['cfg', 'json', 'yml', 'yaml', 'txt', 'ini', 'xml', 'toml'];
+
     private ServerFiles $files;
 
     private Thunderstore $source;
@@ -276,6 +279,84 @@ class Installer
         }
 
         $this->files->delete([$path]);
+    }
+
+    /**
+     * The text files in the config folder - what the mods wrote there on their first start.
+     *
+     * @return string[] paths from the server root
+     */
+    public function configs(): array
+    {
+        $directory = trim((string) $this->profile->setting('config_dir'), '/');
+
+        if ($directory === '') {
+            return [];
+        }
+
+        return collect($this->files->walk($directory))
+            ->filter(fn (string $path) => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::CONFIG_TYPES, true))
+            ->map(fn (string $path) => "$directory/$path")
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /** The config a mod most likely wrote: named after its id, e.g. advize.PlantEverything.cfg */
+    public static function configFor(string $modName, array $configs): ?string
+    {
+        $needle = preg_replace('/[^a-z0-9]/', '', strtolower($modName));
+
+        if (strlen($needle) < 3) {
+            return null;
+        }
+
+        foreach ($configs as $path) {
+            if (str_contains(preg_replace('/[^a-z0-9]/', '', strtolower(pathinfo($path, PATHINFO_FILENAME))), $needle)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /** Reads one config - only one configs() lists, so the editor cannot open anything else. */
+    public function readConfig(string $path): string
+    {
+        $this->assertConfig($path);
+
+        return (string) $this->files->read($path);
+    }
+
+    public function writeConfig(string $path, string $content): void
+    {
+        $this->assertConfig($path);
+
+        $this->files->write($path, $content);
+    }
+
+    /** What players need on their side: every mod that is switched on, the loader first. */
+    public function playerList(): string
+    {
+        $community = (string) $this->profile->setting('community');
+        $loader = (string) $this->profile->setting('loader_package');
+
+        return $this->installs()
+            ->filter(fn (ModInstall $install) => $install->enabled)
+            ->sortBy(fn (ModInstall $install) => [$install->package !== $loader, strtolower($install->name)])
+            ->map(function (ModInstall $install) use ($community) {
+                [$namespace, $name] = Thunderstore::split($install->package);
+
+                return "$install->name $install->version - https://thunderstore.io/c/$community/p/$namespace/$name/";
+            })
+            ->implode("\n");
+    }
+
+    private function assertConfig(string $path): void
+    {
+        if (!in_array($path, $this->configs(), true)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.not_a_config'));
+        }
     }
 
     /** @return Collection<int, ModInstall> */

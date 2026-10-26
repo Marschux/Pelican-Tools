@@ -29,6 +29,7 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 |---|---|---|
 | Access Lists | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
 | Game Query | Query players, map and server info | Admin + Server |
+| Mod Manager | Browse and install mods per server, set up per egg (Valheim so far) | Admin + Server |
 | Server Navigation | Hide sidebar entries per server | Admin + Server |
 | Server Resources | Resources of host, nodes and servers on the admin dashboard | Admin |
 

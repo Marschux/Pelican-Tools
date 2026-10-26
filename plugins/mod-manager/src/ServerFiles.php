@@ -77,6 +77,13 @@ class ServerFiles
         Activity::event('server:file.delete')->property(['directory' => '/', 'files' => $paths])->log();
     }
 
+    public function write(string $path, string $content): void
+    {
+        $this->repository->putContent($path, $content);
+
+        Activity::event('server:file.write')->property('file', $path)->log();
+    }
+
     public function read(string $path): ?string
     {
         try {

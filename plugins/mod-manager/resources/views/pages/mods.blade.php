@@ -8,6 +8,7 @@
     $versions = $this->installedVersions();
     $updates = $this->updates();
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
+    $configs = $tab === 'installed' ? $this->configs() : [];
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
@@ -15,6 +16,17 @@
 @endphp
 
 <x-filament-panels::page>
+    @if ($this->needsRestart())
+        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
+            <x-filament::icon icon="tabler-refresh-alert" style="width:1.25rem;height:1.25rem;color:rgb(234,179,8)" />
+            <span style="flex:1">{{ trans('mod-manager::mods.restart.hint') }}</span>
+            @if ($this->canRestart())
+                <x-filament::button size="sm" color="warning" icon="tabler-refresh" wire:click="restart">{{ trans('mod-manager::mods.restart.button') }}</x-filament::button>
+            @endif
+            <x-filament::icon-button color="gray" icon="tabler-x" wire:click="dismissRestart" :label="trans('mod-manager::mods.restart.dismiss')" />
+        </div>
+    @endif
+
     {{-- the mod loader: mods do nothing without it --}}
     @if ($loader)
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(127,127,127,.2)">
@@ -61,11 +73,14 @@
                 $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]))->count();
             @endphp
             <x-filament::section>
-                @if ($updatable)
-                    <x-slot name="afterHeader">
-                        <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
-                    </x-slot>
-                @endif
+                <x-slot name="afterHeader">
+                    <div style="display:flex;gap:.5rem">
+                        <x-filament::button size="sm" color="gray" icon="tabler-users" wire:click="showPlayerList">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
+                        @if ($updatable)
+                            <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
+                        @endif
+                    </div>
+                </x-slot>
                 <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
 
                 @foreach ($installed as $install)
@@ -99,6 +114,9 @@
                             @if (isset($updates[$install->package]) || $install->pinned)
                                 <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateMod({{ $install->id }})">{{ trans('mod-manager::mods.update') }}</x-filament::button>
                             @endif
+                            @if ($config = \Marschux\ModManager\Installer::configFor($install->name, $configs))
+                                <x-filament::icon-button color="gray" icon="tabler-settings" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
+                            @endif
                             <x-filament::button size="sm" color="gray" :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})">
                                 {{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}
                             </x-filament::button>
@@ -124,6 +142,19 @@
                             <x-filament::button size="sm" color="gray" icon="tabler-download" wire:click="adopt({{ $js($entry['path']) }})">{{ trans('mod-manager::mods.unmanaged.adopt') }}</x-filament::button>
                         @endif
                         <x-filament::icon-button color="danger" icon="tabler-trash" wire:click="removeUnmanaged({{ $js($entry['path']) }})" wire:confirm="{{ trans('mod-manager::mods.unmanaged.confirm_delete', ['path' => $entry['path']]) }}" :label="trans('mod-manager::mods.remove')" />
+                    </div>
+                @endforeach
+            </x-filament::section>
+        @endif
+        @if ($configs)
+            <x-filament::section collapsible collapsed>
+                <x-slot name="heading">{{ trans('mod-manager::mods.config.heading') }} ({{ count($configs) }})</x-slot>
+                <x-slot name="description">{{ trans('mod-manager::mods.config.hint') }}</x-slot>
+
+                @foreach ($configs as $config)
+                    <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
+                        <span style="flex:1;font-family:monospace;font-size:.875rem">{{ $config }}</span>
+                        <x-filament::button size="sm" color="gray" icon="tabler-pencil" wire:click="openConfig({{ $js($config) }})">{{ trans('mod-manager::mods.config.open') }}</x-filament::button>
                     </div>
                 @endforeach
             </x-filament::section>
@@ -317,6 +348,35 @@
             </div>
         @endif
     </x-filament::modal>
+    <x-filament::modal id="mod-config" width="5xl" :close-by-clicking-away="false">
+        <x-slot name="heading">{{ $configPath ? basename($configPath) : '' }}</x-slot>
+        <x-slot name="description">{{ trans('mod-manager::mods.config.restart_note') }}</x-slot>
+
+        <textarea wire:model="configText" spellcheck="false" rows="24" style="width:100%;font-family:monospace;font-size:.8rem;line-height:1.4;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit;resize:vertical"></textarea>
+
+        <x-slot name="footerActions">
+            <x-filament::button icon="tabler-device-floppy" wire:click="saveConfig">{{ trans('mod-manager::mods.config.save') }}</x-filament::button>
+            <x-filament::button color="gray" x-on:click="close">{{ trans('mod-manager::mods.cancel') }}</x-filament::button>
+        </x-slot>
+    </x-filament::modal>
+
+    {{-- for players: the same mods on their side, to paste into chat or a server description --}}
+    <x-filament::modal id="mod-players" width="3xl">
+        <x-slot name="heading">{{ trans('mod-manager::mods.players.heading') }}</x-slot>
+        <x-slot name="description">{{ trans('mod-manager::mods.players.hint') }}</x-slot>
+
+        @php
+            $playerList = $tab === 'installed' ? $this->playerList() : '';
+        @endphp
+        <div x-data="{ copied: false }">
+            <textarea readonly x-ref="list" rows="12" style="width:100%;font-family:monospace;font-size:.8rem;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit">{{ $playerList }}</textarea>
+            <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem">
+                <x-filament::button icon="tabler-copy" x-on:click="navigator.clipboard.writeText($refs.list.value); copied = true; setTimeout(() => copied = false, 2000)">{{ trans('mod-manager::mods.players.copy') }}</x-filament::button>
+                <span x-show="copied" x-cloak style="color:rgb(34,197,94);font-size:.875rem">{{ trans('mod-manager::mods.players.copied') }}</span>
+            </div>
+        </div>
+    </x-filament::modal>
+
     {{-- asks before installing dependencies along and before removing --}}
     <x-filament::modal id="mod-confirm" width="lg" :close-by-clicking-away="false">
         @if ($confirm)

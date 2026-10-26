@@ -5,6 +5,7 @@ namespace Marschux\ModManager\Filament\Server\Pages;
 use App\Enums\SubuserPermission;
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
+use App\Repositories\Daemon\DaemonServerRepository;
 use App\Traits\Filament\BlockAccessInConflict;
 use BackedEnum;
 use Filament\Facades\Filament;
@@ -66,6 +67,11 @@ class ModsPage extends Page
      * @var array<string, mixed>|null
      */
     public ?array $confirm = null;
+
+    /** the config open in the editor */
+    public ?string $configPath = null;
+
+    public string $configText = '';
 
     public static function canAccess(): bool
     {
@@ -208,6 +214,8 @@ class ModsPage extends Page
             try {
                 $names = $this->installer()->uninstall($this->findInstall($this->confirm['id']), $withDependencies);
 
+                $this->markRestart();
+
                 Notification::make()->title(trans('mod-manager::mods.messages.removed', ['name' => implode(', ', $names)]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
             } catch (Throwable $exception) {
                 $this->fail($exception);
@@ -237,6 +245,8 @@ class ModsPage extends Page
 
             return;
         }
+
+        $this->markRestart();
 
         Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => "$loader->name $loader->version"]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
     }
@@ -291,6 +301,88 @@ class ModsPage extends Page
         $this->attempt(fn () => $this->installer()->removeUnmanaged($path), trans('mod-manager::mods.messages.removed', ['name' => basename($path)]));
     }
 
+    public function openConfig(string $path): void
+    {
+        $this->requirePermission(SubuserPermission::FileReadContent);
+
+        try {
+            $this->configText = $this->installer()->readConfig($path);
+        } catch (Throwable $exception) {
+            $this->fail($exception);
+
+            return;
+        }
+
+        $this->configPath = $path;
+        $this->dispatch('open-modal', id: 'mod-config');
+    }
+
+    public function saveConfig(): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        if ($this->configPath === null) {
+            return;
+        }
+
+        $this->attempt(fn () => $this->installer()->writeConfig($this->configPath, $this->configText), trans('mod-manager::mods.messages.config_saved', ['file' => basename($this->configPath)]));
+        $this->dispatch('close-modal', id: 'mod-config');
+    }
+
+    public function showPlayerList(): void
+    {
+        $this->dispatch('open-modal', id: 'mod-players');
+    }
+
+    public function restart(): void
+    {
+        $this->requirePermission(SubuserPermission::ControlRestart);
+
+        try {
+            app(DaemonServerRepository::class)->setServer($this->server())->power('restart');
+        } catch (Throwable $exception) {
+            $this->fail($exception);
+
+            return;
+        }
+
+        session()->forget($this->restartKey());
+
+        Notification::make()->title(trans('mod-manager::mods.messages.restarting'))->success()->send();
+    }
+
+    public function dismissRestart(): void
+    {
+        session()->forget($this->restartKey());
+    }
+
+    /** Something changed since the last restart from this page. */
+    public function needsRestart(): bool
+    {
+        return (bool) session($this->restartKey(), false);
+    }
+
+    public function canRestart(): bool
+    {
+        return (bool) user()?->can(SubuserPermission::ControlRestart, $this->server());
+    }
+
+    /** @return string[] */
+    public function configs(): array
+    {
+        return once(fn () => $this->installer()->configs());
+    }
+
+    public function configFor(string $modName): ?string
+    {
+        return Installer::configFor($modName, $this->configs());
+    }
+
+    public function playerList(): string
+    {
+        return $this->installer()->playerList();
+    }
+
     /** @return array<string, string> package => newer version, worked out once per request */
     public function updates(): array
     {
@@ -329,6 +421,7 @@ class ModsPage extends Page
         }
 
         $names = implode(', ', array_map(fn (array $package) => "{$package['name']} {$package['version']}", $plan));
+        $this->markRestart();
 
         Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => $names]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
     }
@@ -343,7 +436,21 @@ class ModsPage extends Page
             return;
         }
 
+        if ($restart) {
+            $this->markRestart();
+        }
+
         Notification::make()->title($success)->body($restart ? trans('mod-manager::mods.messages.restart') : null)->success()->send();
+    }
+
+    private function markRestart(): void
+    {
+        session([$this->restartKey() => true]);
+    }
+
+    private function restartKey(): string
+    {
+        return 'mod-manager.restart.' . $this->server()->id;
     }
 
     private function fail(Throwable $exception): void
