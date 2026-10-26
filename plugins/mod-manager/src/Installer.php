@@ -276,7 +276,7 @@ class Installer
     public function fillSizes(Collection $installs): void
     {
         foreach ($installs->whereNull('size') as $install) {
-            $install->update(['size' => array_sum(array_map(fn (string $path) => $this->files->usage($path), $install->files))]);
+            $install->update(['size' => array_sum(array_map(fn (string $path) => $this->files->size($path), $install->files))]);
         }
     }
 

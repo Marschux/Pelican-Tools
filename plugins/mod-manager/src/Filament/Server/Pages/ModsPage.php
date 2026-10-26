@@ -396,6 +396,18 @@ class ModsPage extends Page
         return $this->installer()->unmanaged();
     }
 
+    /** The loader's own row in the installed table, null until it is installed through this page. */
+    public function loaderInstall(): ?ModInstall
+    {
+        $loader = $this->installer()->installs()->firstWhere('package', (string) $this->profile()->setting('loader_package'));
+
+        if ($loader) {
+            $this->installer()->fillSizes(new Collection([$loader]));
+        }
+
+        return $loader;
+    }
+
     /** @return Collection<int, ModInstall> the mods, without the loader */
     public function installed(): Collection
     {

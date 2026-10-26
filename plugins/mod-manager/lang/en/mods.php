@@ -66,6 +66,7 @@ return [
     'loader' => [
         'ready' => 'Installed',
         'not_started' => 'Installed, not started through it',
+        'repair' => 'Repair',
         'missing' => 'Not installed',
         'hint' => 'Mods only load through :loader.',
     ],

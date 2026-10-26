@@ -66,6 +66,7 @@ return [
     'loader' => [
         'ready' => 'Instalado',
         'not_started' => 'Instalado, el servidor no arranca con él',
+        'repair' => 'Reparar',
         'missing' => 'No instalado',
         'hint' => 'Los mods solo se cargan a través de :loader.',
     ],

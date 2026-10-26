@@ -10,6 +10,7 @@
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
+    $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
@@ -28,23 +29,18 @@
         </div>
     @endif
 
-    {{-- the mod loader: mods do nothing without it --}}
-    @if ($loader)
+    {{-- the mod loader: only shown while something is wrong, once it runs it is a row in the table --}}
+    @if ($loader && !($loader['installed'] && $loader['started']))
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(127,127,127,.2)">
             <span style="font-weight:600">{{ $loader['name'] }}</span>
-            @if ($loader['installed'] && $loader['started'])
-                <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.loader.ready') }}</x-filament::badge>
-            @elseif ($loader['installed'])
+            @if ($loader['installed'])
                 <x-filament::badge color="warning" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
             @else
                 <x-filament::badge color="danger" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
             @endif
-            @if ($loader['update'])
-                <x-filament::badge color="info" icon="tabler-arrow-up">{{ trans('mod-manager::mods.update_to', ['version' => $loader['update']]) }}</x-filament::badge>
-            @endif
             <span style="{{ $muted }};flex:1">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
-            <x-filament::button size="sm" :color="$loader['installed'] && $loader['started'] ? 'gray' : 'primary'" :icon="$loader['installed'] ? 'tabler-refresh' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
-                {{ trans($loader['installed'] ? 'mod-manager::mods.update' : 'mod-manager::mods.install') }}
+            <x-filament::button size="sm" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
+                {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
             </x-filament::button>
         </div>
     @endif
@@ -59,7 +55,7 @@
     </x-filament::tabs>
 
     @if ($tab === 'installed')
-        @if ($installed->isEmpty() && !$unmanaged)
+        @if ($installed->isEmpty() && !$unmanaged && !$loaderInstall)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
@@ -69,7 +65,7 @@
             </x-filament::section>
         @endif
 
-        @if ($installed->isNotEmpty())
+        @if ($installed->isNotEmpty() || $loaderInstall)
             @php
                 $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
             @endphp
@@ -99,8 +95,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($installed as $install)
+                            @foreach (collect([$loaderInstall])->filter()->concat($installed) as $install)
                                 @php
+                                    // the loader: no switch and no remove, without it no mod runs
+                                    $isLoader = $install->is($loaderInstall);
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'needed_by' => []];
                                     $config = \Marschux\ModManager\Installer::configFor($install->name, $configs);
                                 @endphp
@@ -151,22 +149,33 @@
                                             @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
+                                            @if ($isLoader)
+                                                <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
+                                            @endif
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
                                         <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
                                             @if (isset($updates[$install->package]))
                                                 {{-- shows the jump: from what is there to what is out --}}
-                                                <x-filament::button size="xs" :color="$install->pinned ? 'gray' : 'primary'" icon="tabler-arrow-up" wire:click="updateMod({{ $install->id }})" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
-                                                    {{ $updates[$install->package] }}
-                                                </x-filament::button>
+                                                @if ($isLoader)
+                                                    <x-filament::button size="xs" icon="tabler-arrow-up" wire:click="installLoader" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
+                                                        {{ $updates[$install->package] }}
+                                                    </x-filament::button>
+                                                @else
+                                                    <x-filament::button size="xs" :color="$install->pinned ? 'gray' : 'primary'" icon="tabler-arrow-up" wire:click="updateMod({{ $install->id }})" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
+                                                        {{ $updates[$install->package] }}
+                                                    </x-filament::button>
+                                                @endif
                                             @endif
                                             @if ($config)
                                                 {{-- the text colour, so white on dark and dark on light --}}
                                                 <x-filament::icon-button icon="tabler-settings" size="lg" style="color:inherit" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
                                             @endif
+                                            @unless ($isLoader)
                                             <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
                                             <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
+                                            @endunless
                                         </div>
                                     </td>
                                 </tr>
