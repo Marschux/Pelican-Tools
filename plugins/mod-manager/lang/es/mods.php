@@ -9,7 +9,6 @@ return [
     ],
 
     'nothing_installed' => 'Todavía no hay mods instalados.',
-    'search' => 'Buscar',
     'search_placeholder' => 'Buscar mods',
     'all_categories' => 'Todas las categorías',
     'orderings' => [
@@ -32,6 +31,15 @@ return [
     'dependencies' => 'Dependencias',
     'no_dependencies' => 'Ninguna',
     'loader_dependency' => 'Cargador de mods',
+    'hide_client_side' => 'Ocultar mods solo de cliente',
+    'show_deprecated' => 'Mostrar obsoletos',
+    'used_by' => 'usado por :count mods',
+    'readme' => 'Descripción',
+    'changelog' => 'Registro de cambios',
+    'side' => [
+        'server' => 'Servidor',
+        'client' => 'Solo cliente',
+    ],
     'versions' => 'Versiones',
 
     'loader' => [

@@ -24,9 +24,13 @@ class Thunderstore
     /** @return array<string, string> category id => name */
     public function categories(): array
     {
-        return Cache::remember("mod-manager:thunderstore:$this->community:categories", now()->addDay(), fn () => collect(
-            $this->http()->get(self::SITE . "/api/cyberstorm/community/$this->community/filters/")->json('package_categories', [])
-        )->pluck('name', 'id')->all());
+        return array_column($this->categoryList(), 'name', 'id');
+    }
+
+    /** Category ids differ per community, the slug ("client-side") does not. */
+    public function categoryId(string $slug): ?string
+    {
+        return array_column($this->categoryList(), 'id', 'slug')[$slug] ?? null;
     }
 
     /**
@@ -34,11 +38,15 @@ class Thunderstore
      *
      * @return array{items: array<int, array<string, mixed>>, pages: int}
      */
-    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1): array
+    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $hideClientSide = false, bool $showDeprecated = false): array
     {
         $response = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", array_filter([
             'q' => $query,
             'included_categories' => $category,
+            // client-only mods do nothing on a server
+            'excluded_categories' => $hideClientSide ? $this->categoryId('client-side') : null,
+            // thunderstore leaves deprecated packages out unless asked
+            'deprecated' => $showDeprecated ? 'true' : null,
             'ordering' => in_array($ordering, self::ORDERINGS, true) ? $ordering : 'most-downloaded',
             'page' => $page,
         ]));
@@ -65,11 +73,15 @@ class Thunderstore
         return Cache::remember("mod-manager:thunderstore:$this->community:$id", now()->addMinutes(10), function () use ($namespace, $name) {
             $package = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/$namespace/$name/")->json();
             $versions = $this->http()->get(self::SITE . "/api/cyberstorm/package/$namespace/$name/versions/")->json();
-            $readme = $this->http()->get(self::SITE . "/api/experimental/package/$namespace/$name/{$package['latest_version_number']}/readme/")->json('markdown', '');
+            $base = self::SITE . "/api/experimental/package/$namespace/$name/{$package['latest_version_number']}";
+            $readme = $this->http()->get("$base/readme/")->json('markdown', '');
+            $changelog = ($package['has_changelog'] ?? false) ? $this->http()->get("$base/changelog/")->json('markdown', '') : '';
 
             return $this->item($package) + [
                 'version' => $package['latest_version_number'],
                 'website' => $package['website_url'] ?: null,
+                'size' => (int) ($package['size'] ?? 0),
+                'dependants' => (int) ($package['dependant_count'] ?? 0),
                 'dependencies' => collect($package['dependencies'] ?? [])
                     ->map(fn (array $dependency) => [
                         'id' => "{$dependency['namespace']}-{$dependency['name']}",
@@ -88,10 +100,24 @@ class Thunderstore
                     ])
                     ->values()
                     ->all(),
-                // readmes are written by anyone: raw html is stripped, unsafe links dropped
-                'readme' => Str::markdown((string) $readme, ['html_input' => 'strip', 'allow_unsafe_links' => false]),
+                'readme' => self::markdown($readme),
+                'changelog' => filled($changelog) ? self::markdown($changelog) : null,
             ];
         });
+    }
+
+    /** Readmes and changelogs are written by anyone: raw html is stripped, unsafe links dropped. */
+    private static function markdown(mixed $markdown): string
+    {
+        return (string) Str::markdown((string) $markdown, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
+    }
+
+    /** @return array<int, array{id: string, name: string, slug: string}> */
+    private function categoryList(): array
+    {
+        return Cache::remember("mod-manager:thunderstore:$this->community:categories", now()->addDay(), fn () => $this->http()
+            ->get(self::SITE . "/api/cyberstorm/community/$this->community/filters/")
+            ->json('package_categories', []));
     }
 
     /** @return array{0: string, 1: string} namespace and name */
@@ -117,6 +143,12 @@ class Thunderstore
             'rating' => (int) ($package['rating_count'] ?? 0),
             'updated' => $package['last_updated'] ?? $package['version_created'] ?? null,
             'categories' => array_column($package['categories'] ?? [], 'name'),
+            // server or client only, as far as the author tagged it
+            'side' => match (true) {
+                in_array('server-side', $slugs = array_column($package['categories'] ?? [], 'slug'), true) && !in_array('client-side', $slugs, true) => 'server',
+                in_array('client-side', $slugs, true) && !in_array('server-side', $slugs, true) => 'client',
+                default => null,
+            },
             'deprecated' => (bool) ($package['is_deprecated'] ?? false),
             'url' => self::SITE . "/c/$this->community/p/{$package['namespace']}/{$package['name']}/",
         ];

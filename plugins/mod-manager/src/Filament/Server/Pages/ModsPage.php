@@ -43,6 +43,10 @@ class ModsPage extends Page
 
     public int $page = 1;
 
+    public bool $hideClientSide = true;
+
+    public bool $showDeprecated = false;
+
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
 
@@ -71,11 +75,28 @@ class ModsPage extends Page
         return static::getNavigationLabel();
     }
 
+    /** the browse filters kept between visits, per server: a category id only means something in one game */
+    private const REMEMBERED = ['query', 'category', 'ordering', 'page', 'hideClientSide', 'showDeprecated'];
+
     public function mount(): void
     {
         abort_unless(static::canAccess(), 403);
 
-        $this->search();
+        foreach (session($this->sessionKey(), []) as $property => $value) {
+            if (in_array($property, self::REMEMBERED, true)) {
+                $this->{$property} = $value;
+            }
+        }
+
+        $this->fetch();
+    }
+
+    /** Every filter change searches right away, typing included (debounced in the view). */
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['query', 'category', 'ordering', 'hideClientSide', 'showDeprecated'], true)) {
+            $this->search();
+        }
     }
 
     public function setTab(string $tab): void
@@ -156,7 +177,7 @@ class ModsPage extends Page
     private function fetch(): void
     {
         try {
-            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page);
+            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->hideClientSide, $this->showDeprecated);
         } catch (Throwable $exception) {
             report($exception);
             $this->items = [];
@@ -168,6 +189,13 @@ class ModsPage extends Page
 
         $this->items = $result['items'];
         $this->pages = $result['pages'];
+
+        session([$this->sessionKey() => array_combine(self::REMEMBERED, array_map(fn (string $property) => $this->{$property}, self::REMEMBERED))]);
+    }
+
+    private function sessionKey(): string
+    {
+        return 'mod-manager.browse.' . $this->server()->id;
     }
 
     private function source(): Thunderstore

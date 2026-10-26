@@ -9,7 +9,6 @@ return [
     ],
 
     'nothing_installed' => 'No mods installed yet.',
-    'search' => 'Search',
     'search_placeholder' => 'Search mods',
     'all_categories' => 'All categories',
     'orderings' => [
@@ -32,6 +31,15 @@ return [
     'dependencies' => 'Dependencies',
     'no_dependencies' => 'None',
     'loader_dependency' => 'Mod loader',
+    'hide_client_side' => 'Hide client-only mods',
+    'show_deprecated' => 'Show deprecated',
+    'used_by' => 'used by :count mods',
+    'readme' => 'Description',
+    'changelog' => 'Changelog',
+    'side' => [
+        'server' => 'Server-side',
+        'client' => 'Client only',
+    ],
     'versions' => 'Versions',
 
     'loader' => [

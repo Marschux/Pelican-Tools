@@ -47,12 +47,13 @@
             </div>
         </x-filament::section>
     @else
-        <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap">
-            <x-filament::input.wrapper style="flex:1 1 16rem">
-                <x-filament::input type="search" wire:model="query" :placeholder="trans('mod-manager::mods.search_placeholder')" />
+        {{-- every change searches right away, typing waits for a short pause --}}
+        <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+            <x-filament::input.wrapper prefix-icon="tabler-search" style="flex:1 1 16rem">
+                <x-filament::input type="search" wire:model.live.debounce.500ms="query" :placeholder="trans('mod-manager::mods.search_placeholder')" />
             </x-filament::input.wrapper>
             <x-filament::input.wrapper style="flex:0 1 14rem">
-                <x-filament::input.select wire:model="category" wire:change="search">
+                <x-filament::input.select wire:model.live="category">
                     <option value="">{{ trans('mod-manager::mods.all_categories') }}</option>
                     @foreach ($this->categories() as $id => $name)
                         <option value="{{ $id }}">{{ $name }}</option>
@@ -60,21 +61,28 @@
                 </x-filament::input.select>
             </x-filament::input.wrapper>
             <x-filament::input.wrapper style="flex:0 1 14rem">
-                <x-filament::input.select wire:model="ordering" wire:change="search">
+                <x-filament::input.select wire:model.live="ordering">
                     @foreach (\Marschux\ModManager\Sources\Thunderstore::ORDERINGS as $order)
                         <option value="{{ $order }}">{{ trans("mod-manager::mods.orderings.$order") }}</option>
                     @endforeach
                 </x-filament::input.select>
             </x-filament::input.wrapper>
-            <x-filament::button type="submit" icon="tabler-search">{{ trans('mod-manager::mods.search') }}</x-filament::button>
+            <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                <x-filament::input.checkbox wire:model.live="hideClientSide" />
+                {{ trans('mod-manager::mods.hide_client_side') }}
+            </label>
+            <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                <x-filament::input.checkbox wire:model.live="showDeprecated" />
+                {{ trans('mod-manager::mods.show_deprecated') }}
+            </label>
         </form>
 
-        <div wire:loading.flex wire:target="search,goToPage" style="justify-content:center;padding:2rem">
+        <div wire:loading.flex wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="justify-content:center;padding:2rem">
             <x-filament::loading-indicator style="width:2rem;height:2rem" />
         </div>
 
         {{-- three tiles side by side, fewer when the page gets narrow --}}
-        <div wire:loading.remove wire:target="search,goToPage" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
+        <div wire:loading.remove wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" wire:click="showDetails({{ $js($item['id']) }})">
@@ -98,12 +106,17 @@
 
                     <div style="font-size:.875rem;opacity:.8;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ $item['summary'] }}</div>
 
-                    @if ($item['categories'] || $item['deprecated'])
+                    @if ($item['categories'] || $item['deprecated'] || $item['side'])
                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
+                            @if ($item['side'] === 'server')
+                                <x-filament::badge color="success" size="sm" icon="tabler-server">{{ trans('mod-manager::mods.side.server') }}</x-filament::badge>
+                            @elseif ($item['side'] === 'client')
+                                <x-filament::badge color="warning" size="sm" icon="tabler-device-desktop">{{ trans('mod-manager::mods.side.client') }}</x-filament::badge>
+                            @endif
                             @if ($item['deprecated'])
                                 <x-filament::badge color="danger" size="sm">{{ trans('mod-manager::mods.deprecated') }}</x-filament::badge>
                             @endif
-                            @foreach (array_slice($item['categories'], 0, 3) as $category)
+                            @foreach (array_slice(array_diff($item['categories'], ['Server-side', 'Client-side']), 0, 3) as $category)
                                 <x-filament::badge color="gray" size="sm">{{ $category }}</x-filament::badge>
                             @endforeach
                         </div>
@@ -124,7 +137,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.remove wire:target="search,goToPage" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.remove wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)
@@ -148,7 +161,9 @@
                         <div>{{ $details['name'] }} <span style="{{ $muted }}">{{ $details['version'] }}</span></div>
                         <div style="{{ $muted }};font-weight:400">
                             {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
-                            ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }}
+                            ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }} ·
+                            {{ \Illuminate\Support\Number::fileSize($details['size']) }} ·
+                            {{ trans('mod-manager::mods.used_by', ['count' => number_format($details['dependants'])]) }}
                         </div>
                     </div>
                 </div>
@@ -193,8 +208,17 @@
             </div>
 
             <style>.mod-readme img { max-width: 100%; height: auto; }</style>
-            <div class="fi-prose mod-readme" style="max-width:none;border-top:1px solid rgba(127,127,127,.2);padding-top:1rem">
-                {!! $details['readme'] !!}
+            <div x-data="{ show: 'readme' }" wire:key="details-{{ md5($details['id']) }}" style="border-top:1px solid rgba(127,127,127,.2);padding-top:1rem">
+                @if ($details['changelog'])
+                    <x-filament::tabs style="margin-bottom:1rem">
+                        <x-filament::tabs.item alpine-active="show === 'readme'" x-on:click="show = 'readme'">{{ trans('mod-manager::mods.readme') }}</x-filament::tabs.item>
+                        <x-filament::tabs.item alpine-active="show === 'changelog'" x-on:click="show = 'changelog'">{{ trans('mod-manager::mods.changelog') }}</x-filament::tabs.item>
+                    </x-filament::tabs>
+                @endif
+                <div class="fi-prose mod-readme" style="max-width:none" x-show="show === 'readme'">{!! $details['readme'] !!}</div>
+                @if ($details['changelog'])
+                    <div class="fi-prose mod-readme" style="max-width:none" x-show="show === 'changelog'" x-cloak>{!! $details['changelog'] !!}</div>
+                @endif
             </div>
         @endif
     </x-filament::modal>
