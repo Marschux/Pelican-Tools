@@ -41,7 +41,6 @@ return [
         'client' => 'Client only',
     ],
     'installed_version' => 'Installed :version',
-    'dependency' => 'Dependency',
     'remove' => 'Remove',
     'cancel' => 'Cancel',
     'update_all' => 'Update all (:count)',
