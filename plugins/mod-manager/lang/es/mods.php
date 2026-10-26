@@ -51,6 +51,8 @@ return [
     'enable' => 'Activar',
     'disable' => 'Desactivar',
     'current' => 'Instalada',
+    'requires' => 'Necesita: :names',
+    'needed_by' => 'Lo necesita: :names',
     'versions' => 'Versiones',
 
     'loader' => [

@@ -51,6 +51,8 @@ return [
     'enable' => 'Switch on',
     'disable' => 'Switch off',
     'current' => 'Installed',
+    'requires' => 'Needs: :names',
+    'needed_by' => 'Needed by: :names',
     'versions' => 'Versions',
 
     'loader' => [

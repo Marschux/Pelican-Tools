@@ -399,8 +399,38 @@ class ModsPage extends Page
     public function installed(): Collection
     {
         $hidden = (array) $this->profile()->setting('hidden_packages', []);
+        $installs = $this->installer()->installs()->reject(fn (ModInstall $install) => in_array($install->package, $hidden, true))->values();
 
-        return $this->installer()->installs()->reject(fn (ModInstall $install) => in_array($install->package, $hidden, true))->values();
+        $this->installer()->fillSizes($installs);
+
+        return $installs;
+    }
+
+    /**
+     * Who needs whom, in names: what a mod requires and which mods require it. The loader is
+     * left out - every mod needs it.
+     *
+     * @return array<string, array{requires: string[], needed_by: string[]}> package => names
+     */
+    public function relations(): array
+    {
+        $installs = $this->installed();
+        $names = $installs->pluck('name', 'package')->all();
+        $hidden = (array) $this->profile()->setting('hidden_packages', []);
+        $relations = [];
+
+        foreach ($installs as $install) {
+            $relations[$install->package]['requires'] = array_values(array_map(
+                fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
+                array_diff($install->requires, $hidden),
+            ));
+            $relations[$install->package]['needed_by'] = $installs
+                ->filter(fn (ModInstall $other) => in_array($install->package, $other->requires, true))
+                ->pluck('name')
+                ->all();
+        }
+
+        return $relations;
     }
 
     /** @return array<string, string> package => installed version, for the tiles */

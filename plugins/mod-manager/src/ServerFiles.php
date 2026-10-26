@@ -123,6 +123,24 @@ class ServerFiles
         return $files;
     }
 
+    /** Bytes of every file below $directory together. */
+    public function usage(string $directory): int
+    {
+        try {
+            $entries = $this->repository->getDirectory($directory);
+        } catch (Throwable) {
+            return 0;
+        }
+
+        $bytes = 0;
+
+        foreach (array_is_list($entries) ? $entries : [] as $entry) {
+            $bytes += ($entry['directory'] ?? false) ? $this->usage("$directory/{$entry['name']}") : (int) ($entry['size'] ?? 0);
+        }
+
+        return $bytes;
+    }
+
     public function exists(string $path): bool
     {
         $directory = dirname($path);

@@ -18,10 +18,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property string[] $files
  * @property bool $pinned
  * @property bool $enabled
+ * @property int|null $size  bytes on disk
  */
 class ModInstall extends Model
 {
-    protected $fillable = ['server_id', 'package', 'name', 'version', 'icon', 'dependency', 'requires', 'files', 'pinned', 'enabled'];
+    protected $fillable = ['server_id', 'package', 'name', 'version', 'icon', 'dependency', 'requires', 'files', 'pinned', 'enabled', 'size'];
 
     protected $casts = [
         'dependency' => 'boolean',

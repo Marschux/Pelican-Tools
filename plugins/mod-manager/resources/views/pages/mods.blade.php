@@ -9,6 +9,7 @@
     $updates = $this->updates();
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
+    $relations = $tab === 'installed' ? $this->relations() : [];
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
@@ -92,8 +93,22 @@
                                 <div style="{{ $icon }};width:2.5rem;height:2.5rem"></div>
                             @endif
                             <div style="min-width:0">
-                                <div style="font-weight:600;cursor:pointer" wire:click="showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
-                                <div style="{{ $muted }}">{{ $install->version }} · {{ trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
+                                <div style="display:flex;gap:.5rem;align-items:center">
+                                    <span style="font-weight:600;cursor:pointer" wire:click="showDetails({{ $js($install->package) }})">{{ $install->name }}</span>
+                                    <x-filament::badge color="gray" size="sm">v{{ $install->version }}</x-filament::badge>
+                                </div>
+                                <div style="{{ $muted }}">
+                                    {{ trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}
+                                    @if ($install->size !== null)
+                                        · {{ \Illuminate\Support\Number::fileSize($install->size, 1) }}
+                                    @endif
+                                </div>
+                                @if ($relations[$install->package]['requires'] ?? [])
+                                    <div style="{{ $muted }}">{{ trans('mod-manager::mods.requires', ['names' => implode(', ', $relations[$install->package]['requires'])]) }}</div>
+                                @endif
+                                @if ($relations[$install->package]['needed_by'] ?? [])
+                                    <div style="{{ $muted }}">{{ trans('mod-manager::mods.needed_by', ['names' => implode(', ', $relations[$install->package]['needed_by'])]) }}</div>
+                                @endif
                             </div>
                         </div>
                         <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">

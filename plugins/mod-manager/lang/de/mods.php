@@ -51,6 +51,8 @@ return [
     'enable' => 'Einschalten',
     'disable' => 'Ausschalten',
     'current' => 'Installiert',
+    'requires' => 'Braucht: :names',
+    'needed_by' => 'Gebraucht von: :names',
     'versions' => 'Versionen',
 
     'loader' => [

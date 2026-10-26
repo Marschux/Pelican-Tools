@@ -268,7 +268,16 @@ class Installer
             'dependency' => false,
             'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), (array) ($manifest['dependencies'] ?? []))),
             'files' => [$path],
+            'size' => $this->files->usage($path),
         ]);
+    }
+
+    /** Measures installs from before sizes were kept, once. */
+    public function fillSizes(Collection $installs): void
+    {
+        foreach ($installs->whereNull('size') as $install) {
+            $install->update(['size' => array_sum(array_map(fn (string $path) => $this->files->usage($path), $install->files))]);
+        }
     }
 
     /** Deletes something hand-installed - only what unmanaged() lists, nothing else. */
@@ -391,6 +400,7 @@ class Installer
                 'files' => [$directory],
                 'pinned' => $package['pinned'] ?? false,
                 'enabled' => $enabled,
+                'size' => $this->files->usage($directory),
             ],
         );
     }
