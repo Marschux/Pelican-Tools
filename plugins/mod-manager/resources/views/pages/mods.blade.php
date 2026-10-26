@@ -69,12 +69,12 @@
             <x-filament::button type="submit" icon="tabler-search">{{ trans('mod-manager::mods.search') }}</x-filament::button>
         </form>
 
-        <div wire:loading.flex wire:target="search" style="justify-content:center;padding:2rem">
+        <div wire:loading.flex wire:target="search,goToPage" style="justify-content:center;padding:2rem">
             <x-filament::loading-indicator style="width:2rem;height:2rem" />
         </div>
 
         {{-- three tiles side by side, fewer when the page gets narrow --}}
-        <div wire:loading.remove wire:target="search" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
+        <div wire:loading.remove wire:target="search,goToPage" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" wire:click="showDetails({{ $js($item['id']) }})">
@@ -119,9 +119,20 @@
             @endforelse
         </div>
 
-        @if ($more)
-            <div style="display:flex;justify-content:center" wire:loading.remove wire:target="search">
-                <x-filament::button color="gray" icon="tabler-chevron-down" wire:click="loadMore">{{ trans('mod-manager::mods.load_more') }}</x-filament::button>
+        @if ($pages > 1)
+            {{-- first, last and two around the current page, gaps as dots --}}
+            @php
+                $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
+            @endphp
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.remove wire:target="search,goToPage" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
+                @foreach ($shown as $index => $number)
+                    @if ($index > 0 && $number - $shown[$index - 1] > 1)
+                        <span style="opacity:.5;padding:0 .25rem">…</span>
+                    @endif
+                    <x-filament::button size="sm" :color="$number === $page ? 'primary' : 'gray'" :outlined="$number !== $page" wire:click="goToPage({{ $number }})">{{ $number }}</x-filament::button>
+                @endforeach
+                <x-filament::icon-button icon="tabler-chevron-right" color="gray" :disabled="$page >= $pages" wire:click="goToPage({{ $page + 1 }})" :label="trans('mod-manager::mods.next')" />
             </div>
         @endif
     @endif

@@ -32,7 +32,7 @@ class Thunderstore
     /**
      * One page of 20 packages.
      *
-     * @return array{items: array<int, array<string, mixed>>, more: bool}
+     * @return array{items: array<int, array<string, mixed>>, pages: int}
      */
     public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1): array
     {
@@ -49,7 +49,8 @@ class Thunderstore
             ->values()
             ->all();
 
-        return ['items' => $items, 'more' => $response->json('next') !== null];
+        // pages of 20; hidden packages make a page a little shorter, never shift the count
+        return ['items' => $items, 'pages' => max(1, (int) ceil($response->json('count', 0) / 20))];
     }
 
     /**

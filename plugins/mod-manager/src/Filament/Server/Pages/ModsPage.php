@@ -46,7 +46,7 @@ class ModsPage extends Page
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
 
-    public bool $more = false;
+    public int $pages = 1;
 
     /** @var array<string, mixed>|null the package the detail modal shows */
     public ?array $details = null;
@@ -86,14 +86,12 @@ class ModsPage extends Page
     /** A new search starts at the first page again. */
     public function search(): void
     {
-        $this->page = 1;
-        $this->items = [];
-        $this->fetch();
+        $this->goToPage(1);
     }
 
-    public function loadMore(): void
+    public function goToPage(int $page): void
     {
-        $this->page++;
+        $this->page = max(1, min($page, $this->pages ?: 1));
         $this->fetch();
     }
 
@@ -161,15 +159,15 @@ class ModsPage extends Page
             $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page);
         } catch (Throwable $exception) {
             report($exception);
-            $this->more = false;
+            $this->items = [];
 
             Notification::make()->title(trans('mod-manager::mods.messages.search_failed'))->danger()->send();
 
             return;
         }
 
-        $this->items = [...$this->items, ...$result['items']];
-        $this->more = $result['more'];
+        $this->items = $result['items'];
+        $this->pages = $result['pages'];
     }
 
     private function source(): Thunderstore
