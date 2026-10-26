@@ -33,19 +33,20 @@ class Installer
      *
      * @return array<int, array<string, mixed>> from Thunderstore::latest(), plus "dependency"
      */
-    public function plan(string $id): array
+    public function plan(string $id, ?string $version = null): array
     {
         $installed = $this->installs()->pluck('package')->all();
         $plan = [];
 
-        $collect = function (string $package, bool $root) use (&$collect, &$plan, $installed) {
+        $collect = function (string $package, bool $root) use (&$collect, &$plan, $installed, $version) {
             if (array_key_exists($package, $plan) || in_array($package, $this->hidden(), true) || (!$root && in_array($package, $installed, true))) {
                 return;
             }
 
             // taken before the dependencies, so a dependency cycle stops here
             $plan[$package] = null;
-            $latest = $this->source->latest($package);
+            // a version picked by hand only for the package itself, dependencies come newest
+            $latest = $this->source->release($package, $root ? $version : null);
 
             foreach ($latest['requires'] as $required) {
                 $collect($required, false);
@@ -53,7 +54,7 @@ class Installer
 
             // dependencies first, so nothing is installed before what it needs
             unset($plan[$package]);
-            $plan[$package] = $latest + ['dependency' => !$root];
+            $plan[$package] = $latest + ['dependency' => !$root, 'pinned' => $root && $version !== null];
         };
 
         $collect($id, true);
@@ -166,6 +167,117 @@ class Installer
         }
     }
 
+    /**
+     * Installed packages with a newer version out, the loader included. Pinned ones are left
+     * out: their version was picked on purpose.
+     *
+     * @return array<string, string> package => newest version
+     */
+    public function updates(): array
+    {
+        $updates = [];
+
+        foreach ($this->installs()->reject(fn (ModInstall $install) => $install->pinned) as $install) {
+            try {
+                $latest = $this->source->latestVersion($install->package);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            if (version_compare($latest, $install->version, '>')) {
+                $updates[$install->package] = $latest;
+            }
+        }
+
+        return $updates;
+    }
+
+    /** The newest version, plus any dependency it newly needs. Unpins a pinned version. */
+    public function update(ModInstall $install): void
+    {
+        $this->install($this->plan($install->package));
+    }
+
+    /** Switched off, a mod moves next to the mods folder, where the loader does not look. */
+    public function setEnabled(ModInstall $install, bool $enabled): void
+    {
+        if ($install->enabled === $enabled) {
+            return;
+        }
+
+        $to = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $install->package;
+
+        $this->files->move(array_map(fn (string $from) => ['from' => $from, 'to' => $to], $install->files));
+        $install->update(['enabled' => $enabled, 'files' => [$to]]);
+    }
+
+    /**
+     * What sits in the mods folder without the plugin having put it there - by hand, or with
+     * r2modman. A folder named like a package ("Namespace-Name") can be taken over.
+     *
+     * @return array<int, array{path: string, name: string, version: ?string, package: ?string}>
+     */
+    public function unmanaged(): array
+    {
+        $known = $this->installs()->pluck('files')->flatten()->all();
+        $found = [];
+
+        foreach ($this->files->list($this->modsDir()) as $name => $isDirectory) {
+            $path = $this->modsDir() . "/$name";
+
+            if (in_array($path, $known, true)) {
+                continue;
+            }
+
+            $manifest = $isDirectory ? $this->manifest($path) : null;
+            $package = $isDirectory && preg_match('/^\w+-\w+$/', $name) && is_array($manifest) ? $name : null;
+
+            $found[] = [
+                'path' => $path,
+                'name' => is_array($manifest) && isset($manifest['name']) ? str_replace('_', ' ', (string) $manifest['name']) : $name,
+                'version' => is_array($manifest) ? ($manifest['version_number'] ?? null) : null,
+                'package' => $package,
+            ];
+        }
+
+        return $found;
+    }
+
+    /** Takes a hand-installed package over as it is, so it gets update hints and can be removed. */
+    public function adopt(string $path): ModInstall
+    {
+        $entry = collect($this->unmanaged())->firstWhere('path', $path);
+
+        if (!$entry || !$entry['package']) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        // asks the source, so only packages that really exist there are taken over
+        $latest = $this->source->latest($entry['package']);
+        $manifest = $this->manifest($path) ?? [];
+
+        return ModInstall::query()->create([
+            'server_id' => $this->server->id,
+            'package' => $entry['package'],
+            'name' => $latest['name'],
+            'version' => (string) ($entry['version'] ?? '0'),
+            'icon' => $latest['icon'],
+            'dependency' => false,
+            'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), (array) ($manifest['dependencies'] ?? []))),
+            'files' => [$path],
+        ]);
+    }
+
+    /** Deletes something hand-installed - only what unmanaged() lists, nothing else. */
+    public function removeUnmanaged(string $path): void
+    {
+        if (!collect($this->unmanaged())->contains('path', $path)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        $this->files->delete([$path]);
+    }
+
     /** @return Collection<int, ModInstall> */
     public function installs(): Collection
     {
@@ -175,15 +287,16 @@ class Installer
     /** @param  array<string, mixed>  $package */
     private function installPackage(array $package): ModInstall
     {
-        $directory = trim((string) $this->profile->setting('mods_dir'), '/') . '/' . $package['id'];
+        $existing = $this->installs()->firstWhere('package', $package['id']);
+        // a mod that is switched off stays off through an update
+        $enabled = $existing?->enabled ?? true;
+        $directory = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $package['id'];
 
         // a reinstall or update starts from an empty folder
         $this->files->delete($this->files->exists($directory) ? [$directory] : []);
         $this->files->pull($package['download'], $directory, 'package.zip');
         $this->files->decompress($directory, 'package.zip');
         $this->files->delete(["$directory/package.zip"]);
-
-        $existing = $this->installs()->firstWhere('package', $package['id']);
 
         return ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => $package['id']],
@@ -195,8 +308,29 @@ class Installer
                 'dependency' => $existing ? $existing->dependency && $package['dependency'] : $package['dependency'],
                 'requires' => $package['requires'],
                 'files' => [$directory],
+                'pinned' => $package['pinned'] ?? false,
+                'enabled' => $enabled,
             ],
         );
+    }
+
+    /** A package's manifest.json - written by Windows tools, so often with a byte order mark. */
+    private function manifest(string $directory): ?array
+    {
+        $manifest = json_decode(preg_replace('/^\xEF\xBB\xBF/', '', (string) $this->files->read("$directory/manifest.json")), true);
+
+        return is_array($manifest) ? $manifest : null;
+    }
+
+    private function modsDir(): string
+    {
+        return trim((string) $this->profile->setting('mods_dir'), '/');
+    }
+
+    /** e.g. BepInEx/plugins_disabled, right next to the mods folder */
+    private function disabledDir(): string
+    {
+        return $this->modsDir() . '_disabled';
     }
 
     /** @return string[] */

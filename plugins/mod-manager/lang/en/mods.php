@@ -44,6 +44,13 @@ return [
     'dependency' => 'Dependency',
     'remove' => 'Remove',
     'cancel' => 'Cancel',
+    'update_all' => 'Update all (:count)',
+    'update_to' => ':version available',
+    'pinned' => 'Pinned',
+    'off' => 'Off',
+    'enable' => 'Switch on',
+    'disable' => 'Switch off',
+    'current' => 'Installed',
     'versions' => 'Versions',
 
     'loader' => [
@@ -51,6 +58,13 @@ return [
         'not_started' => 'Installed, not started through it',
         'missing' => 'Not installed',
         'hint' => 'Mods only load through :loader.',
+    ],
+
+    'unmanaged' => [
+        'heading' => 'Installed by hand',
+        'hint' => 'In the mods folder, but not installed through this page. A package can be taken over to get update hints.',
+        'adopt' => 'Take over',
+        'confirm_delete' => 'Delete :path from the server?',
     ],
 
     'confirm' => [
@@ -64,6 +78,11 @@ return [
     ],
 
     'messages' => [
+        'updated' => ':name updated',
+        'enabled' => ':name switched on',
+        'disabled' => ':name switched off',
+        'adopted' => ':name taken over',
+        'not_adoptable' => 'That is not a package this page can take over.',
         'installed' => ':name installed',
         'removed' => ':name removed',
         'restart' => 'Takes effect after a restart of the server.',

@@ -44,6 +44,13 @@ return [
     'dependency' => 'Dependencia',
     'remove' => 'Quitar',
     'cancel' => 'Cancelar',
+    'update_all' => 'Actualizar todo (:count)',
+    'update_to' => ':version disponible',
+    'pinned' => 'Fijado',
+    'off' => 'Apagado',
+    'enable' => 'Activar',
+    'disable' => 'Desactivar',
+    'current' => 'Instalada',
     'versions' => 'Versiones',
 
     'loader' => [
@@ -51,6 +58,13 @@ return [
         'not_started' => 'Instalado, el servidor no arranca con él',
         'missing' => 'No instalado',
         'hint' => 'Los mods solo se cargan a través de :loader.',
+    ],
+
+    'unmanaged' => [
+        'heading' => 'Instalado a mano',
+        'hint' => 'Está en la carpeta de mods, pero no se instaló desde esta página. Un paquete se puede adoptar para recibir avisos de actualización.',
+        'adopt' => 'Adoptar',
+        'confirm_delete' => '¿Borrar :path del servidor?',
     ],
 
     'confirm' => [
@@ -64,6 +78,11 @@ return [
     ],
 
     'messages' => [
+        'updated' => ':name actualizado',
+        'enabled' => ':name activado',
+        'disabled' => ':name desactivado',
+        'adopted' => ':name adoptado',
+        'not_adoptable' => 'No es un paquete que esta página pueda adoptar.',
         'installed' => ':name instalado',
         'removed' => ':name quitado',
         'restart' => 'Se aplica tras reiniciar el servidor.',

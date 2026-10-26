@@ -113,9 +113,25 @@ class Thunderstore
      */
     public function latest(string $id): array
     {
+        return $this->release($id);
+    }
+
+    /**
+     * One version of a package - the newest without $version.
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, download: string, requires: string[]}
+     */
+    public function release(string $id, ?string $version = null): array
+    {
         [$namespace, $name] = self::split($id);
 
-        $latest = $this->http()->get(self::SITE . "/api/experimental/package/$namespace/$name/")->json('latest');
+        if ($version !== null && !preg_match('/^[\d.]+$/', $version)) {
+            throw new RuntimeException("not a version: $version");
+        }
+
+        $latest = $version === null
+            ? $this->http()->get(self::SITE . "/api/experimental/package/$namespace/$name/")->json('latest')
+            : $this->http()->get(self::SITE . "/api/experimental/package/$namespace/$name/$version/")->json();
 
         return [
             'id' => $id,
@@ -126,6 +142,12 @@ class Thunderstore
             // "Namespace-Name-1.2.3" - the version is dropped, the newest is installed anyway
             'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $latest['dependencies'] ?? [])),
         ];
+    }
+
+    /** The newest version number, for the update hints - asked at most every ten minutes. */
+    public function latestVersion(string $id): string
+    {
+        return Cache::remember("mod-manager:thunderstore:$this->community:$id:latest", now()->addMinutes(10), fn () => $this->latest($id)['version']);
     }
 
     /** Readmes and changelogs are written by anyone: raw html is stripped, unsafe links dropped. */

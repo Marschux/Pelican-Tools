@@ -149,12 +149,12 @@ class ModsPage extends Page
     }
 
     /** Straight away when nothing else comes along, else the modal lists the dependencies first. */
-    public function install(string $id): void
+    public function install(string $id, ?string $version = null): void
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
         try {
-            $plan = $this->installer()->plan($id);
+            $plan = $this->installer()->plan($id, $version);
         } catch (Throwable $exception) {
             $this->fail($exception);
 
@@ -167,7 +167,7 @@ class ModsPage extends Page
             return;
         }
 
-        $this->confirm = ['type' => 'install', 'id' => $id, 'name' => end($plan)['name'], 'packages' => array_slice($plan, 0, -1)];
+        $this->confirm = ['type' => 'install', 'id' => $id, 'version' => $version, 'name' => end($plan)['name'], 'packages' => array_slice($plan, 0, -1)];
         $this->dispatch('close-modal', id: 'mod-details');
         $this->dispatch('open-modal', id: 'mod-confirm');
     }
@@ -178,7 +178,7 @@ class ModsPage extends Page
 
         if (($this->confirm['type'] ?? null) === 'install') {
             // planned again: the list in the modal may be minutes old
-            $this->runInstall($this->installer()->plan($this->confirm['id']));
+            $this->runInstall($this->installer()->plan($this->confirm['id'], $this->confirm['version'] ?? null));
         }
 
         $this->closeConfirm();
@@ -241,6 +241,68 @@ class ModsPage extends Page
         Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => "$loader->name $loader->version"]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
     }
 
+    public function updateMod(int $installId): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $install = $this->findInstall($installId);
+
+        $this->attempt(fn () => $this->installer()->update($install), trans('mod-manager::mods.messages.updated', ['name' => $install->name]));
+    }
+
+    /** Every mod with a newer version, the loader not included - it has its own button. */
+    public function updateAll(): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $updates = array_intersect_key($this->installer()->updates(), $this->installedVersions());
+        $installs = $this->installed()->filter(fn (ModInstall $install) => isset($updates[$install->package]));
+
+        $this->attempt(
+            fn () => $installs->each(fn (ModInstall $install) => $this->installer()->update($install)),
+            trans('mod-manager::mods.messages.updated', ['name' => $installs->pluck('name')->implode(', ')]),
+        );
+    }
+
+    public function toggle(int $installId): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $install = $this->findInstall($installId);
+        $enabled = !$install->enabled;
+
+        $this->attempt(
+            fn () => $this->installer()->setEnabled($install, $enabled),
+            trans($enabled ? 'mod-manager::mods.messages.enabled' : 'mod-manager::mods.messages.disabled', ['name' => $install->name]),
+        );
+    }
+
+    public function adopt(string $path): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $this->attempt(fn () => $this->installer()->adopt($path), trans('mod-manager::mods.messages.adopted', ['name' => basename($path)]), false);
+    }
+
+    public function removeUnmanaged(string $path): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->attempt(fn () => $this->installer()->removeUnmanaged($path), trans('mod-manager::mods.messages.removed', ['name' => basename($path)]));
+    }
+
+    /** @return array<string, string> package => newer version, worked out once per request */
+    public function updates(): array
+    {
+        return once(fn () => $this->installer()->updates());
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function unmanaged(): array
+    {
+        return $this->installer()->unmanaged();
+    }
+
     /** @return Collection<int, ModInstall> the mods, without the loader */
     public function installed(): Collection
     {
@@ -269,6 +331,19 @@ class ModsPage extends Page
         $names = implode(', ', array_map(fn (array $package) => "{$package['name']} {$package['version']}", $plan));
 
         Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => $names]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
+    }
+
+    private function attempt(callable $action, string $success, bool $restart = true): void
+    {
+        try {
+            $action();
+        } catch (Throwable $exception) {
+            $this->fail($exception);
+
+            return;
+        }
+
+        Notification::make()->title($success)->body($restart ? trans('mod-manager::mods.messages.restart') : null)->success()->send();
     }
 
     private function fail(Throwable $exception): void
@@ -310,7 +385,7 @@ class ModsPage extends Page
         }
     }
 
-    /** @return array{name: string, installed: bool, started: bool}|null null when the profile has no loader */
+    /** @return array{name: string, installed: bool, started: bool, update: ?string}|null null when the profile has no loader */
     public function loader(): ?array
     {
         $profile = $this->profile();
@@ -334,6 +409,7 @@ class ModsPage extends Page
             'installed' => $installed,
             // started through the loader: this server's start command carries the prefix
             'started' => $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
+            'update' => $this->updates()[(string) $profile->setting('loader_package')] ?? null,
         ];
     }
 

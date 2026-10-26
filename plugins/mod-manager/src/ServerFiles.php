@@ -77,6 +77,15 @@ class ServerFiles
         Activity::event('server:file.delete')->property(['directory' => '/', 'files' => $paths])->log();
     }
 
+    public function read(string $path): ?string
+    {
+        try {
+            return (string) $this->repository->getContent($path, 1048576);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
     /** @return array<string, bool> name => is directory, empty when the directory is missing */
     public function list(string $directory): array
     {

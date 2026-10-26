@@ -44,6 +44,13 @@ return [
     'dependency' => 'Abhängigkeit',
     'remove' => 'Entfernen',
     'cancel' => 'Abbrechen',
+    'update_all' => 'Alle aktualisieren (:count)',
+    'update_to' => ':version verfügbar',
+    'pinned' => 'Festgepinnt',
+    'off' => 'Aus',
+    'enable' => 'Einschalten',
+    'disable' => 'Ausschalten',
+    'current' => 'Installiert',
     'versions' => 'Versionen',
 
     'loader' => [
@@ -51,6 +58,13 @@ return [
         'not_started' => 'Installiert, Server startet nicht darüber',
         'missing' => 'Nicht installiert',
         'hint' => 'Mods laden nur über :loader.',
+    ],
+
+    'unmanaged' => [
+        'heading' => 'Von Hand installiert',
+        'hint' => 'Liegt im Mod-Ordner, wurde aber nicht über diese Seite installiert. Ein Paket lässt sich übernehmen, dann gibt es auch Update-Hinweise.',
+        'adopt' => 'Übernehmen',
+        'confirm_delete' => ':path vom Server löschen?',
     ],
 
     'confirm' => [
@@ -64,6 +78,11 @@ return [
     ],
 
     'messages' => [
+        'updated' => ':name aktualisiert',
+        'enabled' => ':name eingeschaltet',
+        'disabled' => ':name ausgeschaltet',
+        'adopted' => ':name übernommen',
+        'not_adoptable' => 'Das ist kein Paket, das diese Seite übernehmen kann.',
         'installed' => ':name installiert',
         'removed' => ':name entfernt',
         'restart' => 'Wirkt nach einem Neustart des Servers.',
