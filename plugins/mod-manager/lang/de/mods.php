@@ -134,6 +134,7 @@ return [
     ],
 
     'messages' => [
+        'twin' => ':name ist schon installiert, von :source. Erst dort entfernen, um die Quelle zu wechseln.',
         'duplicate' => ':name ist schon installiert - entferne eine der beiden Jar-Dateien.',
         'no_version' => ':name hat keine Version für :version. Wähle eine in den Details.',
         'external_only' => ':name gibt es nur unter :url - bitte von Hand installieren.',

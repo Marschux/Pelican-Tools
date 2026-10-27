@@ -134,6 +134,7 @@ return [
     ],
 
     'messages' => [
+        'twin' => ':name is installed already, from :source. Remove it there first to switch sources.',
         'duplicate' => ':name is installed already - remove one of the two jars.',
         'no_version' => ':name has no version for :version. Pick one in the details.',
         'external_only' => ':name is only available from :url - install it by hand.',

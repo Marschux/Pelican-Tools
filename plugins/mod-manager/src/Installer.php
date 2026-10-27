@@ -68,6 +68,18 @@ class Installer
             $plan[$package] = null;
             // a version picked by hand only for the package itself, dependencies come newest
             $latest = $this->sourceFor($package)->release($package, $root ? $version : null, $this->gameVersion());
+
+            // the same plugin from the other source: Paper would load neither of the two jars
+            if ($twin = $this->twin($package, $latest['name'])) {
+                if ($root) {
+                    throw new RuntimeException(trans('mod-manager::mods.messages.twin', ['name' => $twin->name, 'source' => str_starts_with($twin->package, Hangar::PREFIX) ? 'Hangar' : 'Modrinth']));
+                }
+
+                // as a dependency it is there already
+                unset($plan[$package]);
+
+                return;
+            }
             $picked = $root ? array_values(array_intersect(array_keys($latest['optional'] ?? []), $optional)) : [];
 
             foreach ([...$latest['requires'], ...$picked] as $required) {
@@ -82,6 +94,19 @@ class Installer
         $collect($id, true);
 
         return array_values($plan);
+    }
+
+    /** An installed plugin of another source with the same name - Modrinth's and Hangar's ViaVersion. */
+    private function twin(string $package, string $name): ?ModInstall
+    {
+        if (!self::jarPackage($package) || self::kind($package) !== 'plugin') {
+            return null;
+        }
+
+        return $this->installs()->first(fn (ModInstall $other) => $other->package !== $package
+            && self::jarPackage($other->package)
+            && self::kind($other->package) === 'plugin'
+            && self::needle($other->name) === self::needle($name));
     }
 
     /** @param  array<int, array<string, mixed>>  $plan  from plan() */

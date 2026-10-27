@@ -134,6 +134,7 @@ return [
     ],
 
     'messages' => [
+        'twin' => ':name ya está instalado, desde :source. Quítalo primero para cambiar de fuente.',
         'duplicate' => ':name ya está instalado - elimina uno de los dos jar.',
         'no_version' => ':name no tiene versión para :version. Elige una en los detalles.',
         'external_only' => ':name solo está disponible en :url - instálalo a mano.',
