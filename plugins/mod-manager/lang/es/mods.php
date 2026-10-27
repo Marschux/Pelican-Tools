@@ -120,6 +120,7 @@ return [
         'save' => 'Guardar',
         'confirm_delete' => '¿Borrar :file? El mod escribe uno nuevo con sus valores por defecto en el próximo arranque.',
         'delete' => 'Borrar',
+        'keep_hint' => 'AMX Mod X la necesita y no la vuelve a crear: edítala en su lugar',
         'delete_hint' => 'Borrar - el mod escribe uno nuevo en el próximo arranque',
         'restart_note' => 'La mayoría de los mods solo leen su configuración al arrancar.',
     ],
@@ -146,6 +147,7 @@ return [
     ],
 
     'messages' => [
+        'core_config' => 'AMX Mod X necesita :file y no la vuelve a crear: edítala en su lugar.',
         'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) o un zip de plugins, con un nombre simple: :file',
         'source_only' => ':file solo tiene código fuente (.sma): compílalo primero, p. ej. con el compilador de amxmodx.org.',
         'no_plugin' => 'No hay ningún plugin (.amxx) en :file.',

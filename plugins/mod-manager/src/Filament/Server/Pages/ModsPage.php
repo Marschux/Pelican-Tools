@@ -366,6 +366,12 @@ class ModsPage extends Page
         $file->delete();
     }
 
+    /** A config the page must not delete: AMX Mod X would not write it again. */
+    public function keepsConfig(string $path): bool
+    {
+        return $this->canUpload() && Installer::amxxCore($path);
+    }
+
     /** Plugins are uploaded for GoldSrc games: AMX Mod X has no site to browse. */
     public function canUpload(): bool
     {

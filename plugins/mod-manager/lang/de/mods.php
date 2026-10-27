@@ -120,6 +120,7 @@ return [
         'save' => 'Speichern',
         'confirm_delete' => ':file löschen? Der Mod schreibt beim nächsten Start eine neue mit seinen Standardwerten.',
         'delete' => 'Löschen',
+        'keep_hint' => 'AMX Mod X braucht die Datei und legt sie nicht neu an - stattdessen bearbeiten',
         'delete_hint' => 'Löschen - der Mod schreibt beim nächsten Start eine neue',
         'restart_note' => 'Die meisten Mods lesen ihre Config nur beim Start.',
     ],
@@ -146,6 +147,7 @@ return [
     ],
 
     'messages' => [
+        'core_config' => ':file braucht AMX Mod X und legt sie nicht neu an - stattdessen bearbeiten.',
         'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) oder ein Zip mit Plugins kann hochgeladen werden, mit einfachem Namen: :file',
         'source_only' => ':file enthält nur Quellcode (.sma) - erst kompilieren, z. B. mit dem Compiler auf amxmodx.org.',
         'no_plugin' => 'Kein Plugin (.amxx) in :file.',

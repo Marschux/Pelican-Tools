@@ -120,6 +120,8 @@ assert(Installer::withAmxxLine(";a.amxx\n", 'a.amxx') === ";a.amxx\n", 'there al
 assert(Installer::withoutAmxxPlugin("; head\n;a.amxx\nb.amxx ; uses a.amxx\n", 'a.amxx') === "; head\nb.amxx ; uses a.amxx\n");
 assert(Installer::withoutAmxxPlugin("; head\r\nb.amxx\r\na.amxx", 'a.amxx') === "; head\r\nb.amxx\r\n");
 assert(Installer::uploaded('upload:x') && !Installer::uploaded('modrinth:x'));
+assert(Installer::amxxCore('cstrike/addons/amxmodx/configs/plugins.ini') && Installer::amxxCore('x/users.ini') && Installer::amxxCore('x/plugins-zp.ini'));
+assert(!Installer::amxxCore('x/mm_pack.cfg') && !Installer::amxxCore('x/plugins.cfg'));
 
 foreach ([
     'MyPlugin/addons/amxmodx/plugins/x.amxx' => 'addons/amxmodx/plugins/x.amxx',

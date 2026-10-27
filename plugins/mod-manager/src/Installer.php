@@ -695,6 +695,14 @@ class Installer
         );
     }
 
+    /** One of AMX Mod X's own configs, or a plugins-*.ini - kept, never deleted from the page. */
+    public static function amxxCore(string $path): bool
+    {
+        $file = strtolower(basename($path));
+
+        return in_array($file, self::AMXX_CONFIGS, true) || (bool) preg_match('/^plugins-.+\.ini$/', $file);
+    }
+
     /** An upload: a compiled plugin, or a zip with plugins and what they bring along. */
     public function installUpload(string $name, string $content): ModInstall
     {
@@ -1309,6 +1317,11 @@ class Installer
     public function deleteConfig(string $path): void
     {
         $this->assertConfig($path);
+
+        // AMX Mod X does not write these anew - without plugins.ini no plugin loads
+        if ($this->goldsrc() && self::amxxCore($path)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.core_config', ['file' => basename($path)]));
+        }
 
         $this->files->delete([$path]);
     }

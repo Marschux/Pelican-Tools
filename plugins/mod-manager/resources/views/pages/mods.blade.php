@@ -153,6 +153,10 @@
                                     // only plugins and mods write configs, packs do not
                                     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin';
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
+                                    // the GoldSrc loader's settings are AMX Mod X's main config
+                                    if ($isLoader && $this->canUpload()) {
+                                        $config = collect($configs)->first(fn ($path) => str_ends_with($path, '/amxx.cfg'));
+                                    }
                                 @endphp
                                 <tr wire:key="install-{{ $install->id }}" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
                                     <td style="padding:.6rem .5rem .6rem 0">
@@ -329,6 +333,14 @@
                             </span>
                             <span style="font-family:monospace;font-size:.875rem;min-width:11rem;{{ $plugin['enabled'] ? '' : 'opacity:.5' }}">{{ $plugin['file'] }}</span>
                             <span style="{{ $muted }};flex:1">{{ $plugin['note'] }}</span>
+                            @php
+                                $pluginConfig = \Marschux\ModManager\Installer::configFor(substr($plugin['file'], 0, -5), $configs);
+                            @endphp
+                            @if ($pluginConfig && $canReadConfig)
+                                <button type="button" class="mod-action" wire:click="openConfig({{ $js($pluginConfig) }})" title="{{ $pluginConfig }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => $pluginConfig]) }}">
+                                    <x-filament::icon icon="tabler-settings" />
+                                </button>
+                            @endif
                             @if (!$plugin['exists'])
                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.amxx.missing') }}</x-filament::badge>
                             @endif
@@ -353,7 +365,12 @@
                                     <x-filament::icon icon="tabler-pencil" />
                                 </button>
                             @endif
-                            @if ($canDelete)
+                            @if ($canDelete && $this->keepsConfig($config))
+                                {{-- greyed rather than gone, so the buttons stay in line --}}
+                                <button type="button" class="mod-action mod-danger" disabled title="{{ trans('mod-manager::mods.config.keep_hint') }}" aria-label="{{ trans('mod-manager::mods.config.keep_hint') }}">
+                                    <x-filament::icon icon="tabler-trash" />
+                                </button>
+                            @elseif ($canDelete)
                                 <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => $config]) }}" title="{{ trans('mod-manager::mods.config.delete_hint') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
                                     <x-filament::icon icon="tabler-trash" />
                                 </button>
