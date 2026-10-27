@@ -110,6 +110,12 @@ assert(Installer::configsOf('EpicLoot', $configs, 'BepInEx/config', ['BepInEx/co
 assert(Installer::configsOf('Loot', $configs, 'BepInEx/config') === ['BepInEx/config/randyknapp.mods.epicloot.cfg', 'BepInEx/config/EpicLoot/patches/AllTheHeims/mp.loottables.json']);
 assert(Installer::configsOf('X', $configs, 'BepInEx/config') === [], 'too short a name matches nothing');
 assert(Installer::configsOf('PlantEverything', $configs, '') === []);
+assert(Installer::configFor('PlantEverything', $configs) === 'BepInEx/config/advize.PlantEverything.cfg');
+
+$plugins = ['plugins/Essentials/config.yml', 'plugins/LuckPerms/contexts.json', 'plugins/LuckPerms/config.yml', 'plugins/bStats/config.yml'];
+assert(Installer::configFor('LuckPerms', $plugins) === 'plugins/LuckPerms/config.yml', 'config.yml first');
+assert(Installer::configFor('EssentialsX', $plugins) === 'plugins/Essentials/config.yml', 'by folder, not file name');
+assert(Installer::configFor('WorldEdit', $plugins) === null);
 
 // --- plugin jars ---------------------------------------------------------------------------------
 

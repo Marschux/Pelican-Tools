@@ -236,7 +236,7 @@
                                             </span>
                                             <span class="mod-slot">
                                                 @if ($config && $canReadConfig)
-                                                    <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ basename($config) }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                                    <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ $config }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => $config]) }}">
                                                         <x-filament::icon icon="tabler-settings" />
                                                     </button>
                                                 @elseif ($canReadConfig)
@@ -305,12 +305,12 @@
                         {{-- the same square buttons as the rows of the installed table, side by side --}}
                         <span style="display:inline-flex;gap:.25rem">
                             @if ($canReadConfig)
-                                <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ trans('mod-manager::mods.config.open') }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ trans('mod-manager::mods.config.open') }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => $config]) }}">
                                     <x-filament::icon icon="tabler-pencil" />
                                 </button>
                             @endif
                             @if ($canDelete)
-                                <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" title="{{ trans('mod-manager::mods.config.delete_hint') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
+                                <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => $config]) }}" title="{{ trans('mod-manager::mods.config.delete_hint') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
                                     <x-filament::icon icon="tabler-trash" />
                                 </button>
                             @endif
@@ -558,7 +558,7 @@
         </div>
     </x-filament::modal>
     <x-filament::modal id="mod-config" width="5xl" :close-by-clicking-away="false">
-        <x-slot name="heading">{{ $configPath ? basename($configPath) : '' }}</x-slot>
+        <x-slot name="heading">{{ $configPath ? $configPath : '' }}</x-slot>
         <x-slot name="description">{{ trans('mod-manager::mods.config.restart_note') }}</x-slot>
 
         <textarea wire:model="configText" @readonly(!$canUpdate) spellcheck="false" rows="24" style="width:100%;font-family:monospace;font-size:.8rem;line-height:1.4;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit;resize:vertical"></textarea>

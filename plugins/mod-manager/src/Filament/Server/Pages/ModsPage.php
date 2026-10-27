@@ -371,7 +371,7 @@ class ModsPage extends Page
             return;
         }
 
-        $this->attempt(fn () => $this->installer()->writeConfig($this->configPath, $this->configText), trans('mod-manager::mods.messages.config_saved', ['file' => basename($this->configPath)]));
+        $this->attempt(fn () => $this->installer()->writeConfig($this->configPath, $this->configText), trans('mod-manager::mods.messages.config_saved', ['file' => $this->configPath]));
         $this->dispatch('close-modal', id: 'mod-config');
     }
 
@@ -379,7 +379,7 @@ class ModsPage extends Page
     {
         $this->requirePermission(SubuserPermission::FileDelete);
 
-        $this->attempt(fn () => $this->installer()->deleteConfig($path), trans('mod-manager::mods.messages.config_deleted', ['file' => basename($path)]));
+        $this->attempt(fn () => $this->installer()->deleteConfig($path), trans('mod-manager::mods.messages.config_deleted', ['file' => $path]));
     }
 
     public function restart(): void

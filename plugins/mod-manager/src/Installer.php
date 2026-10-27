@@ -607,6 +607,10 @@ class Installer
      */
     public function configs(): array
     {
+        if ($this->jarMods()) {
+            return $this->pluginConfigs();
+        }
+
         $directory = trim((string) $this->profile->setting('config_dir'), '/');
 
         if ($directory === '') {
@@ -621,13 +625,47 @@ class Installer
             ->all();
     }
 
-    /** The config a mod most likely wrote: named after its id, e.g. advize.PlantEverything.cfg */
+    /**
+     * Plugins write their configs to plugins/<plugin name>/. Only that first level: deeper down
+     * are languages, player data and the like.
+     *
+     * @return string[]
+     */
+    private function pluginConfigs(): array
+    {
+        $directory = $this->modsDir();
+
+        return collect($this->files->list($directory))
+            ->filter(fn (bool $isDirectory, string $name) => $isDirectory && !str_starts_with($name, '.'))
+            ->keys()
+            ->flatMap(fn (string $folder) => collect($this->files->list("$directory/$folder"))
+                ->reject()
+                ->keys()
+                ->map(fn (string $file) => "$directory/$folder/$file"))
+            ->filter(fn (string $path) => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::CONFIG_TYPES, true))
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * The config a mod most likely wrote: in a folder named after it (plugins/LuckPerms/config.yml,
+     * config.yml first), else named after its id (advize.PlantEverything.cfg).
+     */
     public static function configFor(string $modName, array $configs): ?string
     {
         $needle = self::needle($modName);
 
         if (strlen($needle) < 3) {
             return null;
+        }
+
+        $inFolder = array_filter($configs, fn (string $path) => self::dataFoldersOf($modName, [basename(dirname($path))]) !== []);
+
+        if ($inFolder !== []) {
+            usort($inFolder, fn (string $a, string $b) => (basename($a) !== 'config.yml') <=> (basename($b) !== 'config.yml'));
+
+            return $inFolder[0];
         }
 
         foreach ($configs as $path) {
