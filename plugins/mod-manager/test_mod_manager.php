@@ -44,6 +44,16 @@ foreach (['Jotunn', '../x-y', 'a-b/c', 'a-', '-b', ''] as $bad) {
     }
 }
 
+// --- pages of 12 out of thunderstore's list -------------------------------------------------------
+
+assert(Thunderstore::sourceStart(1, [0, 3]) === 1, 'a hidden one right at the start is skipped');
+assert(Thunderstore::sourceStart(1, [3]) === 0, 'one further down is dropped from the page instead');
+assert(Thunderstore::sourceStart(2, []) === 12);
+assert(Thunderstore::sourceStart(2, [0, 3]) === 14, 'two hidden before it shift page 2 by two');
+assert(Thunderstore::sourceStart(2, [12, 13]) === 14, 'hidden right where it would start are skipped too');
+assert(Thunderstore::sourceStart(2, [15]) === 12, 'a hidden one after the start does not shift it');
+assert(Thunderstore::sourceStart(3, [1, 5]) === 26);
+
 // --- what removing the loader deletes ------------------------------------------------------------
 
 $kept = ['BepInEx/plugins', 'BepInEx/plugins_disabled', 'BepInEx/config'];

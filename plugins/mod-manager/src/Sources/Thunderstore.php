@@ -60,37 +60,68 @@ class Thunderstore
             'ordering' => in_array($ordering, self::ORDERINGS, true) ? $ordering : 'most-downloaded',
         ]);
 
-        // thunderstore pages hold 20 and ignore a page size; pages of 12 fill the three columns,
-        // so one page here takes its slice out of one or two of theirs
-        $start = (max(1, $page) - 1) * self::PER_PAGE;
-        $first = intdiv($start, self::SOURCE_PAGE) + 1;
-        $last = intdiv($start + self::PER_PAGE - 1, self::SOURCE_PAGE) + 1;
-        $results = [];
-        $count = 0;
+        $isHidden = fn (array $package) => in_array("{$package['namespace']}-{$package['name']}", $this->hidden, true);
 
-        foreach (range($first, $last) as $sourcePage) {
-            // kept a few minutes, so paging back and forth does not ask again
-            $listing = Cache::remember(
-                "mod-manager:thunderstore:$this->community:listing:" . md5(json_encode($query + ['page' => $sourcePage])),
-                now()->addMinutes(5),
-                fn () => $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", $query + ['page' => $sourcePage])->json(),
-            );
+        // hidden packages (the loader, the desktop client) are popular, so they sit on
+        // thunderstore's first page; where they are there shifts every page after it
+        // ponytail: hidden ones further back only make their page one shorter
+        $firstPage = $this->listing($query, 1);
+        $hiddenAt = array_keys(array_filter($firstPage['results'] ?? [], $isHidden));
+
+        // thunderstore pages hold 20 and ignore a page size; pages of 12 fill the three columns,
+        // so one page here is cut out of one or two of theirs
+        $start = self::sourceStart($page, $hiddenAt);
+        $end = $start + self::PER_PAGE + count($this->hidden);
+        $results = [];
+        $count = (int) ($firstPage['count'] ?? 0);
+
+        foreach (range(intdiv($start, self::SOURCE_PAGE) + 1, intdiv($end - 1, self::SOURCE_PAGE) + 1) as $sourcePage) {
+            $listing = $sourcePage === 1 ? $firstPage : $this->listing($query, $sourcePage);
             $results = [...$results, ...($listing['results'] ?? [])];
-            $count = (int) ($listing['count'] ?? 0);
 
             if (($listing['next'] ?? null) === null) {
                 break;
             }
         }
 
-        // hidden packages make a page a little shorter, never shift the count
-        $items = collect(array_slice($results, $start - ($first - 1) * self::SOURCE_PAGE, self::PER_PAGE))
-            ->reject(fn (array $package) => in_array("{$package['namespace']}-{$package['name']}", $this->hidden, true))
+        $items = collect(array_slice($results, $start % self::SOURCE_PAGE))
+            ->reject($isHidden)
+            ->take(self::PER_PAGE)
             ->map(fn (array $package) => $this->item($package))
             ->values()
             ->all();
 
-        return ['items' => $items, 'pages' => max(1, (int) ceil($count / self::PER_PAGE))];
+        return ['items' => $items, 'pages' => max(1, (int) ceil(($count - count($hiddenAt)) / self::PER_PAGE))];
+    }
+
+    /**
+     * Where page $page starts in thunderstore's list, with the hidden packages at $hiddenAt
+     * (positions in that list) skipped before it.
+     *
+     * @param  int[]  $hiddenAt
+     */
+    public static function sourceStart(int $page, array $hiddenAt): int
+    {
+        $start = (max(1, $page) - 1) * self::PER_PAGE;
+        sort($hiddenAt);
+
+        foreach ($hiddenAt as $position) {
+            if ($position <= $start) {
+                $start++;
+            }
+        }
+
+        return $start;
+    }
+
+    /** One of thunderstore's pages, kept a few minutes so paging back and forth does not ask again. */
+    private function listing(array $query, int $page): array
+    {
+        return Cache::remember(
+            "mod-manager:thunderstore:$this->community:listing:" . md5(json_encode($query + ['page' => $page])),
+            now()->addMinutes(5),
+            fn () => $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", $query + ['page' => $page])->json(),
+        );
     }
 
     /**
