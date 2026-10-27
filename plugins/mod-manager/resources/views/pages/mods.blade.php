@@ -407,10 +407,10 @@
             $kinds = $this->kinds();
             $gameVersion = $this->gameVersion();
         @endphp
-        @if (count($sources) > 1 || $kinds || $gameVersion)
+        @if ($sources || $kinds || $gameVersion)
             <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-                @if (count($sources) > 1)
-                    {{-- every source has its own categories, switching starts the search over --}}
+                @if ($sources)
+                    {{-- shown with one source too, so it is clear where the tiles come from; every source has its own categories, switching starts the search over --}}
                     <div style="display:flex;gap:.25rem">
                         @foreach ($sources as $key => $name)
                             <x-filament::button size="sm" :color="$key === $this->sourceKey() ? 'primary' : 'gray'" :outlined="$key !== $this->sourceKey()" wire:click="$set('source', {{ $js($key) }})">{{ $name }}</x-filament::button>
