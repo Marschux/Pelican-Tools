@@ -45,7 +45,8 @@ class Presets
                     'sources' => ['modrinth', 'hangar'],
                     // a plugin is one jar in here, its data folder plugins/<Name> sits next to it
                     'mods_dir' => 'plugins',
-                    'version_file' => 'version_history.json',
+                    // older Paper wrote it next to server.jar, those fall back to PAPER_VERSION
+                    'version_file' => '.paper/version_history.json',
                     'version_variable' => 'PAPER_VERSION',
                     'hidden_packages' => [],
                 ],

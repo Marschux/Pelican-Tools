@@ -43,7 +43,7 @@ class GameVersion
         return $value !== null ? ['version' => $value, 'from' => $variable] : null;
     }
 
-    /** Paper's version_history.json: {"currentVersion": "26.3-226-main@4f49049 (MC: 26.3)", ...} */
+    /** Paper's .paper/version_history.json: {"currentVersion": "26.3-226-4f49049 (MC: 26.3)"} */
     public static function fromFile(string $content): ?string
     {
         $history = json_decode($content, true);

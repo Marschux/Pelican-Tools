@@ -39,7 +39,7 @@ foreach (Presets::all() as $key => $preset) {
 
 // --- game version --------------------------------------------------------------------------------
 
-assert(GameVersion::fromFile('{"currentVersion": "26.3-226-main@4f49049 (MC: 26.3)"}') === '26.3');
+assert(GameVersion::fromFile('{"currentVersion":"26.3-226-4f49049 (MC: 26.3)"}') === '26.3');
 assert(GameVersion::fromFile('{"oldVersion": "git-Paper-1 (MC: 1.20.4)", "currentVersion": "1.21.4-232-main@abc (MC: 1.21.4)"}') === '1.21.4', 'the current one, not the old one');
 assert(GameVersion::fromFile('') === null);
 assert(GameVersion::fromFile('{"currentVersion": "something else"}') === null);
