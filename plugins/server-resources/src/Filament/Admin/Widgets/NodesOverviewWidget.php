@@ -114,11 +114,14 @@ class NodesOverviewWidget extends Widget
     private function node(Node $node): array
     {
         $maintenance = $node->isUnderMaintenance();
-        $reachable = !$maintenance && !isset($node->systemInformation()['exception']);
+        $info = $maintenance ? [] : $node->systemInformation();
+        $reachable = !$maintenance && !isset($info['exception']);
         $stats = $reachable ? $node->statistics() : null;
         // the cpu limit entered on the node, in percent - wings' own cpu count is what its process
-        // may be scheduled on, which in an LXC can be every thread of the host, not the cores it got
-        $cores = $node->cpu > 0 ? $node->cpu / 100 : null;
+        // may be scheduled on, which in an LXC can be every thread of the host, not the cores it got,
+        // so it is only the fallback for a node without a limit
+        $limit = $node->cpu > 0 ? $node->cpu : null;
+        $cores = $limit ? $limit / 100 : ((int) ($info['cpu_count'] ?? 0) ?: null);
 
         return [
             'id' => $node->id,
@@ -132,7 +135,9 @@ class NodesOverviewWidget extends Widget
                 Resources::bytesBar('disk', (int) $stats['disk_used'], (int) $stats['disk_total']),
             ],
             'facts' => $stats === null ? [] : array_values(array_filter([
-                $cores ? Resources::fact('tabler-cpu-2', trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $node->cpu])) : null,
+                $cores ? Resources::fact('tabler-cpu-2', $limit
+                    ? trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $limit])
+                    : trans('server-resources::resources.host.cores', ['count' => $cores])) : null,
                 Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
             ])),
             // sorted here, not in sql: external_id is a text column, so the database would put
