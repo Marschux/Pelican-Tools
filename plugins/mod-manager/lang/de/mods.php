@@ -31,7 +31,7 @@ return [
     'dependencies' => 'Abhängigkeiten',
     'no_dependencies' => 'Keine',
     'loader_dependency' => 'Mod-Loader',
-    'hide_client_side' => 'Nur-Client-Mods ausblenden',
+    'show_client_side' => 'Nur-Client-Mods zeigen',
     'show_deprecated' => 'Veraltete zeigen',
     'used_by' => '{0} von keinem anderen Mod benutzt|{1} von 1 Mod benutzt|[2,*] von :count Mods benutzt',
     'readme' => 'Beschreibung',

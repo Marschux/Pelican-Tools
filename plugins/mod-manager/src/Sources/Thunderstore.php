@@ -48,13 +48,13 @@ class Thunderstore
      *
      * @return array{items: array<int, array<string, mixed>>, pages: int}
      */
-    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $hideClientSide = false, bool $showDeprecated = false): array
+    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $showClientSide = true, bool $showDeprecated = false): array
     {
         $query = array_filter([
             'q' => $query,
             'included_categories' => $category,
             // client-only mods do nothing on a server
-            'excluded_categories' => $hideClientSide ? $this->categoryId('client-side') : null,
+            'excluded_categories' => !$showClientSide ? $this->categoryId('client-side') : null,
             // thunderstore leaves deprecated packages out unless asked
             'deprecated' => $showDeprecated ? 'true' : null,
             'ordering' => in_array($ordering, self::ORDERINGS, true) ? $ordering : 'most-downloaded',

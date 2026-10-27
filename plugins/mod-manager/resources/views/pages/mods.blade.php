@@ -304,8 +304,8 @@
                 </x-filament::input.select>
             </x-filament::input.wrapper>
             <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
-                <x-filament::input.checkbox wire:model.live="hideClientSide" />
-                {{ trans('mod-manager::mods.hide_client_side') }}
+                <x-filament::input.checkbox wire:model.live="showClientSide" />
+                {{ trans('mod-manager::mods.show_client_side') }}
             </label>
             <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
                 <x-filament::input.checkbox wire:model.live="showDeprecated" />
@@ -317,7 +317,7 @@
         <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
 
         {{-- three tiles side by side, fewer when the page gets narrow; every row as tall as the tallest, so all tiles are the same size --}}
-        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
+        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,showClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
@@ -376,7 +376,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,showClientSide,showDeprecated">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)

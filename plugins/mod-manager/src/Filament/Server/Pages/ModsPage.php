@@ -48,7 +48,7 @@ class ModsPage extends Page
 
     public int $page = 1;
 
-    public bool $hideClientSide = true;
+    public bool $showClientSide = false;
 
     public bool $showDeprecated = false;
 
@@ -94,7 +94,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['query', 'category', 'ordering', 'page', 'hideClientSide', 'showDeprecated'];
+    private const REMEMBERED = ['query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated'];
 
     public function mount(): void
     {
@@ -117,7 +117,7 @@ class ModsPage extends Page
     /** Every filter change searches right away, typing included (debounced in the view). */
     public function updated(string $property): void
     {
-        if (in_array($property, ['query', 'category', 'ordering', 'hideClientSide', 'showDeprecated'], true)) {
+        if (in_array($property, ['query', 'category', 'ordering', 'showClientSide', 'showDeprecated'], true)) {
             $this->search();
         }
     }
@@ -605,7 +605,7 @@ class ModsPage extends Page
     private function fetch(): void
     {
         try {
-            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->hideClientSide, $this->showDeprecated);
+            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->showClientSide, $this->showDeprecated);
         } catch (Throwable $exception) {
             report($exception);
             $this->items = [];

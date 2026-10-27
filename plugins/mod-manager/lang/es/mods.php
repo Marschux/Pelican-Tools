@@ -31,7 +31,7 @@ return [
     'dependencies' => 'Dependencias',
     'no_dependencies' => 'Ninguna',
     'loader_dependency' => 'Cargador de mods',
-    'hide_client_side' => 'Ocultar mods solo de cliente',
+    'show_client_side' => 'Mostrar mods solo de cliente',
     'show_deprecated' => 'Mostrar obsoletos',
     'used_by' => '{0} no lo usa ningún otro mod|{1} usado por 1 mod|[2,*] usado por :count mods',
     'readme' => 'Descripción',
