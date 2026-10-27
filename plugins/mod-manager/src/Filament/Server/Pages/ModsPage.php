@@ -315,8 +315,8 @@ class ModsPage extends Page
     {
         $this->requirePermission(SubuserPermission::FileUpdate);
 
-        $updates = array_intersect_key($this->installer()->updates(), $this->installedVersions());
-        // a pinned version was picked on purpose, it is only updated one by one
+        $updates = $this->installer()->updates();
+        // a pinned version was picked on purpose, it is only updated one by one; installed() leaves the loader out
         $installs = $this->installed()->filter(fn (ModInstall $install) => isset($updates[$install->package]) && !$install->pinned);
 
         $this->attempt(
@@ -463,6 +463,7 @@ class ModsPage extends Page
     public function sourceName(string $id): string
     {
         return match (true) {
+            $id === GoldSrc::PACKAGE => 'AMX Mod X',
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
             str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
             default => Presets::SOURCES['thunderstore'],
@@ -575,10 +576,10 @@ class ModsPage extends Page
         return $relations;
     }
 
-    /** @return array<string, string> package => installed version, for the tiles */
+    /** @return array<string, string> package => installed version, for the tiles and the details - the loader included */
     public function installedVersions(): array
     {
-        return $this->installed()->pluck('version', 'package')->all();
+        return $this->installer()->installs()->pluck('version', 'package')->all();
     }
 
     /** @param  array<int, array<string, mixed>>  $plan */
