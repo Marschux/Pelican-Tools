@@ -44,6 +44,15 @@ return [
         'server' => 'Servidor',
         'client' => 'Solo cliente',
     ],
+    'kinds' => [
+        'plugin' => 'Plugins',
+        'datapack' => 'Datapacks',
+        'resourcepack' => 'Paquetes de recursos',
+    ],
+    'kind' => [
+        'datapack' => 'Datapack',
+        'resourcepack' => 'Paquete de recursos',
+    ],
     'is_installed' => 'Instalado',
     'remove' => 'Quitar',
     'cancel' => 'Cancelar',
@@ -107,6 +116,7 @@ return [
         'button' => 'Lista de mods para jugadores',
         'heading' => 'Lista de mods para jugadores',
         'hint' => 'Los jugadores necesitan los mismos mods. Lo más fácil es r2modman: instalar allí estos mods y arrancar el juego con él.',
+        'hint_plugins' => 'Los plugins solo funcionan en el servidor, los jugadores no necesitan ninguno: la lista sirve para compartir lo que ejecuta este servidor. Un paquete de recursos se ofrece a los jugadores al entrar.',
         'copy' => 'Copiar',
         'copied' => 'Copiado',
     ],

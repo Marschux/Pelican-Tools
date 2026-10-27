@@ -11,7 +11,9 @@ use RuntimeException;
 
 /**
  * Modrinth, through its public v2 API. A project is addressed as "modrinth:<project id>" - the
- * prefix keeps it apart from packages of other sources on the same server.
+ * prefix keeps it apart from packages of other sources on the same server. Datapacks and
+ * resource packs get prefixes of their own: one project can come as plugin, datapack and
+ * resource pack, and each is installed somewhere else.
  */
 class Modrinth
 {
@@ -23,21 +25,49 @@ class Modrinth
 
     public const PREFIX = 'modrinth:';
 
+    /**
+     * What the browser can show from Modrinth: the package prefix, the loaders a project needs
+     * (the profile's for plugins), whose categories it uses and its page on the site.
+     */
+    public const KINDS = [
+        'plugin' => ['prefix' => self::PREFIX, 'loaders' => null, 'categories' => 'mod', 'page' => 'plugin'],
+        'datapack' => ['prefix' => 'modrinth-datapack:', 'loaders' => ['datapack'], 'categories' => 'mod', 'page' => 'datapack'],
+        'resourcepack' => ['prefix' => 'modrinth-resourcepack:', 'loaders' => ['minecraft'], 'categories' => 'resourcepack', 'page' => 'resourcepack'],
+    ];
+
     /** mods per page in the browser: four rows of three */
     private const PER_PAGE = 12;
 
     /** the browser's orderings => modrinth's index */
     private const INDEXES = ['most-downloaded' => 'downloads', 'top-rated' => 'follows', 'last-updated' => 'updated', 'newest' => 'newest'];
 
-    /** @param  string[]  $loaders  e.g. paper, spigot, bukkit - a project needs one of them */
-    public function __construct(private array $loaders) {}
+    /** @param  string[]  $loaders  e.g. paper, spigot, bukkit - a project needs one of them; only for plugins */
+    public function __construct(private array $loaders, private string $kind = 'plugin')
+    {
+        $this->kind = isset(self::KINDS[$kind]) ? $kind : 'plugin';
+        $this->loaders = self::KINDS[$this->kind]['loaders'] ?? $loaders;
+    }
+
+    /** plugin, datapack or resourcepack for a package of Modrinth, null for any other */
+    public static function kindOf(string $package): ?string
+    {
+        foreach (self::KINDS as $kind => $settings) {
+            if (str_starts_with($package, $settings['prefix'])) {
+                return $kind;
+            }
+        }
+
+        return null;
+    }
 
     /** @return array<string, string> category slug => name */
     public function categories(): array
     {
-        return Cache::remember('mod-manager:modrinth:categories', now()->addDay(), fn () => collect($this->http()->get(self::API . '/tag/category')->json())
-            // plugins share the categories of mods, the loaders come as their own tags
-            ->filter(fn (array $category) => $category['project_type'] === 'mod' && $category['header'] === 'categories')
+        $type = self::KINDS[$this->kind]['categories'];
+
+        return Cache::remember("mod-manager:modrinth:categories:$type", now()->addDay(), fn () => collect($this->http()->get(self::API . '/tag/category')->json())
+            // plugins and datapacks share the categories of mods, the loaders come as their own tags
+            ->filter(fn (array $category) => $category['project_type'] === $type && $category['header'] === 'categories')
             ->mapWithKeys(fn (array $category) => [$category['name'] => ucwords(str_replace('-', ' ', $category['name']))])
             ->all());
     }
@@ -126,14 +156,14 @@ class Modrinth
                 'icon' => ($info['icon_url'] ?? null) ?: null,
                 'downloads' => (int) ($info['downloads'] ?? 0),
                 'rating' => (int) ($info['followers'] ?? 0),
-                'url' => self::SITE . '/plugin/' . ($info['slug'] ?? $project),
+                'url' => self::SITE . '/' . self::KINDS[$this->kind]['page'] . '/' . ($info['slug'] ?? $project),
                 'version' => (string) ($latest['version_number'] ?? ''),
                 'website' => ($info['source_url'] ?? null) ?: (($info['wiki_url'] ?? null) ?: null),
                 'size' => (int) (collect($latest['files'] ?? [])->firstWhere('primary', true)['size'] ?? ($latest['files'][0]['size'] ?? 0)),
                 // modrinth does not count who depends on a project
                 'dependants' => null,
                 'dependencies' => $dependencies->map(fn (array $dependency, string $projectId) => [
-                    'id' => self::PREFIX . $projectId,
+                    'id' => $this->prefix() . $projectId,
                     'name' => (string) ($projects[$projectId]['title'] ?? $projectId),
                     'version' => '',
                     'icon' => ($projects[$projectId]['icon_url'] ?? null) ?: null,
@@ -175,15 +205,17 @@ class Modrinth
         $names = $optional === [] ? [] : collect($this->http()->get(self::API . '/projects', ['ids' => json_encode($optional)])->json())->pluck('title', 'id')->all();
 
         return [
-            'id' => self::PREFIX . $project['id'],
+            'id' => $this->prefix() . $project['id'],
             'name' => (string) $project['title'],
             'version' => (string) $release['version_number'],
             'icon' => ($project['icon_url'] ?? null) ?: null,
             'download' => (string) $file['url'],
             'file' => (string) $file['filename'],
             'size' => (int) ($file['size'] ?? 0),
-            'requires' => $dependencies->where('dependency_type', 'required')->map(fn (array $dependency) => self::PREFIX . $dependency['project_id'])->values()->all(),
-            'optional' => collect($optional)->mapWithKeys(fn (string $projectId) => [self::PREFIX . $projectId => (string) ($names[$projectId] ?? $projectId)])->all(),
+            // a resource pack is not put on the server, players get it from the link and check it with this
+            'sha1' => (string) ($file['hashes']['sha1'] ?? ''),
+            'requires' => $dependencies->where('dependency_type', 'required')->map(fn (array $dependency) => $this->prefix() . $dependency['project_id'])->values()->all(),
+            'optional' => collect($optional)->mapWithKeys(fn (string $projectId) => [$this->prefix() . $projectId => (string) ($names[$projectId] ?? $projectId)])->all(),
         ];
     }
 
@@ -219,13 +251,13 @@ class Modrinth
             $project = $projects[$version['project_id']] ?? [];
 
             $found[$hash] = [
-                'id' => self::PREFIX . $version['project_id'],
+                'id' => $this->prefix() . $version['project_id'],
                 'name' => (string) ($project['title'] ?? $version['name'] ?? $version['project_id']),
                 'version' => (string) $version['version_number'],
                 'icon' => ($project['icon_url'] ?? null) ?: null,
                 'requires' => collect($version['dependencies'] ?? [])
                     ->filter(fn (array $dependency) => $dependency['dependency_type'] === 'required' && filled($dependency['project_id']))
-                    ->map(fn (array $dependency) => self::PREFIX . $dependency['project_id'])
+                    ->map(fn (array $dependency) => $this->prefix() . $dependency['project_id'])
                     ->values()
                     ->all(),
             ];
@@ -253,10 +285,10 @@ class Modrinth
         );
     }
 
-    /** @return string the project id or slug in "modrinth:<id>" */
+    /** @return string the project id or slug in "modrinth:<id>" (or modrinth-datapack:, modrinth-resourcepack:) */
     public static function split(string $id): string
     {
-        if (!preg_match('/^modrinth:([\w-]+)$/', $id, $match)) {
+        if (!preg_match('/^modrinth(?:-datapack|-resourcepack)?:([\w-]+)$/', $id, $match)) {
             throw new RuntimeException("not a Modrinth project: $id");
         }
 
@@ -271,7 +303,7 @@ class Modrinth
     private function item(array $hit, array $categories): array
     {
         return [
-            'id' => self::PREFIX . $hit['project_id'],
+            'id' => $this->prefix() . $hit['project_id'],
             'name' => (string) $hit['title'],
             'author' => (string) ($hit['author'] ?? ''),
             'summary' => (string) ($hit['description'] ?? ''),
@@ -283,8 +315,13 @@ class Modrinth
             'categories' => array_values(array_intersect_key($categories, array_flip($hit['display_categories'] ?? []))),
             'side' => null,
             'deprecated' => false,
-            'url' => self::SITE . '/plugin/' . ($hit['slug'] ?? $hit['project_id']),
+            'url' => self::SITE . '/' . self::KINDS[$this->kind]['page'] . '/' . ($hit['slug'] ?? $hit['project_id']),
         ];
+    }
+
+    private function prefix(): string
+    {
+        return self::KINDS[$this->kind]['prefix'];
     }
 
     private function http(): PendingRequest

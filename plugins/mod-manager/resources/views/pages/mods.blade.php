@@ -141,7 +141,9 @@
                                     // the loader: no switch and no remove, without it no mod runs
                                     $isLoader = $install->is($loaderInstall);
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
-                                    $config = \Marschux\ModManager\Installer::configFor($install->name, $configs);
+                                    // only plugins and mods write configs, packs do not
+                                    $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin';
+                                    $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                 @endphp
                                 <tr wire:key="install-{{ $install->id }}" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
                                     <td style="padding:.6rem .5rem .6rem 0">
@@ -153,8 +155,7 @@
                                             @endif
                                             <div style="min-width:0">
                                                 <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
-                                                {{-- a thunderstore id starts with the author, a plugin's only says where it came from --}}
-                                                <div style="{{ $muted }}">{{ \Marschux\ModManager\Installer::jarPackage($install->package) ? (\Marschux\ModManager\Profiles\Presets::SOURCES[strtok($install->package, ':')] ?? '') : trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
+                                                <div style="{{ $muted }}">{{ $this->origin($install->package) }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -239,7 +240,7 @@
                                                     <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ $config }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => $config]) }}">
                                                         <x-filament::icon icon="tabler-settings" />
                                                     </button>
-                                                @elseif ($canReadConfig)
+                                                @elseif ($canReadConfig && $hasConfigs)
                                                     {{-- greyed out rather than gone, so it is clear where the config will be --}}
                                                     <button type="button" class="mod-action" disabled title="{{ trans('mod-manager::mods.config.none_yet') }}" aria-label="{{ trans('mod-manager::mods.config.none_yet') }}">
                                                         <x-filament::icon icon="tabler-settings" />
@@ -322,15 +323,24 @@
     @else
         @php
             $sources = $this->sources();
+            $kinds = $this->kinds();
             $gameVersion = $this->gameVersion();
         @endphp
-        @if (count($sources) > 1 || $gameVersion)
+        @if (count($sources) > 1 || $kinds || $gameVersion)
             <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
                 @if (count($sources) > 1)
                     {{-- every source has its own categories, switching starts the search over --}}
                     <div style="display:flex;gap:.25rem">
                         @foreach ($sources as $key => $name)
                             <x-filament::button size="sm" :color="$key === $this->sourceKey() ? 'primary' : 'gray'" :outlined="$key !== $this->sourceKey()" wire:click="$set('source', {{ $js($key) }})">{{ $name }}</x-filament::button>
+                        @endforeach
+                    </div>
+                @endif
+                @if ($kinds)
+                    {{-- modrinth also has datapacks and resource packs, each with categories of its own --}}
+                    <div style="display:flex;gap:.25rem">
+                        @foreach ($kinds as $key => $name)
+                            <x-filament::button size="sm" :color="$key === $kind ? 'primary' : 'gray'" :outlined="$key !== $kind" wire:click="$set('kind', {{ $js($key) }})">{{ $name }}</x-filament::button>
                         @endforeach
                     </div>
                 @endif
@@ -382,7 +392,7 @@
         <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
 
         {{-- three tiles side by side, fewer when the page gets narrow; every row as tall as the tallest, so all tiles are the same size --}}
-        <div wire:loading.class="mod-loading" wire:target="search,goToPage,source,query,category,ordering,showClientSide,showDeprecated,showAll" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
+        <div wire:loading.class="mod-loading" wire:target="search,goToPage,source,kind,query,category,ordering,showClientSide,showDeprecated,showAll" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
@@ -441,7 +451,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,source,query,category,ordering,showClientSide,showDeprecated,showAll">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,source,kind,query,category,ordering,showClientSide,showDeprecated,showAll">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)
@@ -489,7 +499,7 @@
                 @elseif ($canInstall && $details['versions'] !== [])
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
-                <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">{{ \Marschux\ModManager\Profiles\Presets::SOURCES[$this->sourceKey()] ?? '' }}</x-filament::button>
+                <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">{{ $this->sourceName($details['id']) }}</x-filament::button>
                 @if ($details['website'])
                     <x-filament::button color="gray" icon="tabler-world" tag="a" :href="$details['website']" target="_blank">{{ trans('mod-manager::mods.website') }}</x-filament::button>
                 @endif
@@ -574,7 +584,7 @@
     {{-- for players: the same mods on their side, to paste into chat or a server description --}}
     <x-filament::modal id="mod-players" width="3xl">
         <x-slot name="heading">{{ trans('mod-manager::mods.players.heading') }}</x-slot>
-        <x-slot name="description">{{ trans('mod-manager::mods.players.hint') }}</x-slot>
+        <x-slot name="description">{{ trans($tab === 'installed' && $this->jarMods() ? 'mod-manager::mods.players.hint_plugins' : 'mod-manager::mods.players.hint') }}</x-slot>
 
         @php
             $playerList = $tab === 'installed' ? $this->playerList() : '';

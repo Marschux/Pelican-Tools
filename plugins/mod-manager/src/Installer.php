@@ -17,10 +17,15 @@ use RuntimeException;
  *
  * Every Thunderstore package is unpacked whole into a folder of its own below the mods folder,
  * like r2modman does it - BepInEx loads plugins from any depth there. A Modrinth or Hangar
- * plugin is a single jar, pulled straight into the mods folder.
+ * plugin is a single jar, pulled straight into the mods folder, a datapack a single zip in the
+ * world's datapacks folder. A resource pack is not put on the server at all: server.properties
+ * points the players to it.
  */
 class Installer
 {
+    /** where Minecraft keeps its settings: the world's name and the resource pack */
+    private const PROPERTIES = 'server.properties';
+
     /** what the config editor opens: text, never a binary a mod keeps in the config folder */
     private const CONFIG_TYPES = ['cfg', 'json', 'yml', 'yaml', 'txt', 'ini', 'xml', 'toml'];
 
@@ -96,6 +101,11 @@ class Installer
         $configs = $withConfigs ? $this->runtimeConfigs($removing) : [];
 
         $this->files->delete([...$removing->pluck('files')->flatten()->all(), ...$configs]);
+
+        if (self::kind($install->package) === 'resourcepack' && $install->enabled) {
+            $this->useResourcePack(null);
+        }
+
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
 
         return $removing->pluck('name')->all();
@@ -111,7 +121,8 @@ class Installer
     public function runtimeConfigs(Collection $installs): array
     {
         if ($this->jarMods()) {
-            return $this->dataFolders($installs);
+            // datapacks and resource packs keep no data of their own
+            return $this->dataFolders($installs->filter(fn (ModInstall $install) => self::kind($install->package) === 'plugin'));
         }
 
         $directory = $this->configDir();
@@ -348,6 +359,7 @@ class Installer
             $this->modsDir(),
             ...array_map(fn (string $folder) => $root === '' ? '' : "$root/$folder", self::SORTED),
             $this->configDir(),
+            $this->jarMods() ? $this->datapacksDir() : '',
         ]));
     }
 
@@ -414,6 +426,14 @@ class Installer
     public function setEnabled(ModInstall $install, bool $enabled): void
     {
         if ($install->enabled === $enabled) {
+            return;
+        }
+
+        // nothing to move: on means server.properties points to it, and only one can be on
+        if (self::kind($install->package) === 'resourcepack') {
+            $this->useResourcePack($enabled ? $this->sourceFor($install->package)->release($install->package, $install->version) : null, $install->package);
+            $install->update(['enabled' => $enabled]);
+
             return;
         }
 
@@ -710,13 +730,16 @@ class Installer
             ->filter(fn (ModInstall $install) => $install->enabled)
             ->sortBy(fn (ModInstall $install) => [$install->package !== $loader, strtolower($install->name)])
             ->map(function (ModInstall $install) use ($community) {
-                if (str_starts_with($install->package, Modrinth::PREFIX)) {
+                if (Modrinth::kindOf($install->package)) {
                     return "$install->name $install->version - https://modrinth.com/project/" . Modrinth::split($install->package);
                 }
 
-                // ponytail: a hangar link needs the owner, which is not kept
                 if (str_starts_with($install->package, Hangar::PREFIX)) {
-                    return "$install->name $install->version";
+                    try {
+                        return "$install->name $install->version - " . (new Hangar())->url($install->package);
+                    } catch (\Throwable) {
+                        return "$install->name $install->version";
+                    }
                 }
 
                 [$namespace, $name] = Thunderstore::split($install->package);
@@ -854,12 +877,20 @@ class Installer
         );
     }
 
-    /** A plugin: one jar, pulled straight into the mods folder - or next to it while switched off. */
+    /**
+     * A plugin: one jar, pulled straight into the mods folder - or next to it while switched off.
+     * A datapack likewise into the world's datapacks folder.
+     */
     private function installJar(array $package): ModInstall
     {
+        if (self::kind($package['id']) === 'resourcepack') {
+            return $this->installResourcePack($package);
+        }
+
         $existing = $this->installs()->firstWhere('package', $package['id']);
         $enabled = $existing?->enabled ?? true;
-        $path = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . self::jarName((string) $package['file']);
+        $directory = self::kind($package['id']) === 'datapack' ? $this->datapacksDir() : $this->modsDir();
+        $path = ($enabled ? $directory : "{$directory}_disabled") . '/' . self::jarName((string) $package['file']);
 
         // an update replaces the old jar, which may be named differently; Wings will not pull onto a file
         $this->files->delete(array_values(array_filter(array_unique([...($existing?->files ?? []), $path]), fn (string $old) => $this->files->exists($old))));
@@ -881,10 +912,103 @@ class Installer
         );
     }
 
-    /** The jar's file name as the source gives it - it ends up in a path, so nothing but a plain name. */
+    /**
+     * A resource pack: server.properties points the players to it, no file on the server. A new
+     * one is switched on, which switches the one before off.
+     */
+    private function installResourcePack(array $package): ModInstall
+    {
+        $existing = $this->installs()->firstWhere('package', $package['id']);
+        $enabled = $existing?->enabled ?? true;
+
+        if ($enabled) {
+            $this->useResourcePack($package, $package['id']);
+        }
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => $package['id']],
+            [
+                'name' => $package['name'],
+                'version' => $package['version'],
+                'icon' => $package['icon'],
+                'dependency' => false,
+                'requires' => [],
+                'files' => [],
+                'pinned' => $package['pinned'] ?? false,
+                'enabled' => $enabled,
+                'size' => $package['size'],
+            ],
+        );
+    }
+
+    /**
+     * Points server.properties to this resource pack, or to none. The other resource packs are
+     * switched off - Minecraft offers only one.
+     *
+     * @param  array<string, mixed>|null  $package  from release()
+     */
+    private function useResourcePack(?array $package, ?string $id = null): void
+    {
+        $this->files->write(self::PROPERTIES, self::withProperties((string) $this->files->read(self::PROPERTIES), [
+            'resource-pack' => (string) ($package['download'] ?? ''),
+            'resource-pack-sha1' => (string) ($package['sha1'] ?? ''),
+        ]));
+
+        if ($id !== null) {
+            ModInstall::query()
+                ->where('server_id', $this->server->id)
+                ->where('package', 'like', Modrinth::KINDS['resourcepack']['prefix'] . '%')
+                ->where('package', '!=', $id)
+                ->update(['enabled' => false]);
+        }
+    }
+
+    /** The world's datapacks folder, e.g. world/datapacks - the world named in server.properties. */
+    private function datapacksDir(): string
+    {
+        $level = trim((string) self::property((string) $this->files->read(self::PROPERTIES), 'level-name'), '/');
+
+        return ($level === '' || str_contains($level, '..') ? 'world' : $level) . '/datapacks';
+    }
+
+    /** A value of a Java properties file, "\:" read as ":"; null when it is not there. */
+    public static function property(string $text, string $key): ?string
+    {
+        if (!preg_match('/^' . preg_quote($key, '/') . '[ \t]*[=:][ \t]*([^\r\n]*)/m', $text, $match)) {
+            return null;
+        }
+
+        return preg_replace('/\\\\(.)/', '$1', trim($match[1]));
+    }
+
+    /**
+     * The properties file with these values set: a line that is there is replaced, else one is
+     * added. Everything else stays as it is.
+     *
+     * @param  array<string, string>  $values
+     */
+    public static function withProperties(string $text, array $values): string
+    {
+        foreach ($values as $key => $value) {
+            // one line, and a backslash would start an escape
+            $line = "$key=" . str_replace(['\\', "\r", "\n"], ['\\\\', '', ''], $value);
+            $replaced = preg_replace_callback('/^' . preg_quote($key, '/') . '[ \t]*[=:][^\r\n]*/m', fn () => $line, $text, 1, $count);
+            $text = $count ? $replaced : ($text === '' ? '' : rtrim($text, "\r\n") . "\n") . "$line\n";
+        }
+
+        return $text;
+    }
+
+    /** plugin (any mod), datapack or resourcepack */
+    public static function kind(string $package): string
+    {
+        return Modrinth::kindOf($package) ?? 'plugin';
+    }
+
+    /** The file's name as the source gives it - it ends up in a path, so nothing but a plain name. */
     public static function jarName(string $file): string
     {
-        if (!preg_match('/^\w[\w .+()\[\]-]*\.jar\z/i', $file)) {
+        if (!preg_match('/^\w[\w .+()\[\]-]*\.(jar|zip)\z/i', $file)) {
             throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $file]));
         }
 
@@ -894,7 +1018,7 @@ class Installer
     /** A package of a source that ships single jars: Modrinth or Hangar. */
     public static function jarPackage(string $package): bool
     {
-        return str_starts_with($package, Modrinth::PREFIX) || str_starts_with($package, Hangar::PREFIX);
+        return Modrinth::kindOf($package) !== null || str_starts_with($package, Hangar::PREFIX);
     }
 
     /** Mods of this game are single jars: the profile gets them from Modrinth or Hangar. */
@@ -906,7 +1030,7 @@ class Installer
     private function sourceFor(string $package): Thunderstore|Modrinth|Hangar
     {
         return match (true) {
-            str_starts_with($package, Modrinth::PREFIX) => new Modrinth((array) $this->profile->setting('modrinth_loaders', [])),
+            Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),
             default => $this->source,
         };

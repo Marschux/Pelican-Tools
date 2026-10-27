@@ -222,6 +222,14 @@ class Hangar
         ];
     }
 
+    /** The project's page: hangar wants the owner in it, the slug alone is not enough. */
+    public function url(string $id): string
+    {
+        $project = $this->project(self::split($id));
+
+        return self::SITE . '/' . ($project['namespace']['owner'] ?? '') . '/' . ($project['namespace']['slug'] ?? self::split($id));
+    }
+
     /** @return array<string, mixed> by slug or by hangar's numeric id */
     private function project(string $project): array
     {

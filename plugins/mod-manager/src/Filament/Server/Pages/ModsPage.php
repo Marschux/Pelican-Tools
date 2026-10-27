@@ -59,6 +59,9 @@ class ModsPage extends Page
     /** the source the browse tab shows, one of the profile's - see sourceKey() */
     public string $source = '';
 
+    /** what the browse tab shows from Modrinth: plugin, datapack or resourcepack - see kinds() */
+    public string $kind = 'plugin';
+
     /** also mods made for other game versions than the server runs */
     public bool $showAll = false;
 
@@ -110,7 +113,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['source', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
+    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
 
     public function mount(): void
     {
@@ -134,11 +137,11 @@ class ModsPage extends Page
     public function updated(string $property): void
     {
         // categories are the source's own
-        if ($property === 'source') {
+        if (in_array($property, ['source', 'kind'], true)) {
             $this->category = '';
         }
 
-        if (in_array($property, ['source', 'query', 'category', 'ordering', 'showClientSide', 'showDeprecated', 'showAll'], true)) {
+        if (in_array($property, ['source', 'kind', 'query', 'category', 'ordering', 'showClientSide', 'showDeprecated', 'showAll'], true)) {
             $this->search();
         }
     }
@@ -163,7 +166,8 @@ class ModsPage extends Page
     public function showDetails(string $id): void
     {
         try {
-            $this->details = $this->source()?->details($id, $this->versionFilter());
+            // from the installed tab it can be a package of another source than the one browsed
+            $this->details = $this->sourceFor($id)?->details($id, $this->versionFilter());
         } catch (Throwable $exception) {
             report($exception);
             $this->details = null;
@@ -246,7 +250,7 @@ class ModsPage extends Page
             // only shown - what gets deleted is worked out again on confirm
             'configs' => $this->installer()->runtimeConfigs(new Collection([$install])),
             // plugins keep data folders rather than configs
-            'data' => $this->installer()->jarMods(),
+            'data' => $this->jarMods(),
         ];
         $this->dispatch('open-modal', id: 'mod-confirm');
     }
@@ -436,6 +440,44 @@ class ModsPage extends Page
     public function playerList(): string
     {
         return $this->installer()->playerList();
+    }
+
+    /** Plugins rather than mods: single files from Modrinth or Hangar, nothing players need. */
+    public function jarMods(): bool
+    {
+        return $this->installer()->jarMods();
+    }
+
+    /** @return array<string, string> what the browse tab can show from Modrinth, kind => name - empty unless there is a choice */
+    public function kinds(): array
+    {
+        if ($this->sourceKey() !== 'modrinth' || !$this->jarMods()) {
+            return [];
+        }
+
+        return collect(array_keys(Modrinth::KINDS))->mapWithKeys(fn (string $kind) => [$kind => trans("mod-manager::mods.kinds.$kind")])->all();
+    }
+
+    /** The site a package comes from, by its id. */
+    public function sourceName(string $id): string
+    {
+        return match (true) {
+            Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
+            str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
+            default => Presets::SOURCES['thunderstore'],
+        };
+    }
+
+    /** The line below a name in the installed table: a mod's author, a plugin's source, a pack's kind. */
+    public function origin(string $package): string
+    {
+        $kind = Modrinth::kindOf($package);
+
+        return match (true) {
+            $kind !== null && $kind !== 'plugin' => $this->sourceName($package) . ' · ' . trans("mod-manager::mods.kind.$kind"),
+            Installer::jarPackage($package) => $this->sourceName($package),
+            default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
+        };
     }
 
     /** @return array<string, string> package => newer version, worked out once per request */
@@ -718,9 +760,21 @@ class ModsPage extends Page
 
         return match ($this->sourceKey()) {
             'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
-            'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', [])),
+            'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             default => null,
+        };
+    }
+
+    /** The source a package belongs to, by its id. */
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar
+    {
+        $profile = $this->profile();
+
+        return match (true) {
+            Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
+            str_starts_with($id, Hangar::PREFIX) => new Hangar(),
+            default => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
         };
     }
 

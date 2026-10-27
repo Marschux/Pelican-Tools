@@ -44,6 +44,15 @@ return [
         'server' => 'Serverseitig',
         'client' => 'Nur Client',
     ],
+    'kinds' => [
+        'plugin' => 'Plugins',
+        'datapack' => 'Datapacks',
+        'resourcepack' => 'Resource-Packs',
+    ],
+    'kind' => [
+        'datapack' => 'Datapack',
+        'resourcepack' => 'Resource-Pack',
+    ],
     'is_installed' => 'Installiert',
     'remove' => 'Entfernen',
     'cancel' => 'Abbrechen',
@@ -107,6 +116,7 @@ return [
         'button' => 'Mod-Liste für Spieler',
         'heading' => 'Mod-Liste für Spieler',
         'hint' => 'Spieler brauchen dieselben Mods. Am einfachsten mit r2modman: diese Mods dort installieren und das Spiel darüber starten.',
+        'hint_plugins' => 'Plugins laufen nur auf dem Server, Spieler brauchen keins davon - die Liste ist zum Teilen, was hier läuft. Ein Resource-Pack wird Spielern beim Beitreten angeboten.',
         'copy' => 'Kopieren',
         'copied' => 'Kopiert',
     ],

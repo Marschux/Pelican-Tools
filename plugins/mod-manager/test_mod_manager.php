@@ -56,6 +56,31 @@ foreach (['hXiIvTyT', 'modrinth:', 'modrinth:../x', 'thunderstore:a-b'] as $bad)
     }
 }
 
+use Marschux\ModManager\Sources\Modrinth;
+
+assert(Modrinth::split('modrinth-datapack:abc') === 'abc' && Modrinth::split('modrinth-resourcepack:x-y') === 'x-y');
+assert(Modrinth::kindOf('modrinth:a') === 'plugin' && Modrinth::kindOf('modrinth-datapack:a') === 'datapack' && Modrinth::kindOf('modrinth-resourcepack:a') === 'resourcepack');
+assert(Modrinth::kindOf('hangar:a') === null && Modrinth::kindOf('Foo-Bar') === null);
+assert(Installer::kind('modrinth-datapack:a') === 'datapack' && Installer::kind('hangar:a') === 'plugin' && Installer::kind('A-B') === 'plugin');
+assert(Installer::jarPackage('modrinth-resourcepack:a'));
+
+// --- server.properties ---------------------------------------------------------------------------
+
+$properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";
+assert(Installer::property($properties, 'level-name') === 'my world');
+assert(Installer::property($properties, 'motd') === 'a:b');
+assert(Installer::property($properties, 'resource-pack') === '');
+assert(Installer::property($properties, 'gamemode') === null);
+
+$set = Installer::withProperties($properties, ['resource-pack' => 'https://cdn.modrinth.com/a.zip', 'resource-pack-sha1' => 'abc']);
+assert(Installer::property($set, 'resource-pack') === 'https://cdn.modrinth.com/a.zip');
+assert(Installer::property($set, 'resource-pack-sha1') === 'abc');
+assert(Installer::property($set, 'resource-pack-prompt') === '' && substr_count($set, "\n") === substr_count($properties, "\n"), 'other lines stay');
+assert(Installer::withProperties($set, ['resource-pack' => '', 'resource-pack-sha1' => '']) === $properties, 'cleared again');
+assert(Installer::withProperties('', ['resource-pack' => 'u']) === "resource-pack=u\n", 'no file yet');
+assert(Installer::withProperties("a=1", ['b' => "x\ny"]) === "a=1\nb=xy\n", 'one line only');
+assert(Installer::withProperties("a=1\r\nb=2\r\n", ['a' => '$1']) === "a=\$1\r\nb=2\r\n", 'no regex back references');
+
 // --- hangar ids ---------------------------------------------------------------------------------
 
 assert(Marschux\ModManager\Sources\Hangar::split('hangar:ViaBackwards') === 'ViaBackwards');
@@ -122,9 +147,10 @@ assert(Installer::configFor('WorldEdit', $plugins) === null);
 assert(Installer::jarName('EssentialsX-2.22.0.jar') === 'EssentialsX-2.22.0.jar');
 assert(Installer::jarName('ViaBackwards-5.12.2-SNAPSHOT+665.jar') === 'ViaBackwards-5.12.2-SNAPSHOT+665.jar');
 assert(Installer::jarName('Chunky-Bukkit [1.4].jar') === 'Chunky-Bukkit [1.4].jar');
+assert(Installer::jarName('Terralith_1.21.x_v2.5.8.zip') === 'Terralith_1.21.x_v2.5.8.zip', 'a datapack');
 
 // the name ends up in a path on the server
-foreach (['', '.jar', '../x.jar', 'a/b.jar', '.hidden.jar', 'x.zip', "x.jar\n", 'x.jar/'] as $bad) {
+foreach (['', '.jar', '../x.jar', 'a/b.jar', '.hidden.jar', 'x.exe', "x.jar\n", 'x.jar/'] as $bad) {
     try {
         Installer::jarName($bad);
         assert(false, "$bad should not pass");
