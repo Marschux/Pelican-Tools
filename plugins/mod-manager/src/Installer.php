@@ -33,6 +33,9 @@ class Installer
 
     private const AMXX_DLL = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
 
+    /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
+    public const UPLOAD = 'upload:';
+
     /** where Minecraft keeps its settings: the world's name and the resource pack */
     private const PROPERTIES = 'server.properties';
 
@@ -139,6 +142,10 @@ class Installer
 
         if (self::kind($install->package) === 'resourcepack' && $install->enabled) {
             $this->useResourcePack(null);
+        }
+
+        if (self::uploaded($install->package)) {
+            $this->writeUploadedIni(fn (string $ini) => self::withoutAmxxPlugin($ini, basename($install->files[0] ?? '')));
         }
 
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
@@ -636,6 +643,85 @@ class Installer
         );
     }
 
+    /**
+     * A compiled AMX Mod X plugin uploaded through the page: into the plugins folder, its line
+     * into plugins-modmanager.ini - AMX Mod X reads every plugins-*.ini, so the plugins.ini the
+     * admin keeps stays untouched. The same name again replaces it.
+     */
+    public function installAmxx(string $name, string $content): ModInstall
+    {
+        $name = self::amxxName($name);
+        $package = self::UPLOAD . substr($name, 0, -5);
+        $existing = $this->installs()->firstWhere('package', $package);
+        $path = $this->modsDir() . "/$name";
+
+        // e.g. one AMX Mod X comes with - replacing it would be gone on the loader's next update
+        if (!$existing && $this->files->exists($path)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => $name]));
+        }
+
+        $enabled = $existing?->enabled ?? true;
+
+        $this->files->write($path, $content);
+        $this->writeUploadedIni(fn (string $ini) => self::withAmxxPlugin(self::withAmxxLine($ini, $name), $name, $enabled));
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => $package],
+            [
+                'name' => substr($name, 0, -5),
+                // a compiled plugin carries no version that can be read here: when it came is what there is
+                'version' => now()->format('Y-m-d H:i'),
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                'files' => [$path],
+                'enabled' => $enabled,
+                'size' => strlen($content),
+            ],
+        );
+    }
+
+    /** @param  callable(string): string  $change */
+    private function writeUploadedIni(callable $change): void
+    {
+        $path = $this->configDir() . '/plugins-modmanager.ini';
+        $ini = (string) $this->files->read($path);
+
+        $this->files->write($path, $change($ini === '' ? "; Plugins uploaded through the Mods page of the panel\n" : $ini));
+    }
+
+    /** An uploaded plugin's name - it ends up in a path and a line of an ini file, so a plain one. */
+    public static function amxxName(string $file): string
+    {
+        if (!preg_match('/^\w[\w.-]*\.amxx\z/i', $file)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $file]));
+        }
+
+        return $file;
+    }
+
+    /** plugins.ini with a line for $file, unless it has one - switched on or off. */
+    public static function withAmxxLine(string $ini, string $file): string
+    {
+        if (in_array($file, array_column(self::parseAmxxPlugins($ini), 'file'), true)) {
+            return $ini;
+        }
+
+        return ($ini === '' ? '' : rtrim($ini, "\r\n") . "\n") . "$file\n";
+    }
+
+    /** plugins.ini without $file's line. */
+    public static function withoutAmxxPlugin(string $ini, string $file): string
+    {
+        return (string) preg_replace('/^[ \t]*(?:;[ \t]*)?' . preg_quote($file, '/') . '(?=[ \t;\r]|$).*(\r?\n|$)/m', '', $ini, 1);
+    }
+
+    /** A plugin uploaded through the page, see installAmxx(). */
+    public static function uploaded(string $package): bool
+    {
+        return str_starts_with($package, self::UPLOAD);
+    }
+
     private function goldsrc(): bool
     {
         return $this->profile->setting('loader_type') === 'goldsrc';
@@ -703,6 +789,14 @@ class Installer
         // nothing to move: on means server.properties points to it, and only one can be on
         if (self::kind($install->package) === 'resourcepack') {
             $this->useResourcePack($enabled ? $this->sourceFor($install->package)->release($install->package, $install->version) : null, $install->package);
+            $install->update(['enabled' => $enabled]);
+
+            return;
+        }
+
+        // the jar stays where it is, AMX Mod X skips a line commented out
+        if (self::uploaded($install->package)) {
+            $this->writeUploadedIni(fn (string $ini) => self::withAmxxPlugin($ini, basename($install->files[0] ?? ''), $enabled));
             $install->update(['enabled' => $enabled]);
 
             return;

@@ -93,6 +93,11 @@ return [
         'confirm_delete' => ':path vom Server löschen?',
     ],
 
+    'upload' => [
+        'button' => 'Plugin hochladen',
+        'origin' => 'Hochgeladen',
+    ],
+
     'amxx' => [
         'heading' => 'Plugins von AMX Mod X',
         'hint' => 'Die Plugins aus plugins.ini - die mitgelieferten und von Hand eingetragene. Aus heißt: die Zeile ist auskommentiert.',
@@ -140,6 +145,8 @@ return [
     ],
 
     'messages' => [
+        'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) mit einfachem Namen kann hochgeladen werden: :file',
+        'exists' => ':file liegt schon auf dem Server und wurde nicht hier hochgeladen - erst dort entfernen.',
         'twin' => ':name ist schon installiert, von :source. Erst dort entfernen, um die Quelle zu wechseln.',
         'duplicate' => ':name ist schon installiert - entferne eine der beiden Jar-Dateien.',
         'no_version' => ':name hat keine Version für :version. Wähle eine in den Details.',

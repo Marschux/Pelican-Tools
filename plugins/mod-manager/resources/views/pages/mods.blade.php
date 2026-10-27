@@ -77,6 +77,13 @@
             <x-filament::section>
                 <x-slot name="afterHeader">
                     <div style="display:flex;gap:.5rem">
+                        @if ($canInstall && $this->canUpload())
+                            {{-- picking the file uploads it, the page installs it once it is there --}}
+                            <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" wire:loading.attr="disabled" wire:target="upload">
+                                {{ trans('mod-manager::mods.upload.button') }}
+                                <input type="file" accept=".amxx" wire:model="upload" style="display:none">
+                            </x-filament::button>
+                        @endif
                         <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
                         @if ($updatable && $canUpdate)
                             <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
@@ -156,7 +163,12 @@
                                                 <div style="{{ $icon }};width:2.25rem;height:2.25rem"></div>
                                             @endif
                                             <div style="min-width:0">
-                                                <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
+                                                @if (\Marschux\ModManager\Installer::uploaded($install->package))
+                                                    {{-- an upload has no page to show --}}
+                                                    <div style="font-weight:600">{{ $install->name }}</div>
+                                                @else
+                                                    <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
+                                                @endif
                                                 <div style="{{ $muted }}">{{ $this->origin($install->package) }}</div>
                                             </div>
                                         </div>

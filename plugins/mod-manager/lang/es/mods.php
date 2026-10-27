@@ -93,6 +93,11 @@ return [
         'confirm_delete' => '¿Borrar :path del servidor?',
     ],
 
+    'upload' => [
+        'button' => 'Subir plugin',
+        'origin' => 'Subido',
+    ],
+
     'amxx' => [
         'heading' => 'Plugins de AMX Mod X',
         'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',
@@ -140,6 +145,8 @@ return [
     ],
 
     'messages' => [
+        'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) con un nombre simple: :file',
+        'exists' => ':file ya está en el servidor y no se subió aquí: quítalo primero.',
         'twin' => ':name ya está instalado, desde :source. Quítalo primero para cambiar de fuente.',
         'duplicate' => ':name ya está instalado - elimina uno de los dos jar.',
         'no_version' => ':name no tiene versión para :version. Elige una en los detalles.',

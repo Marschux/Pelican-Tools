@@ -93,6 +93,11 @@ return [
         'confirm_delete' => 'Delete :path from the server?',
     ],
 
+    'upload' => [
+        'button' => 'Upload plugin',
+        'origin' => 'Uploaded',
+    ],
+
     'amxx' => [
         'heading' => 'Plugins of AMX Mod X',
         'hint' => 'The plugins in plugins.ini - those AMX Mod X comes with, and any put there by hand. Switched off, the line is commented out.',
@@ -140,6 +145,8 @@ return [
     ],
 
     'messages' => [
+        'bad_amxx' => 'Only a compiled plugin (.amxx) can be uploaded, with a plain name: :file',
+        'exists' => ':file is on the server already and was not uploaded here - remove it there first.',
         'twin' => ':name is installed already, from :source. Remove it there first to switch sources.',
         'duplicate' => ':name is installed already - remove one of the two jars.',
         'no_version' => ':name has no version for :version. Pick one in the details.',

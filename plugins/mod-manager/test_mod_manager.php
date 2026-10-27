@@ -103,8 +103,23 @@ assert(str_contains($off, ";admin.amxx\t\t; admin base (required for any admin-r
 assert(Installer::withAmxxPlugin($off, 'admin.amxx', true) === $ini, 'back on as it was');
 assert(Installer::parseAmxxPlugins(Installer::withAmxxPlugin($ini, 'telemenu.amxx', true))[3]['enabled']);
 assert(Installer::withAmxxPlugin($ini, 'admin', false) === $ini, 'only a whole file name');
-assert(str_contains($off, ";admin_sql.amxx		; admin base - SQL version (comment admin.amxx)
-"), 'a note naming the file is not its line');
+assert(str_contains($off, ";admin_sql.amxx\t\t; admin base - SQL version (comment admin.amxx)\r\n"), 'a note naming the file is not its line');
+
+assert(Installer::amxxName('mm_test.amxx') === 'mm_test.amxx' && Installer::amxxName('Zombie.Plague-5.amxx') === 'Zombie.Plague-5.amxx');
+foreach (['x.sma', '../x.amxx', 'a b.amxx', '.x.amxx', 'x.amxx/', "x.amxx\n"] as $bad) {
+    try {
+        Installer::amxxName($bad);
+        assert(false, "$bad should not pass");
+    } catch (Throwable $exception) {
+        assert(!$exception instanceof AssertionError, $exception->getMessage());
+    }
+}
+assert(Installer::withAmxxLine('', 'a.amxx') === "a.amxx\n");
+assert(Installer::withAmxxLine("; head\n", 'a.amxx') === "; head\na.amxx\n");
+assert(Installer::withAmxxLine(";a.amxx\n", 'a.amxx') === ";a.amxx\n", 'there already, switched off');
+assert(Installer::withoutAmxxPlugin("; head\n;a.amxx\nb.amxx ; uses a.amxx\n", 'a.amxx') === "; head\nb.amxx ; uses a.amxx\n");
+assert(Installer::withoutAmxxPlugin("; head\r\nb.amxx\r\na.amxx", 'a.amxx') === "; head\r\nb.amxx\r\n");
+assert(Installer::uploaded('upload:x') && !Installer::uploaded('modrinth:x'));
 
 // --- server.properties ---------------------------------------------------------------------------
 

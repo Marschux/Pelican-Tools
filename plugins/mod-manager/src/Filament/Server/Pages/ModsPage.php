@@ -12,6 +12,8 @@ use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
@@ -33,6 +35,7 @@ use Throwable;
 class ModsPage extends Page
 {
     use BlockAccessInConflict;
+    use WithFileUploads;
 
     protected string $view = 'mod-manager::pages.mods';
 
@@ -87,6 +90,9 @@ class ModsPage extends Page
 
     /** @var string[] the optional dependencies ticked in the install modal */
     public array $optionalPicked = [];
+
+    /** a compiled AMX Mod X plugin being uploaded, installed as soon as it is there */
+    public ?TemporaryUploadedFile $upload = null;
 
     /** the config open in the editor */
     public ?string $configPath = null;
@@ -338,6 +344,34 @@ class ModsPage extends Page
         );
     }
 
+    /** The upload finished: the plugin goes on the server straight away. */
+    public function updatedUpload(): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+
+        $file = $this->upload;
+        $this->upload = null;
+
+        if (!$file instanceof TemporaryUploadedFile) {
+            return;
+        }
+
+        $name = $file->getClientOriginalName();
+
+        $this->attempt(
+            fn () => $this->installer()->installAmxx($name, (string) file_get_contents($file->getRealPath())),
+            trans('mod-manager::mods.messages.installed', ['name' => $name]),
+        );
+
+        $file->delete();
+    }
+
+    /** Plugins are uploaded for GoldSrc games: AMX Mod X has no site to browse. */
+    public function canUpload(): bool
+    {
+        return $this->profile()->setting('loader_type') === 'goldsrc';
+    }
+
     /** A plugin of AMX Mod X's plugins.ini on or off. */
     public function toggleAmxx(string $file, bool $enabled): void
     {
@@ -494,6 +528,7 @@ class ModsPage extends Page
 
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
+            Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
             $kind !== null && $kind !== 'plugin' => $this->sourceName($package) . ' · ' . trans("mod-manager::mods.kind.$kind"),
             Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
