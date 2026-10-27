@@ -94,7 +94,7 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Upload plugin',
+        'button' => 'Upload plugin or zip',
         'origin' => 'Uploaded',
     ],
 
@@ -145,7 +145,9 @@ return [
     ],
 
     'messages' => [
-        'bad_amxx' => 'Only a compiled plugin (.amxx) can be uploaded, with a plain name: :file',
+        'bad_amxx' => 'Only a compiled plugin (.amxx) or a zip of plugins can be uploaded, with a plain name: :file',
+        'source_only' => ':file only has source code (.sma) - compile it first, e.g. with the compiler on amxmodx.org.',
+        'no_plugin' => 'No plugin (.amxx) in :file.',
         'exists' => ':file is on the server already and was not uploaded here - remove it there first.',
         'twin' => ':name is installed already, from :source. Remove it there first to switch sources.',
         'duplicate' => ':name is installed already - remove one of the two jars.',

@@ -33,6 +33,9 @@ class Installer
 
     private const AMXX_DLL = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
 
+    /** AMX Mod X's own configs: an uploaded zip that brings one along never gets it, nor deletes it */
+    private const AMXX_CONFIGS = ['amxx.cfg', 'sql.cfg', 'custommenuitems.cfg', 'plugins.ini', 'modules.ini', 'users.ini', 'core.ini', 'configs.ini', 'cmdaccess.ini', 'clcmds.ini', 'cmds.ini', 'cvars.ini', 'maps.ini', 'speech.ini', 'stats.ini', 'miscstats.ini'];
+
     /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
     public const UPLOAD = 'upload:';
 
@@ -138,14 +141,17 @@ class Installer
         // worked out before anything is deleted, while the configs are still listed
         $configs = $withConfigs ? $this->runtimeConfigs($removing) : [];
 
-        $this->files->delete([...$removing->pluck('files')->flatten()->all(), ...$configs]);
+        // configs an uploaded archive brought along are only deleted when asked, like those a mod wrote
+        $files = array_filter($removing->pluck('files')->flatten()->all(), fn (string $path) => !self::uploaded($install->package) || !$this->inConfigDir($path));
+
+        $this->files->delete([...$files, ...$configs]);
 
         if (self::kind($install->package) === 'resourcepack' && $install->enabled) {
             $this->useResourcePack(null);
         }
 
         if (self::uploaded($install->package)) {
-            $this->writeUploadedIni(fn (string $ini) => self::withoutAmxxPlugin($ini, basename($install->files[0] ?? '')));
+            $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withoutAmxxPlugin($ini, $file), $ini));
         }
 
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
@@ -162,6 +168,14 @@ class Installer
      */
     public function runtimeConfigs(Collection $installs): array
     {
+        // what an uploaded archive brought into the config folder
+        if ($this->goldsrc()) {
+            return array_values(array_filter(
+                $installs->filter(fn (ModInstall $install) => self::uploaded($install->package))->pluck('files')->flatten()->all(),
+                fn (string $path) => $this->inConfigDir($path),
+            ));
+        }
+
         if ($this->jarMods()) {
             // datapacks and resource packs keep no data of their own
             return $this->dataFolders($installs->filter(fn (ModInstall $install) => self::kind($install->package) === 'plugin'));
@@ -681,6 +695,160 @@ class Installer
         );
     }
 
+    /** An upload: a compiled plugin, or a zip with plugins and what they bring along. */
+    public function installUpload(string $name, string $content): ModInstall
+    {
+        return str_ends_with(strtolower($name), '.zip') ? $this->installAmxxArchive($name, $content) : $this->installAmxx($name, $content);
+    }
+
+    /**
+     * A zip of AMX Mod X plugins: unpacked on the server, sorted into the game folder (see
+     * amxxPlacement), every plugin in it gets its line. Configs and other files already there are
+     * kept; a plugin file that is there and not from this upload stops it.
+     */
+    public function installAmxxArchive(string $name, string $content): ModInstall
+    {
+        if (!preg_match('/^\w[\w.-]*\.zip\z/i', $name)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $name]));
+        }
+
+        $package = self::UPLOAD . substr($name, 0, -4);
+        $existing = $this->installs()->firstWhere('package', $package);
+        $game = $this->gameDir();
+        $scratch = '.mod-manager/upload';
+
+        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
+
+        try {
+            $this->files->write("$scratch/$name", $content);
+            $this->files->decompress($scratch, $name);
+            $this->files->delete(["$scratch/$name"]);
+
+            $placed = [];
+
+            foreach ($this->files->walk($scratch) as $path) {
+                $to = self::amxxPlacement($path);
+
+                if ($to !== null) {
+                    $placed["$game/$to"] = "$scratch/$path";
+                }
+            }
+
+            $plugins = array_values(array_filter(array_keys($placed), fn (string $path) => str_ends_with($path, '.amxx')));
+
+            if ($plugins === []) {
+                $sources = array_filter($this->files->walk($scratch), fn (string $path) => str_ends_with(strtolower($path), '.sma'));
+
+                throw new RuntimeException(trans($sources ? 'mod-manager::mods.messages.source_only' : 'mod-manager::mods.messages.no_plugin', ['file' => $name]));
+            }
+
+            $ours = $existing?->files ?? [];
+            $moves = [];
+            $replace = [];
+            $kept = [];
+            $listings = [];
+
+            foreach ($placed as $to => $from) {
+                $listings[dirname($to)] ??= $this->files->list(dirname($to));
+
+                if (isset($listings[dirname($to)][basename($to)])) {
+                    if (str_ends_with($to, '.amxx') && !in_array($to, $ours, true)) {
+                        throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
+                    }
+
+                    // a config may have been changed - it stays, and stays this upload's unless AMX Mod X's own;
+                    // anything else of someone else's stays theirs
+                    if ($this->inConfigDir($to)) {
+                        if (!in_array(strtolower(basename($to)), self::AMXX_CONFIGS, true)) {
+                            $kept[] = $to;
+                        }
+
+                        continue;
+                    }
+
+                    if (!in_array($to, $ours, true)) {
+                        continue;
+                    }
+
+                    $replace[] = $to;
+                }
+
+                $moves[] = ['from' => $from, 'to' => $to];
+            }
+
+            $this->files->delete($replace);
+            $this->files->move($moves);
+        } finally {
+            $this->files->delete([$scratch]);
+        }
+
+        $enabled = $existing?->enabled ?? true;
+        $names = array_map('basename', $plugins);
+
+        $this->writeUploadedIni(fn (string $ini) => array_reduce($names, fn (string $ini, string $file) => self::withAmxxPlugin(self::withAmxxLine($ini, $file), $file, $enabled), $ini));
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => $package],
+            [
+                'name' => substr($name, 0, -4),
+                'version' => now()->format('Y-m-d H:i'),
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                // kept configs stay tracked, so removing with the box ticked takes them along
+                'files' => array_values(array_unique([...array_column($moves, 'to'), ...$kept, ...array_intersect($ours, array_keys($placed))])),
+                'enabled' => $enabled,
+                'size' => strlen($content),
+            ],
+        );
+    }
+
+    /**
+     * Where a file of an uploaded zip goes, relative to the game folder - null to leave it out.
+     * Whatever folders the zip wraps things in (MyPlugin/, cstrike/), an addons/amxmodx/ or a game
+     * folder (sound/, models/, ...) inside counts from there; loose plugins and configs go to AMX Mod X's
+     * folders. Source code, the scripting folder and readmes stay out.
+     */
+    public static function amxxPlacement(string $path): ?string
+    {
+        $parts = explode('/', str_replace('\\', '/', $path));
+        $lower = array_map('strtolower', $parts);
+        $file = end($parts);
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+        if (($index = array_search('addons', $lower, true)) !== false) {
+            $rest = array_slice($lower, $index);
+
+            return ($rest[1] ?? '') === 'amxmodx' && count($rest) > 3 && in_array($rest[2], ['plugins', 'configs', 'data', 'modules'], true) && !in_array($extension, ['sma', 'inc'], true)
+                ? implode('/', array_slice($parts, $index))
+                : null;
+        }
+
+        foreach (['sound', 'models', 'sprites', 'gfx', 'maps', 'overviews', 'resource'] as $folder) {
+            if (($index = array_search($folder, $lower, true)) !== false && $index < count($parts) - 1) {
+                return implode('/', array_slice($parts, $index));
+            }
+        }
+
+        return match (true) {
+            $extension === 'amxx' => "addons/amxmodx/plugins/$file",
+            in_array($extension, ['cfg', 'ini'], true) => "addons/amxmodx/configs/$file",
+            $extension === 'txt' && ($lower[count($lower) - 2] ?? '') === 'lang' => "addons/amxmodx/data/lang/$file",
+            default => null,
+        };
+    }
+
+    /** @return string[] the plugin files of an upload, by name */
+    private function amxxFilesOf(ModInstall $install): array
+    {
+        return array_values(array_map('basename', array_filter($install->files, fn (string $path) => str_ends_with($path, '.amxx'))));
+    }
+
+    private function inConfigDir(string $path): bool
+    {
+        return $this->configDir() !== '' && str_starts_with($path, $this->configDir() . '/');
+    }
+
     /** @param  callable(string): string  $change */
     private function writeUploadedIni(callable $change): void
     {
@@ -796,7 +964,7 @@ class Installer
 
         // the jar stays where it is, AMX Mod X skips a line commented out
         if (self::uploaded($install->package)) {
-            $this->writeUploadedIni(fn (string $ini) => self::withAmxxPlugin($ini, basename($install->files[0] ?? ''), $enabled));
+            $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withAmxxPlugin($ini, $file, $enabled), $ini));
             $install->update(['enabled' => $enabled]);
 
             return;

@@ -94,7 +94,7 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Subir plugin',
+        'button' => 'Subir plugin o zip',
         'origin' => 'Subido',
     ],
 
@@ -145,7 +145,9 @@ return [
     ],
 
     'messages' => [
-        'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) con un nombre simple: :file',
+        'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) o un zip de plugins, con un nombre simple: :file',
+        'source_only' => ':file solo tiene código fuente (.sma): compílalo primero, p. ej. con el compilador de amxmodx.org.',
+        'no_plugin' => 'No hay ningún plugin (.amxx) en :file.',
         'exists' => ':file ya está en el servidor y no se subió aquí: quítalo primero.',
         'twin' => ':name ya está instalado, desde :source. Quítalo primero para cambiar de fuente.',
         'duplicate' => ':name ya está instalado - elimina uno de los dos jar.',

@@ -121,6 +121,25 @@ assert(Installer::withoutAmxxPlugin("; head\n;a.amxx\nb.amxx ; uses a.amxx\n", '
 assert(Installer::withoutAmxxPlugin("; head\r\nb.amxx\r\na.amxx", 'a.amxx') === "; head\r\nb.amxx\r\n");
 assert(Installer::uploaded('upload:x') && !Installer::uploaded('modrinth:x'));
 
+foreach ([
+    'MyPlugin/addons/amxmodx/plugins/x.amxx' => 'addons/amxmodx/plugins/x.amxx',
+    'cstrike/addons/amxmodx/configs/x.cfg' => 'addons/amxmodx/configs/x.cfg',
+    'addons/amxmodx/data/lang/x.txt' => 'addons/amxmodx/data/lang/x.txt',
+    'addons/amxmodx/scripting/x.sma' => null,
+    'addons/amxmodx/plugins/x.sma' => null,
+    'addons/metamod/plugins.ini' => null,
+    'MyPlugin/cstrike/sound/x/hello.wav' => 'sound/x/hello.wav',
+    'sound/cstrike/x.wav' => 'sound/cstrike/x.wav',
+    'models/x/v_knife.mdl' => 'models/x/v_knife.mdl',
+    'x.amxx' => 'addons/amxmodx/plugins/x.amxx',
+    'pack/x.ini' => 'addons/amxmodx/configs/x.ini',
+    'lang/x.txt' => 'addons/amxmodx/data/lang/x.txt',
+    'readme.txt' => null,
+    'x.sma' => null,
+] as $from => $to) {
+    assert(Installer::amxxPlacement($from) === $to, $from);
+}
+
 // --- server.properties ---------------------------------------------------------------------------
 
 $properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";

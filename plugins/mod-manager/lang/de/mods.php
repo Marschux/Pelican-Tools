@@ -94,7 +94,7 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Plugin hochladen',
+        'button' => 'Plugin oder Zip hochladen',
         'origin' => 'Hochgeladen',
     ],
 
@@ -145,7 +145,9 @@ return [
     ],
 
     'messages' => [
-        'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) mit einfachem Namen kann hochgeladen werden: :file',
+        'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) oder ein Zip mit Plugins kann hochgeladen werden, mit einfachem Namen: :file',
+        'source_only' => ':file enthält nur Quellcode (.sma) - erst kompilieren, z. B. mit dem Compiler auf amxmodx.org.',
+        'no_plugin' => 'Kein Plugin (.amxx) in :file.',
         'exists' => ':file liegt schon auf dem Server und wurde nicht hier hochgeladen - erst dort entfernen.',
         'twin' => ':name ist schon installiert, von :source. Erst dort entfernen, um die Quelle zu wechseln.',
         'duplicate' => ':name ist schon installiert - entferne eine der beiden Jar-Dateien.',

@@ -81,7 +81,7 @@
                             {{-- picking the file uploads it, the page installs it once it is there --}}
                             <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" wire:loading.attr="disabled" wire:target="upload">
                                 {{ trans('mod-manager::mods.upload.button') }}
-                                <input type="file" accept=".amxx" wire:model="upload" style="display:none">
+                                <input type="file" accept=".amxx,.zip" wire:model="upload" style="display:none">
                             </x-filament::button>
                         @endif
                         <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>

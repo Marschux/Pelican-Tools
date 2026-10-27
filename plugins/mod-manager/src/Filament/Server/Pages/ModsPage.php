@@ -359,7 +359,7 @@ class ModsPage extends Page
         $name = $file->getClientOriginalName();
 
         $this->attempt(
-            fn () => $this->installer()->installAmxx($name, (string) file_get_contents($file->getRealPath())),
+            fn () => $this->installer()->installUpload($name, (string) file_get_contents($file->getRealPath())),
             trans('mod-manager::mods.messages.installed', ['name' => $name]),
         );
 
