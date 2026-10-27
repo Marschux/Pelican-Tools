@@ -43,3 +43,9 @@ python build.py game-query
 
 - [Pelican Project](https://pelican.dev/)
 - [Pelican Eggs](https://github.com/pelican-eggs)
+
+## License
+
+[AGPL-3.0](LICENSE), the same license as Pelican itself.
+
+The eggs build on the [Pelican Eggs](https://github.com/pelican-eggs) collection, which is released under the MIT license; its copyright notice applies to the parts taken from there.
