@@ -48,6 +48,11 @@
         .mod-action.mod-danger { color: rgb(220,38,38); border-color: rgba(239,68,68,.45); }
         .dark .mod-action.mod-on { color: rgb(74,222,128); }
         .dark .mod-action.mod-danger { color: rgb(248,113,113); }
+        {{-- the update below a version: small, blue like the link it replaces; grey while the version is pinned --}}
+        .mod-update { margin-top: .2rem; padding: .05rem .45rem; border-radius: .375rem; border: 1px solid rgba(59,130,246,.45); background: rgba(59,130,246,.1); color: rgb(37,99,235); font-size: .75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .mod-update:hover { background: rgba(59,130,246,.2); }
+        .dark .mod-update { color: rgb(96,165,250); }
+        .mod-update.mod-update-pinned { color: inherit; border-color: rgba(127,127,127,.35); background: transparent; }
     </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
@@ -99,9 +104,10 @@
                         <thead>
                             <tr style="text-align:left;{{ $muted }}">
                                 <th style="padding:.4rem .5rem .4rem 0;font-weight:500">{{ trans('mod-manager::mods.columns.mod') }}</th>
+                                <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.type') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.version') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('mod-manager::mods.columns.size') }}</th>
-                                <th style="padding:.4rem .5rem .4rem 2rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
+                                <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.status') }}</th>
                                 <th></th>
                             </tr>
@@ -121,17 +127,19 @@
                                             </div>
                                         </div>
                                     </td>
+                                    <td style="padding:.6rem .5rem">
+                                        <x-filament::badge color="info" size="sm" icon="tabler-plug" style="width:max-content">{{ trans('mod-manager::mods.types.loader') }}</x-filament::badge>
+                                    </td>
                                     <td style="padding:.6rem .5rem">–</td>
                                     <td style="padding:.6rem .5rem;text-align:right">–</td>
-                                    <td style="padding:.6rem .5rem .6rem 2rem;{{ $muted }}">–</td>
-                                    <td style="padding:.6rem .5rem">
+                                    <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
+                                    <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                                 @if ($loader['installed'])
                                                     <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
                                                 @else
                                                     <x-filament::badge color="danger" size="sm" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
                                                 @endif
-                                            <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
@@ -179,16 +187,30 @@
                                             </div>
                                         </div>
                                     </td>
+                                    <td style="padding:.6rem .5rem">
+                                        {{-- one badge per row, the same colour for all: what kind of thing it is --}}
+                                        @php
+                                            [$type, $typeIcon] = $this->type($install->package, $isLoader);
+                                        @endphp
+                                        <x-filament::badge color="info" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
+                                    </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap">
                                         {{ $install->version }}
                                         @if (isset($updates[$install->package]))
-                                            <div style="color:rgb(59,130,246);font-size:.75rem">→ {{ $updates[$install->package] }}</div>
+                                            {{-- the jump from what is there to what is out, and a click on it updates --}}
+                                            @if (($isLoader ? $canLoader : $canUpdate) && !($isLoader && !$loaderRuns))
+                                                <div>
+                                                    <button type="button" @class(['mod-update', 'mod-update-pinned' => $install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : 'updateMod(' . $install->id . ')' }}" wire:loading.attr="disabled" title="{{ trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]) }}">↑ {{ $updates[$install->package] }}</button>
+                                                </div>
+                                            @else
+                                                <div style="color:rgb(59,130,246);font-size:.75rem">→ {{ $updates[$install->package] }}</div>
+                                            @endif
                                         @endif
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
                                     </td>
-                                    <td style="padding:.6rem .5rem .6rem 2rem;{{ $muted }};min-width:10rem">
+                                    <td style="padding:.6rem .5rem;{{ $muted }};min-width:10rem">
                                         @if ($relation['requires'])
                                             <div>{{ trans('mod-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
                                         @endif
@@ -199,7 +221,7 @@
                                             –
                                         @endif
                                     </td>
-                                    <td style="padding:.6rem .5rem">
+                                    <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                             @if (isset($updates[$install->package]) && !$install->pinned)
                                                 <x-filament::badge color="info" size="sm" icon="tabler-arrow-up">{{ trans('mod-manager::mods.update') }}</x-filament::badge>
@@ -222,21 +244,6 @@
                                             @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
-                                            @if ($isLoader)
-                                                <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
-                                            @endif
-                                            {{-- maps and packs share the table with plugins, this tells them apart at a glance --}}
-                                            @php
-                                                $kindBadge = match (true) {
-                                                    $isMap => ['map', 'tabler-map'],
-                                                    \Marschux\ModManager\Installer::kind($install->package) === 'datapack' => ['datapack', 'tabler-package'],
-                                                    \Marschux\ModManager\Installer::kind($install->package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
-                                                    default => null,
-                                                };
-                                            @endphp
-                                            @if ($kindBadge)
-                                                <x-filament::badge color="info" size="sm" :icon="$kindBadge[1]">{{ trans('mod-manager::mods.kind.' . $kindBadge[0]) }}</x-filament::badge>
-                                            @endif
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
@@ -245,17 +252,6 @@
                                                 @if ($canLoader)
                                                     <x-filament::button size="xs" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled" style="white-space:nowrap">
                                                         {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
-                                                    </x-filament::button>
-                                                @endif
-                                            @elseif (isset($updates[$install->package]) && ($isLoader ? $canLoader : $canUpdate))
-                                                {{-- shows the jump: from what is there to what is out --}}
-                                                @if ($isLoader)
-                                                    <x-filament::button size="xs" icon="tabler-arrow-up" wire:click="installLoader" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
-                                                        {{ $updates[$install->package] }}
-                                                    </x-filament::button>
-                                                @else
-                                                    <x-filament::button size="xs" :color="$install->pinned ? 'gray' : 'primary'" icon="tabler-arrow-up" wire:click="updateMod({{ $install->id }})" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
-                                                        {{ $updates[$install->package] }}
                                                     </x-filament::button>
                                                 @endif
                                             @endif

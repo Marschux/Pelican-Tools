@@ -52,10 +52,13 @@ return [
         'datapack' => 'Datapacks',
         'resourcepack' => 'Resource-Packs',
     ],
-    'kind' => [
-        'map' => 'Map',
+    'types' => [
+        'mod' => 'Mod',
+        'plugin' => 'Plugin',
         'datapack' => 'Datapack',
         'resourcepack' => 'Resource-Pack',
+        'map' => 'Map',
+        'loader' => 'Loader',
     ],
     'is_installed' => 'Installiert',
     'remove' => 'Entfernen',
@@ -74,6 +77,7 @@ return [
     'active' => 'Aktiv',
     'columns' => [
         'mod' => 'Mod',
+        'type' => 'Typ',
         'version' => 'Version',
         'size' => 'Größe',
         'dependencies' => 'Abhängigkeiten',

@@ -540,15 +540,29 @@ class ModsPage extends Page
     /** The line below a name in the installed table: a mod's author, a plugin's source, a pack's kind. */
     public function origin(string $package): string
     {
-        $kind = Modrinth::kindOf($package);
-
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
-            str_starts_with($package, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'] . ' · ' . trans('mod-manager::mods.kind.map'),
-            $kind !== null && $kind !== 'plugin' => $this->sourceName($package) . ' · ' . trans("mod-manager::mods.kind.$kind"),
-            Installer::jarPackage($package) => $this->sourceName($package),
+            str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
+        };
+    }
+
+    /**
+     * What a row is, for the type column: key of mods.types and its icon.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function type(string $package, bool $isLoader = false): array
+    {
+        return match (true) {
+            $isLoader => ['loader', 'tabler-plug'],
+            str_starts_with($package, GameBanana::PREFIX) => ['map', 'tabler-map'],
+            Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
+            Modrinth::kindOf($package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
+            // jars of Paper and AMX Mod X's .amxx are plugins, Thunderstore packages mods
+            Installer::uploaded($package), Installer::jarPackage($package) => ['plugin', 'tabler-puzzle'],
+            default => ['mod', 'tabler-puzzle'],
         };
     }
 
