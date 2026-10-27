@@ -36,7 +36,7 @@
         .mod-installed { align-self: stretch; display: inline-flex; align-items: center; gap: .35rem; padding: 0 .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: rgb(21,128,61); background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); }
         .dark .mod-installed { color: rgb(74,222,128); }
         .mod-slot { display: inline-flex; justify-content: center; width: 2.5rem; }
-        {{-- the row actions: one square button each - gear in the text colour, power green while on, bin red --}}
+        {{-- the row actions: one square button each - gear in the text colour, switch green while on, bin red --}}
         .mod-action { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: .5rem; border: 1px solid rgba(127,127,127,.35); background: transparent; color: inherit; cursor: pointer; transition: background .15s; }
         .mod-action:hover { background: rgba(127,127,127,.15); }
         .mod-action:disabled { opacity: .3; cursor: not-allowed; background: transparent; }
@@ -231,7 +231,7 @@
                                             <span class="mod-slot">
                                                 @if (!$isLoader && $canUpdate)
                                                     <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
-                                                        <x-filament::icon icon="tabler-power" />
+                                                        <x-filament::icon :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
                                                     </button>
                                                 @endif
                                             </span>
