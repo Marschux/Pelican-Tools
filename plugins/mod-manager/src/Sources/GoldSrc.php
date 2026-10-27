@@ -8,16 +8,22 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * The loader of GoldSrc games: Metamod-R from its GitHub releases and AMX Mod X 1.10 from the
- * AlliedModders build drop. One package, "goldsrc:loader", made of three archives.
+ * What GoldSrc games get on top: the loader - Metamod-R from its GitHub releases and AMX Mod X
+ * 1.10 from the AlliedModders build drop, one package "goldsrc:loader" - and, optionally, the
+ * engine - ReHLDS, ReGameDLL and the ReAPI module, "goldsrc:engine".
  */
 class GoldSrc
 {
     public const PACKAGE = 'goldsrc:loader';
 
+    public const ENGINE = 'goldsrc:engine';
+
     private const METAMOD = 'https://api.github.com/repos/rehlds/Metamod-R/releases/latest';
 
     private const AMXX = 'https://www.amxmodx.org/amxxdrop/1.10/';
+
+    /** the engine's parts, each the "-bin-" zip of its latest release */
+    private const ENGINE_REPOS = ['rehlds' => 'rehlds/ReHLDS', 'regamedll' => 'rehlds/ReGameDLL_CS', 'reapi' => 'rehlds/ReAPI'];
 
     private const AGENT = 'Marschux/pelican-mod-manager';
 
@@ -60,32 +66,69 @@ class GoldSrc
         });
     }
 
-    public function latestVersion(string $id, ?string $gameVersion = null): string
+    /**
+     * ReHLDS, ReGameDLL and ReAPI, newest releases. ReHLDS is built against the Steam API of
+     * Valve's steam_legacy branch, which today's HLDS no longer ships - so its libsteam_api.so
+     * comes along, from the ReHLDS repository at the same release.
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, parts: array<int, array{name: string, url: string}>}
+     */
+    public function engineRelease(): array
     {
-        return $this->release()['version'];
+        return Cache::remember('mod-manager:goldsrc:engine', now()->addHour(), function () {
+            $tags = [];
+            $parts = [];
+
+            foreach (self::ENGINE_REPOS as $name => $repo) {
+                $release = $this->http()->get("https://api.github.com/repos/$repo/releases/latest")->json();
+                $asset = collect($release['assets'] ?? [])->first(fn (array $asset) => str_contains($asset['name'], '-bin-') && str_ends_with($asset['name'], '.zip'))
+                    ?? throw new RuntimeException("$repo: no release zip");
+
+                $tags[$name] = (string) $release['tag_name'];
+                $parts[] = ['name' => $name, 'url' => (string) $asset['browser_download_url']];
+            }
+
+            $parts[] = ['name' => 'steam_api', 'url' => "https://raw.githubusercontent.com/rehlds/ReHLDS/{$tags['rehlds']}/rehlds/lib/linux32/libsteam_api.so"];
+
+            return [
+                'id' => self::ENGINE,
+                'name' => 'ReHLDS + ReGameDLL + ReAPI',
+                'version' => implode(' / ', array_map(fn (string $tag) => ltrim($tag, 'v'), $tags)),
+                'icon' => null,
+                'parts' => $parts,
+            ];
+        });
     }
 
-    /** What the detail modal shows for the loader row: there is no page to read, only links. */
+    public function latestVersion(string $id, ?string $gameVersion = null): string
+    {
+        return $id === self::ENGINE ? $this->engineRelease()['version'] : $this->release()['version'];
+    }
+
+    /** What the detail modal shows for the loader and the engine rows: there is no page to read, only links. */
     public function details(string $id, ?string $gameVersion = null): array
     {
-        $release = $this->release();
+        $engine = $id === self::ENGINE;
+        $release = $engine ? $this->engineRelease() : $this->release();
 
         return [
-            'id' => self::PACKAGE,
+            'id' => $release['id'],
             'name' => $release['name'],
-            'author' => 'ReHLDS team, AlliedModders',
+            'author' => $engine ? 'ReHLDS team' : 'ReHLDS team, AlliedModders',
             'summary' => '',
             'icon' => null,
             'downloads' => 0,
             'rating' => 0,
-            'url' => 'https://www.amxmodx.org',
+            'url' => $engine ? 'https://github.com/rehlds/ReHLDS' : 'https://www.amxmodx.org',
             'version' => $release['version'],
-            'website' => 'https://github.com/rehlds/Metamod-R',
+            'website' => $engine ? 'https://github.com/rehlds/ReGameDLL_CS' : 'https://github.com/rehlds/Metamod-R',
             'size' => 0,
             'dependants' => null,
             'dependencies' => [],
             'versions' => [['number' => $release['version'], 'date' => now()->toIso8601String(), 'downloads' => 0]],
-            'readme' => '<p>Metamod-R loads AMX Mod X into the game; it is hooked in through <code>liblist.gam</code>. AMX Mod X runs the plugins in <code>addons/amxmodx/plugins</code>.</p>',
+            'readme' => $engine
+                ? '<p>ReHLDS replaces the engine of HLDS, ReGameDLL the game library (<code>dlls/cs.so</code>), ReAPI gives AMX Mod X plugins access to both. Valve\'s files are kept and come back when this is removed.</p>'
+                : '<p>Metamod-R loads AMX Mod X into the game; it is hooked in through <code>liblist.gam</code>. AMX Mod X runs the plugins in <code>addons/amxmodx/plugins</code>.</p>',
             'changelog' => null,
         ];
     }

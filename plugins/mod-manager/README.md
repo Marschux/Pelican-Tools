@@ -49,6 +49,14 @@ through it. The button installs or updates it:
   configs, plugins and data. A `validate` of steamcmd restores `liblist.gam`; the row then says so
   and its button hooks Metamod in again.
 
+**Engine row** (Counter-Strike 1.6 and Condition Zero, optional). ReHLDS, ReGameDLL and the ReAPI
+module of AMX Mod X, newest releases from GitHub - many newer AMX Mod X plugins need them. ReHLDS
+is built against the Steam API of Valve's `steam_legacy` branch, which today's HLDS no longer
+ships, so its `libsteam_api.so` comes along from the ReHLDS repository at the same release; the egg
+stays as it is. Valve's files are moved to `.mod-manager/valve/` and come back when the engine is
+removed. A `validate` of steamcmd (reinstalling the server) puts Valve's files back as well - install
+the engine again afterwards.
+
 **Browse.** Search while typing, category, sorting, pages of 12. Filters are remembered per
 server. A tile opens the details: dependencies, all versions (each installable on its own),
 description and changelog.

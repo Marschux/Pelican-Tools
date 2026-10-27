@@ -89,6 +89,20 @@ assert(Installer::goldsrcFile('addons/amxmodx/plugins/admin.amxx') && !Installer
 assert(!Installer::goldsrcFile('example_plugin/Makefile'));
 assert(Installer::goldsrcTarget('addons/metamod/metamod_i386.so') === 'addons/metamod/metamod.so', 'HLDS will not load a game library named _i386');
 assert(Installer::goldsrcTarget('addons/amxmodx/dlls/amxmodx_mm_i386.so') === 'addons/amxmodx/dlls/amxmodx_mm_i386.so', 'metamod loads its plugins by any name');
+foreach ([
+    ['rehlds', 'bin/linux32/engine_i486.so', 'engine_i486.so'],
+    ['rehlds', 'bin/linux32/valve/dlls/director.so', 'valve/dlls/director.so'],
+    ['rehlds', 'bin/win32/engine.dll', null],
+    ['rehlds', 'hlsdk/x.h', null],
+    ['regamedll', 'bin/linux32/cstrike/dlls/cs.so', 'czero/dlls/cs.so'],
+    ['regamedll', 'bin/linux32/cstrike/game.cfg', 'czero/game.cfg'],
+    ['regamedll', 'bin/win32/cstrike/dlls/mp.dll', null],
+    ['reapi', 'addons/amxmodx/modules/reapi_amxx_i386.so', 'czero/addons/amxmodx/modules/reapi_amxx_i386.so'],
+    ['reapi', 'addons/amxmodx/modules/reapi_amxx.dll', null],
+    ['reapi', 'addons/amxmodx/scripting/include/reapi.inc', null],
+] as [$part, $from, $to]) {
+    assert(Installer::enginePlacement($part, $from, 'czero') === $to, "$part $from");
+}
 assert(Installer::keptOnUpdate('addons/amxmodx/configs/users.ini') && Installer::keptOnUpdate('addons/amxmodx/configs/amxx.cfg'));
 assert(!Installer::keptOnUpdate('addons/amxmodx/data/lang/admin.txt'));
 

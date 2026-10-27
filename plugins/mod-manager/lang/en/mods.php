@@ -58,6 +58,7 @@ return [
         'datapack' => 'Datapack',
         'resourcepack' => 'Resource pack',
         'map' => 'Map',
+        'engine' => 'Engine',
         'loader' => 'Loader',
     ],
     'is_installed' => 'Installed',
@@ -112,6 +113,12 @@ return [
         'add' => 'Put into mapcycle.txt',
         'remove' => 'Take out of mapcycle.txt',
         'out' => 'Not in mapcycle',
+    ],
+
+    'engine' => [
+        'optional' => 'Optional',
+        'hint' => 'Optional, many newer plugins need it.',
+        'remove_body' => 'The engine and game library of Valve come back, the server runs as steamcmd installed it again. Plugins that need ReAPI no longer load.',
     ],
 
     'amxx' => [

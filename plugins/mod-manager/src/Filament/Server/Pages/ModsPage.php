@@ -557,6 +557,7 @@ class ModsPage extends Page
     {
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
+            $package === GoldSrc::ENGINE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
@@ -571,6 +572,7 @@ class ModsPage extends Page
     public function type(string $package, bool $isLoader = false): array
     {
         return match (true) {
+            $package === GoldSrc::ENGINE => ['engine', 'tabler-engine'],
             $isLoader => ['loader', 'tabler-plug'],
             str_starts_with($package, GameBanana::PREFIX) => ['map', 'tabler-map'],
             Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
@@ -591,6 +593,56 @@ class ModsPage extends Page
     public function unmanaged(): array
     {
         return $this->installer()->unmanaged();
+    }
+
+    /** ReHLDS, ReGameDLL and ReAPI's row, null until they are in. */
+    public function engineInstall(): ?ModInstall
+    {
+        $engine = $this->canUpload() ? $this->installer()->installs()->firstWhere('package', GoldSrc::ENGINE) : null;
+
+        if ($engine) {
+            $this->installer()->fillSizes(new Collection([$engine]));
+        }
+
+        return $engine;
+    }
+
+    /** Installs or updates ReHLDS, ReGameDLL and ReAPI - Valve's files are put aside. */
+    public function installEngine(): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        try {
+            $engine = $this->installer()->installEngine();
+        } catch (Throwable $exception) {
+            $this->fail($exception);
+
+            return;
+        }
+
+        $this->markRestart();
+
+        Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => "$engine->name $engine->version"]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
+    }
+
+    public function removeEngine(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->confirm = ['type' => 'remove_engine', 'name' => 'ReHLDS + ReGameDLL + ReAPI', 'packages' => []];
+        $this->dispatch('open-modal', id: 'mod-confirm');
+    }
+
+    public function confirmRemoveEngine(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        if (($this->confirm['type'] ?? null) === 'remove_engine') {
+            $this->attempt(fn () => $this->installer()->uninstallEngine(), trans('mod-manager::mods.messages.removed', ['name' => $this->confirm['name']]));
+        }
+
+        $this->closeConfirm();
     }
 
     public function removeLoader(): void
@@ -634,7 +686,8 @@ class ModsPage extends Page
     /** @return Collection<int, ModInstall> the mods, without the loader */
     public function installed(): Collection
     {
-        $hidden = (array) $this->profile()->setting('hidden_packages', []);
+        // the GoldSrc engine has a row of its own, like the loader
+        $hidden = [...(array) $this->profile()->setting('hidden_packages', []), GoldSrc::ENGINE];
         $installs = $this->installer()->installs()->reject(fn (ModInstall $install) => in_array($install->package, $hidden, true))->values();
 
         $this->installer()->fillSizes($installs);
@@ -881,7 +934,7 @@ class ModsPage extends Page
         $profile = $this->profile();
 
         return match (true) {
-            $id === GoldSrc::PACKAGE => new GoldSrc(),
+            $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),

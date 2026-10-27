@@ -87,6 +87,14 @@ class ServerFiles
         Activity::event('server:file.delete')->property(['directory' => '/', 'files' => $paths])->log();
     }
 
+    /** @param  string  $mode  octal, e.g. 755 */
+    public function chmod(string $path, string $mode): void
+    {
+        $this->repository->getHttpClient()
+            ->post("/api/servers/{$this->server->uuid}/files/chmod", ['root' => '/', 'files' => [['file' => ltrim($path, '/'), 'mode' => $mode]]])
+            ->throw();
+    }
+
     public function write(string $path, string $content): void
     {
         $this->repository->putContent($path, $content);

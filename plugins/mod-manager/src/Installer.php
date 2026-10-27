@@ -37,6 +37,9 @@ class Installer
     /** AMX Mod X's own configs: an uploaded zip that brings one along never gets it, nor deletes it */
     private const AMXX_CONFIGS = ['amxx.cfg', 'sql.cfg', 'custommenuitems.cfg', 'plugins.ini', 'modules.ini', 'users.ini', 'core.ini', 'configs.ini', 'cmdaccess.ini', 'clcmds.ini', 'cmds.ini', 'cvars.ini', 'maps.ini', 'speech.ini', 'stats.ini', 'miscstats.ini'];
 
+    /** where Valve's files wait while ReHLDS and ReGameDLL are in */
+    private const ENGINE_BACKUP = '.mod-manager/valve';
+
     /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
     public const UPLOAD = 'upload:';
 
@@ -525,6 +528,131 @@ class Installer
                 'files' => array_values(array_unique([...array_keys($moves), ...$previous])),
             ],
         );
+    }
+
+    /**
+     * ReHLDS, ReGameDLL and ReAPI over Valve's files: what is there of Valve's moves to
+     * .mod-manager/valve first and comes back on removal. A config already there (ReGameDLL's
+     * game.cfg) is kept through an update. Running binaries can be replaced - the server picks
+     * them up on its next start.
+     */
+    public function installEngine(): ModInstall
+    {
+        $release = (new GoldSrc())->engineRelease();
+        $game = $this->gameDir();
+        $scratch = '.mod-manager/engine';
+        $ours = $this->installs()->firstWhere('package', GoldSrc::ENGINE)?->files ?? [];
+        $targets = [];
+        $moves = [];
+        $kept = [];
+
+        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
+
+        try {
+            foreach ($release['parts'] as $part) {
+                $directory = "$scratch/{$part['name']}";
+                $file = basename((string) parse_url($part['url'], PHP_URL_PATH));
+
+                $this->files->pull($part['url'], $directory, $file);
+
+                if ($part['name'] === 'steam_api') {
+                    $targets[$file] = "$directory/$file";
+
+                    continue;
+                }
+
+                $this->files->decompress($directory, $file);
+
+                foreach ($this->files->walk($directory) as $path) {
+                    $to = self::enginePlacement($part['name'], $path, $game);
+
+                    if ($to !== null) {
+                        $targets[$to] = "$directory/$path";
+                    }
+                }
+            }
+
+            $backups = [];
+            $replace = [];
+            $listings = [];
+
+            foreach ($targets as $to => $from) {
+                $listings[dirname($to)] ??= $this->files->list(dirname($to) === '.' ? '' : dirname($to));
+
+                if (isset($listings[dirname($to)][basename($to)])) {
+                    if (self::keptOnUpdate($to)) {
+                        $kept[] = $to;
+
+                        continue;
+                    }
+
+                    if (in_array($to, $ours, true)) {
+                        $replace[] = $to;
+                    } else {
+                        // Valve's file, put aside once; a newer one after a steamcmd validate replaces the copy
+                        $replace[] = self::ENGINE_BACKUP . "/$to";
+                        $backups[] = ['from' => $to, 'to' => self::ENGINE_BACKUP . "/$to"];
+                    }
+                }
+
+                $moves[] = ['from' => $from, 'to' => $to];
+            }
+
+            // Wings will not move onto a file
+            $this->files->delete($replace);
+            $this->files->move($backups);
+            $this->files->move($moves);
+        } finally {
+            $this->files->delete([$scratch]);
+        }
+
+        // the start binary has to stay executable, whatever the unpacking did to it
+        $this->files->chmod('hlds_linux', '755');
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => GoldSrc::ENGINE],
+            [
+                'name' => $release['name'],
+                'version' => $release['version'],
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                'files' => array_values(array_unique([...array_column($moves, 'to'), ...$kept])),
+                'size' => null,
+            ],
+        );
+    }
+
+    /** Valve's engine and game library again: ours deleted, the copies put back. */
+    public function uninstallEngine(): void
+    {
+        $engine = $this->installs()->firstWhere('package', GoldSrc::ENGINE);
+
+        $this->files->delete($engine?->files ?? []);
+
+        $this->files->move(array_map(
+            fn (string $path) => ['from' => self::ENGINE_BACKUP . "/$path", 'to' => $path],
+            $this->files->walk(self::ENGINE_BACKUP),
+        ));
+        $this->files->delete([self::ENGINE_BACKUP]);
+        $this->files->chmod('hlds_linux', '755');
+
+        $engine?->delete();
+    }
+
+    /**
+     * Where a file of the engine's archives goes, from the server root - null to leave it out.
+     * ReHLDS: its Linux build to the root. ReGameDLL: its cstrike folder to the game folder (it
+     * serves Condition Zero as well). ReAPI: only the module, AMX Mod X loads it.
+     */
+    public static function enginePlacement(string $part, string $path, string $game): ?string
+    {
+        return match (true) {
+            $part === 'rehlds' && str_starts_with($path, 'bin/linux32/') => substr($path, strlen('bin/linux32/')),
+            $part === 'regamedll' && str_starts_with($path, 'bin/linux32/cstrike/') => "$game/" . substr($path, strlen('bin/linux32/cstrike/')),
+            $part === 'reapi' && $path === 'addons/amxmodx/modules/reapi_amxx_i386.so' => "$game/$path",
+            default => null,
+        };
     }
 
     /**
@@ -1165,7 +1293,7 @@ class Installer
 
             // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
             // there the newest for the game version simply differs from what is installed
-            if (self::jarPackage($install->package) || $install->package === GoldSrc::PACKAGE ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
+            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE], true) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -1879,7 +2007,7 @@ class Installer
     private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|GameBanana
     {
         return match (true) {
-            $package === GoldSrc::PACKAGE => new GoldSrc(),
+            $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE => new GoldSrc(),
             str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),

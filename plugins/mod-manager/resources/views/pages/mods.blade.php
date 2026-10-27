@@ -15,6 +15,9 @@
     $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
+    // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
+    $canEngine = $tab === 'installed' && $this->canUpload();
+    $engineInstall = $canEngine ? $this->engineInstall() : null;
     // without a running loader no mod loads, switched on or not
     $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
@@ -182,15 +185,17 @@
                                     </td>
                                 </tr>
                             @endif
-                            @foreach (collect([$loaderInstall])->filter()->concat($installed) as $install)
+                            @foreach (collect([$loaderInstall, $engineInstall])->filter()->concat($installed) as $install)
                                 @php
                                     // the loader: no switch and no remove, without it no mod runs
                                     $isLoader = $install->is($loaderInstall);
+                                    // the engine: no switch and no config, removing it brings Valve's files back
+                                    $isEngine = $engineInstall && $install->is($engineInstall);
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
                                     // only plugins and mods write configs, packs do not
                                     // maps from GameBanana have none either
                                     $isMap = str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
-                                    $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap;
+                                    $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                     // the GoldSrc loader's settings are AMX Mod X's main config
                                     if ($isLoader && $this->canUpload()) {
@@ -224,12 +229,13 @@
                                         <x-filament::badge color="info" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap">
-                                        {{ $install->version }}
+                                        {{-- a loader's or engine's version is several: one per line --}}
+                                        {!! implode('<br>', array_map('e', explode(' / ', $install->version))) !!}
                                         @if (isset($updates[$install->package]))
                                             {{-- the jump from what is there to what is out, and a click on it updates --}}
                                             @if (($isLoader ? $canLoader : $canUpdate) && !($isLoader && !$loaderRuns))
                                                 <div>
-                                                    <button type="button" @class(['mod-update', 'mod-update-pinned' => $install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : 'updateMod(' . $install->id . ')' }}" wire:loading.attr="disabled" title="{{ trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]) }}">↑ {{ $updates[$install->package] }}</button>
+                                                    <button type="button" @class(['mod-update', 'mod-update-pinned' => $install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" title="{{ trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]) }}">↑ {{ $updates[$install->package] }}</button>
                                                 </div>
                                             @else
                                                 <div style="color:rgb(59,130,246);font-size:.75rem">→ {{ $updates[$install->package] }}</div>
@@ -292,7 +298,7 @@
                                                         ? trans($install->enabled ? 'mod-manager::mods.mapcycle.remove' : 'mod-manager::mods.mapcycle.add')
                                                         : trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable');
                                                 @endphp
-                                                @if (!$isLoader && $canUpdate)
+                                                @if (!$isLoader && !$isEngine && $canUpdate)
                                                     <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ $switchLabel }}" aria-label="{{ $switchLabel }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
                                                         <x-filament::icon :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
                                                     </button>
@@ -312,7 +318,7 @@
                                             </span>
                                             <span class="mod-slot">
                                                 @if ($isLoader ? $canRemoveLoader : $canDelete)
-                                                    <button type="button" class="mod-action mod-danger" wire:click="{{ $isLoader ? 'removeLoader' : 'remove(' . $install->id . ')' }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
+                                                    <button type="button" class="mod-action mod-danger" wire:click="{{ $isLoader ? 'removeLoader' : ($isEngine ? 'removeEngine' : 'remove(' . $install->id . ')') }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
                                                         <x-filament::icon icon="tabler-trash" />
                                                     </button>
                                                 @endif
@@ -321,6 +327,38 @@
                                     </td>
                                 </tr>
                             @endforeach
+                            @if ($canEngine && !$engineInstall)
+                                {{-- GoldSrc: ReHLDS, ReGameDLL and ReAPI are offered, never needed --}}
+                                <tr wire:key="engine-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                    <td style="padding:.6rem .5rem .6rem 0">
+                                        <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
+                                            <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
+                                                <x-filament::icon icon="tabler-engine" style="width:1.25rem;height:1.25rem;opacity:.6" />
+                                            </div>
+                                            <div style="min-width:0;max-width:22rem">
+                                                <div style="font-weight:600">ReHLDS + ReGameDLL + ReAPI</div>
+                                                <div style="{{ $muted }}">{{ trans('mod-manager::mods.engine.hint') }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding:.6rem .5rem">
+                                        <x-filament::badge color="info" size="sm" icon="tabler-engine" style="width:max-content">{{ trans('mod-manager::mods.types.engine') }}</x-filament::badge>
+                                    </td>
+                                    <td style="padding:.6rem .5rem">–</td>
+                                    <td style="padding:.6rem .5rem;text-align:right">–</td>
+                                    <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
+                                    <td style="padding:.6rem .5rem;min-width:8rem">
+                                        <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.engine.optional') }}</x-filament::badge>
+                                    </td>
+                                    <td style="padding:.6rem .5rem">
+                                        <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
+                                            @if ($canInstall && $canUpdate)
+                                                <x-filament::button size="xs" icon="tabler-download" wire:click="installEngine" wire:loading.attr="disabled" style="white-space:nowrap">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -729,6 +767,10 @@
                 <div style="font-size:.875rem">{{ trans_choice('mod-manager::mods.confirm.loader_body', $confirm['mods'], ['name' => $confirm['name']]) }}</div>
             @endif
 
+            @if ($confirm['type'] === 'remove_engine')
+                <div style="font-size:.875rem">{{ trans('mod-manager::mods.engine.remove_body') }}</div>
+            @endif
+
             @if ($confirm['packages'])
                 <div style="{{ $muted }};font-size:.875rem">
                     {{ trans('mod-manager::mods.confirm.install_body', ['name' => $confirm['name']]) }}
@@ -782,6 +824,8 @@
                     <x-filament::button icon="tabler-download" wire:click="confirmInstall">{{ trans('mod-manager::mods.confirm.install_all') }}</x-filament::button>
                 @elseif ($confirm['type'] === 'remove_loader')
                     <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveLoader">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                @elseif ($confirm['type'] === 'remove_engine')
+                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveEngine">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
                 @else
                     <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
                 @endif
