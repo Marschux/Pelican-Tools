@@ -2,10 +2,10 @@
     "id": "game-query",
     "name": "Game Query",
     "author": "Marschux",
-    "version": "1.26.0",
+    "version": "1.26.1",
     "description": "Query game servers for players, map and server info",
     "category": "plugin",
-    "url": null,
+    "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/game-query",
     "update_url": null,
     "namespace": "Marschux\\GameQuery",
     "class": "GameQueryPlugin",
@@ -13,7 +13,7 @@
         "admin",
         "server"
     ],
-    "panel_version": null,
+    "panel_version": "^1.0.0-rc.2",
     "api_version": 1,
     "composer_packages": {}
 }
