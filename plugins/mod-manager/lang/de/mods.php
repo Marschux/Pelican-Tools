@@ -93,6 +93,7 @@ return [
         'edit' => ':file bearbeiten',
         'save' => 'Speichern',
         'confirm_delete' => ':file löschen? Der Mod schreibt beim nächsten Start eine neue mit seinen Standardwerten.',
+        'delete' => 'Löschen',
         'delete_hint' => 'Löschen - der Mod schreibt beim nächsten Start eine neue',
         'restart_note' => 'Die meisten Mods lesen ihre Config nur beim Start.',
     ],

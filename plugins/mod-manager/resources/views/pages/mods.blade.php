@@ -281,7 +281,7 @@
                             <x-filament::button size="sm" color="gray" icon="tabler-pencil" wire:click="openConfig({{ $js($config) }})">{{ trans('mod-manager::mods.config.open') }}</x-filament::button>
                         @endif
                         @if ($canDelete)
-                            <x-filament::icon-button color="danger" icon="tabler-trash" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.config.delete_hint')" />
+                            <x-filament::button size="sm" color="danger" outlined icon="tabler-trash" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" :tooltip="trans('mod-manager::mods.config.delete_hint')">{{ trans('mod-manager::mods.config.delete') }}</x-filament::button>
                         @endif
                     </div>
                 @endforeach

@@ -93,6 +93,7 @@ return [
         'edit' => 'Edit :file',
         'save' => 'Save',
         'confirm_delete' => 'Delete :file? The mod writes a fresh one with its defaults on the next start.',
+        'delete' => 'Delete',
         'delete_hint' => 'Delete - the mod writes a fresh one on its next start',
         'restart_note' => 'Most mods read their config only on start.',
     ],

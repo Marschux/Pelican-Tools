@@ -93,6 +93,7 @@ return [
         'edit' => 'Editar :file',
         'save' => 'Guardar',
         'confirm_delete' => '¿Borrar :file? El mod escribe uno nuevo con sus valores por defecto en el próximo arranque.',
+        'delete' => 'Borrar',
         'delete_hint' => 'Borrar - el mod escribe uno nuevo en el próximo arranque',
         'restart_note' => 'La mayoría de los mods solo leen su configuración al arrancar.',
     ],
