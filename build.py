@@ -14,6 +14,7 @@ import zipfile
 
 SKIP_DIRS = {'.git', '__pycache__', 'node_modules', 'vendor'}
 SKIP_SUFFIX = {'.zip', '.pyc'}
+TEXT_SUFFIX = {'.php', '.json', '.md', '.txt', '.css', '.js'}
 
 
 def build(name: str) -> None:
@@ -40,7 +41,11 @@ def build(name: str) -> None:
             info.date_time = (1980, 1, 1, 0, 0, 0)
             info.external_attr = 0o644 << 16
             info.compress_type = zipfile.ZIP_DEFLATED
-            zf.writestr(info, path.read_bytes())
+            data = path.read_bytes()
+            # an editor on Windows may write CRLF; the panel runs on Linux, so text goes in as LF
+            if path.suffix in TEXT_SUFFIX:
+                data = data.replace(b'\r\n', b'\n')
+            zf.writestr(info, data)
 
     print(f'{target.name}: {len(files)} files, version {version}')
 
