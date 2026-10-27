@@ -5,7 +5,7 @@ The ZIP is the deploy artifact and is checked in. If it drifts from the source, 
 an old version and then hunt for the bug in the code - exactly what happened with the
 predecessor plugin. So always build through this script, never by hand.
 
-    python build.py game-query
+    python scripts/build.py game-query
 """
 import json
 import pathlib
@@ -18,7 +18,7 @@ TEXT_SUFFIX = {'.php', '.json', '.md', '.txt', '.css', '.js'}
 
 
 def build(name: str) -> None:
-    root = pathlib.Path(__file__).parent / "plugins"
+    root = pathlib.Path(__file__).parent.parent / "plugins"
     source = root / name
 
     if not source.is_dir():

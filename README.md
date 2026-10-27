@@ -76,7 +76,7 @@ Each plugin's README covers what it needs set up in the admin panel.
 After every plugin change, bump the version in `plugin.json` and rebuild the ZIP:
 
 ```
-python build.py game-query
+python scripts/build.py game-query
 ```
 
 ## Sources
