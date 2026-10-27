@@ -295,12 +295,21 @@
                 @foreach ($configs as $config)
                     <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
                         <span style="flex:1;font-family:monospace;font-size:.875rem">{{ $config }}</span>
-                        @if ($canReadConfig)
-                            <x-filament::button size="sm" color="gray" icon="tabler-pencil" wire:click="openConfig({{ $js($config) }})">{{ trans('mod-manager::mods.config.open') }}</x-filament::button>
-                        @endif
-                        @if ($canDelete)
-                            <x-filament::button size="sm" color="danger" outlined icon="tabler-trash" label-sr-only wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" :tooltip="trans('mod-manager::mods.config.delete_hint')">{{ trans('mod-manager::mods.config.delete') }}</x-filament::button>
-                        @endif
+                        {{-- the same square buttons as the rows of the installed table --}}
+                        <span class="mod-slot">
+                            @if ($canReadConfig)
+                                <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ trans('mod-manager::mods.config.open') }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                    <x-filament::icon icon="tabler-pencil" />
+                                </button>
+                            @endif
+                        </span>
+                        <span class="mod-slot">
+                            @if ($canDelete)
+                                <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" title="{{ trans('mod-manager::mods.config.delete_hint') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
+                                    <x-filament::icon icon="tabler-trash" />
+                                </button>
+                            @endif
+                        </span>
                     </div>
                 @endforeach
             </x-filament::section>
