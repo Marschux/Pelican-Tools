@@ -5,8 +5,8 @@ update, switch off or remove later. Wings does the downloading, unpacking and mo
 passes through the panel. Eggs are not changed.
 
 Built in: Valheim (Thunderstore + BepInEx), Minecraft Paper (plugins from Modrinth and Hangar,
-datapacks and resource packs from Modrinth) and Counter-Strike 1.6 (Metamod-R + AMX Mod X, plugins
-uploaded, maps from GameBanana).
+datapacks and resource packs from Modrinth), Counter-Strike 1.6 and Condition Zero (Metamod-R +
+AMX Mod X, plugins uploaded, maps from GameBanana).
 
 ## Install
 
@@ -31,6 +31,9 @@ Servers with those eggs get the Mods page. An egg can have one profile.
 | Start command prefix | the doorstop variables BepInEx needs | none | none - `liblist.gam` loads Metamod |
 | Game version | - | `.paper/version_history.json`, before the first start the egg variable `PAPER_VERSION` | - |
 | Hidden packages | the loader itself and r2modman | - | the loader |
+
+Condition Zero is the Counter-Strike 1.6 preset in the game folder `czero` (mods, configs and
+check path below it), GameBanana game `7`, category `5181`.
 
 ## The page
 

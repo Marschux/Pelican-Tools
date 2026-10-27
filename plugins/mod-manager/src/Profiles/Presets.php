@@ -81,6 +81,25 @@ class Presets
                     'hidden_packages' => ['goldsrc:loader'],
                 ],
             ],
+            // the same as 1.6 in its own game folder; AMX Mod X's cstrike addon covers both
+            'counter-strike-cz' => [
+                'name' => 'Counter-Strike: Condition Zero',
+                'settings' => [
+                    'sources' => ['gamebanana'],
+                    // Counter-Strike: Condition Zero, its category Maps
+                    'gamebanana_game' => 7,
+                    'gamebanana_category' => 5181,
+                    'game_dir' => 'czero',
+                    'mods_dir' => 'czero/addons/amxmodx/plugins',
+                    'config_dir' => 'czero/addons/amxmodx/configs',
+                    'loader_type' => 'goldsrc',
+                    'loader_name' => 'Metamod-R + AMX Mod X',
+                    'loader_package' => 'goldsrc:loader',
+                    'loader_check' => 'czero/addons/metamod/metamod.so',
+                    'game_dll' => 'dlls/cs.so',
+                    'hidden_packages' => ['goldsrc:loader'],
+                ],
+            ],
         ];
     }
 
