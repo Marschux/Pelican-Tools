@@ -3,8 +3,11 @@
 namespace Marschux\ModManager\Sources;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 /**
  * Modrinth, through its public v2 API. A project is addressed as "modrinth:<project id>" - the
@@ -68,6 +71,91 @@ class Modrinth
             'items' => array_map(fn (array $hit) => $this->item($hit, $categories), $result['hits'] ?? []),
             'pages' => max(1, (int) ceil(((int) ($result['total_hits'] ?? 0)) / self::PER_PAGE)),
         ];
+    }
+
+    /**
+     * Everything the detail view shows. Modrinth keeps a changelog per version, the newest few
+     * are put together into one.
+     *
+     * @return array<string, mixed>
+     */
+    public function details(string $id): array
+    {
+        $project = self::split($id);
+
+        return Cache::remember("mod-manager:modrinth:details:$project:" . implode(',', $this->loaders), now()->addMinutes(10), function () use ($id, $project) {
+            // at once - one after the other they make opening the details slow
+            $responses = Http::pool(fn (Pool $pool) => [
+                $pool->as('project')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project"),
+                $pool->as('versions')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project/version", ['loaders' => json_encode($this->loaders)]),
+                $pool->as('members')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project/members"),
+            ]);
+
+            foreach ($responses as $response) {
+                if (!$response instanceof Response) {
+                    throw $response;
+                }
+
+                $response->throw();
+            }
+
+            $info = $responses['project']->json();
+            $versions = $responses['versions']->json();
+            $latest = $versions[0] ?? [];
+            $members = collect($responses['members']->json());
+            $dependencies = collect($latest['dependencies'] ?? [])
+                // embedded ones are inside the jar already, incompatible ones are not wanted
+                ->filter(fn (array $dependency) => in_array($dependency['dependency_type'], ['required', 'optional'], true) && filled($dependency['project_id']))
+                ->keyBy('project_id');
+            $projects = $dependencies->isEmpty() ? [] : collect($this->http()->get(self::API . '/projects', ['ids' => json_encode($dependencies->keys()->all())])->json())->keyBy('id')->all();
+
+            $changelog = collect($versions)
+                ->take(10)
+                ->filter(fn (array $version) => filled($version['changelog'] ?? null))
+                ->map(fn (array $version) => "## {$version['version_number']}\n\n{$version['changelog']}")
+                ->implode("\n\n");
+
+            return [
+                'id' => $id,
+                'name' => (string) $info['title'],
+                'author' => (string) (($members->firstWhere('role', 'Owner') ?? $members->first())['user']['username'] ?? ''),
+                'summary' => (string) ($info['description'] ?? ''),
+                'icon' => ($info['icon_url'] ?? null) ?: null,
+                'downloads' => (int) ($info['downloads'] ?? 0),
+                'rating' => (int) ($info['followers'] ?? 0),
+                'url' => self::SITE . '/plugin/' . ($info['slug'] ?? $project),
+                'version' => (string) ($latest['version_number'] ?? ''),
+                'website' => ($info['source_url'] ?? null) ?: (($info['wiki_url'] ?? null) ?: null),
+                'size' => (int) (collect($latest['files'] ?? [])->firstWhere('primary', true)['size'] ?? ($latest['files'][0]['size'] ?? 0)),
+                // modrinth does not count who depends on a project
+                'dependants' => null,
+                'dependencies' => $dependencies->map(fn (array $dependency, string $projectId) => [
+                    'id' => self::PREFIX . $projectId,
+                    'name' => (string) ($projects[$projectId]['title'] ?? $projectId),
+                    'version' => '',
+                    'icon' => ($projects[$projectId]['icon_url'] ?? null) ?: null,
+                    'hidden' => false,
+                    'optional' => $dependency['dependency_type'] === 'optional',
+                ])->values()->all(),
+                'versions' => array_map(fn (array $version) => [
+                    'number' => (string) $version['version_number'],
+                    'date' => $version['date_published'],
+                    'downloads' => (int) $version['downloads'],
+                ], $versions),
+                'readme' => Thunderstore::markdown($info['body'] ?? ''),
+                'changelog' => filled($changelog) ? Thunderstore::markdown($changelog) : null,
+            ];
+        });
+    }
+
+    /** @return string the project id or slug in "modrinth:<id>" */
+    public static function split(string $id): string
+    {
+        if (!preg_match('/^modrinth:([\w-]+)$/', $id, $match)) {
+            throw new RuntimeException("not a Modrinth project: $id");
+        }
+
+        return $match[1];
     }
 
     /**

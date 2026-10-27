@@ -31,6 +31,7 @@ return [
     'website' => 'Sitio web',
     'dependencies' => 'Dependencias',
     'no_dependencies' => 'Ninguna',
+    'optional' => 'Opcional',
     'loader_dependency' => 'Cargador de mods',
     'show_client_side' => 'Mostrar mods solo de cliente',
     'show_deprecated' => 'Mostrar obsoletos',

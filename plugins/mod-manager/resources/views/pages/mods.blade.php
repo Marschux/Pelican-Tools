@@ -444,8 +444,11 @@
                         <div style="{{ $muted }};font-weight:400">
                             {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
                             ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }} ·
-                            {{ \Illuminate\Support\Number::fileSize($details['size']) }} ·
-                            {{ trans_choice('mod-manager::mods.used_by', $details['dependants'], ['count' => number_format($details['dependants'])]) }}
+                            {{ \Illuminate\Support\Number::fileSize($details['size']) }}
+                            {{-- not every source counts who depends on a package --}}
+                            @if ($details['dependants'] !== null)
+                                · {{ trans_choice('mod-manager::mods.used_by', $details['dependants'], ['count' => number_format($details['dependants'])]) }}
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -457,7 +460,7 @@
                 @elseif ($canInstall)
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
-                <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">Thunderstore</x-filament::button>
+                <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">{{ \Marschux\ModManager\Profiles\Presets::SOURCES[$this->sourceKey()] ?? '' }}</x-filament::button>
                 @if ($details['website'])
                     <x-filament::button color="gray" icon="tabler-world" tag="a" :href="$details['website']" target="_blank">{{ trans('mod-manager::mods.website') }}</x-filament::button>
                 @endif
@@ -474,6 +477,8 @@
                             <span style="flex:1">{{ $dependency['name'] }} <span style="{{ $muted }}">{{ $dependency['version'] }}</span></span>
                             @if ($dependency['hidden'])
                                 <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
+                            @elseif ($dependency['optional'] ?? false)
+                                <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.optional') }}</x-filament::badge>
                             @endif
                         </div>
                     @empty

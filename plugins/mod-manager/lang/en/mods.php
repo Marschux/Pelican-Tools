@@ -31,6 +31,7 @@ return [
     'website' => 'Website',
     'dependencies' => 'Dependencies',
     'no_dependencies' => 'None',
+    'optional' => 'Optional',
     'loader_dependency' => 'Mod loader',
     'show_client_side' => 'Show client-only mods',
     'show_deprecated' => 'Show deprecated',

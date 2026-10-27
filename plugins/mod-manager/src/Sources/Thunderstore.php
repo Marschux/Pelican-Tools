@@ -229,7 +229,7 @@ class Thunderstore
     }
 
     /** Readmes and changelogs are written by anyone: raw html is stripped, unsafe links dropped. */
-    private static function markdown(mixed $markdown): string
+    public static function markdown(mixed $markdown): string
     {
         return (string) Str::markdown((string) $markdown, ['html_input' => 'strip', 'allow_unsafe_links' => false]);
     }

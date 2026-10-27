@@ -42,6 +42,19 @@ foreach (Presets::all() as $key => $preset) {
     assert(!str_starts_with($settings['mods_dir'], '/') && !str_contains($settings['mods_dir'], '..'), "$key: mods_dir stays inside the server");
 }
 
+// --- modrinth ids -------------------------------------------------------------------------------
+
+assert(Marschux\ModManager\Sources\Modrinth::split('modrinth:hXiIvTyT') === 'hXiIvTyT');
+assert(Marschux\ModManager\Sources\Modrinth::split('modrinth:luckperms-gui') === 'luckperms-gui');
+
+foreach (['hXiIvTyT', 'modrinth:', 'modrinth:../x', 'thunderstore:a-b'] as $bad) {
+    try {
+        Marschux\ModManager\Sources\Modrinth::split($bad);
+        assert(false, "$bad should not pass");
+    } catch (RuntimeException) {
+    }
+}
+
 // --- game version --------------------------------------------------------------------------------
 
 assert(GameVersion::fromFile('{"currentVersion":"26.3-226-4f49049 (MC: 26.3)"}') === '26.3');
