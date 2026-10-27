@@ -151,6 +151,8 @@ return [
             'sources_hint' => 'Woher die Mods kommen. Die erste wird zuerst geöffnet.',
             'community' => 'Community',
             'community_hint' => 'Das Spiel auf Thunderstore, z. B. "valheim" in thunderstore.io/c/valheim. Nur für Thunderstore nötig.',
+            'modrinth_loaders' => 'Modrinth-Loader',
+            'modrinth_loaders_hint' => 'Ein Projekt braucht einen davon, z. B. paper, spigot, bukkit. Nur für Modrinth nötig.',
             'mods_dir' => 'Mod-Ordner',
             'config_dir' => 'Config-Ordner',
             'version_file' => 'Versionsdatei',

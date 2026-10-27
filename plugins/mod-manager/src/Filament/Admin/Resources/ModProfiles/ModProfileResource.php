@@ -113,6 +113,11 @@ class ModProfileResource extends Resource
                         ->label(trans($field('community')))
                         ->helperText(trans($field('community_hint')))
                         ->required(fn (Get $get) => in_array('thunderstore', (array) $get('settings.sources'), true)),
+                    TagsInput::make('settings.modrinth_loaders')
+                        ->label(trans($field('modrinth_loaders')))
+                        ->helperText(trans($field('modrinth_loaders_hint')))
+                        ->required(fn (Get $get) => in_array('modrinth', (array) $get('settings.sources'), true))
+                        ->columnSpanFull(),
                     TextInput::make('settings.mods_dir')
                         ->label(trans($field('mods_dir')))
                         ->required(),

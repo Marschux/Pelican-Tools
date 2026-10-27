@@ -9,6 +9,7 @@ namespace Marschux\ModManager\Profiles;
  * Settings of a profile:
  * - sources: where mods come from (thunderstore, modrinth, hangar), the first one is opened first
  * - community: the game on Thunderstore, e.g. "valheim"
+ * - modrinth_loaders: a Modrinth project needs one of these, e.g. paper
  * - mods_dir / config_dir: where mods and their configs live on the server
  * - loader_name / loader_package / loader_check: the mod loader, its package on the site and a
  *   path that exists once it is installed
@@ -43,6 +44,8 @@ class Presets
                 'name' => 'Minecraft Paper',
                 'settings' => [
                     'sources' => ['modrinth', 'hangar'],
+                    // plugins for Spigot and Bukkit run on Paper too
+                    'modrinth_loaders' => ['paper', 'spigot', 'bukkit'],
                     // a plugin is one jar in here, its data folder plugins/<Name> sits next to it
                     'mods_dir' => 'plugins',
                     // older Paper wrote it next to server.jar, those fall back to PAPER_VERSION

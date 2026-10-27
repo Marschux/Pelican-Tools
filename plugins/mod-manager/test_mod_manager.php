@@ -8,6 +8,7 @@
 
 require __DIR__ . '/src/Profiles/Presets.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
+require __DIR__ . '/src/Sources/Modrinth.php';
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
@@ -27,6 +28,10 @@ foreach (Presets::all() as $key => $preset) {
 
     if (in_array('thunderstore', $settings['sources'], true)) {
         assert(($settings['community'] ?? '') !== '', "$key: thunderstore needs a community");
+    }
+
+    if (in_array('modrinth', $settings['sources'], true)) {
+        assert(($settings['modrinth_loaders'] ?? []) !== [], "$key: modrinth needs loaders");
     }
 
     // the loader is installed through its own button, so the browser never offers it

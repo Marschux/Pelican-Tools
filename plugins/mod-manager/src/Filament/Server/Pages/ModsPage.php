@@ -16,6 +16,7 @@ use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
+use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
 use RuntimeException;
 use Throwable;
@@ -659,16 +660,21 @@ class ModsPage extends Page
         return 'mod-manager.browse.' . $this->server()->id;
     }
 
-    /** null until the profile's source can be browsed here - only Thunderstore so far */
-    private function source(): ?Thunderstore
+    /** The source the browse tab shows: the profile's first one that can be browsed here, null for none. */
+    public function sourceKey(): ?string
+    {
+        return collect($this->profile()->sources())->first(fn (string $source) => in_array($source, ['thunderstore', 'modrinth'], true));
+    }
+
+    private function source(): Thunderstore|Modrinth|null
     {
         $profile = $this->profile();
 
-        if (!in_array('thunderstore', $profile->sources(), true)) {
-            return null;
-        }
-
-        return new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', []));
+        return match ($this->sourceKey()) {
+            'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
+            'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', [])),
+            default => null,
+        };
     }
 
     private function profile(): ModProfile

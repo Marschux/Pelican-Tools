@@ -338,14 +338,17 @@
                     @endforeach
                 </x-filament::input.select>
             </x-filament::input.wrapper>
-            <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
-                <x-filament::input.checkbox wire:model.live="showClientSide" />
-                {{ trans('mod-manager::mods.show_client_side') }}
-            </label>
-            <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
-                <x-filament::input.checkbox wire:model.live="showDeprecated" />
-                {{ trans('mod-manager::mods.show_deprecated') }}
-            </label>
+            {{-- thunderstore tags client-only and deprecated packages, other sources do not --}}
+            @if ($this->sourceKey() === 'thunderstore')
+                <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                    <x-filament::input.checkbox wire:model.live="showClientSide" />
+                    {{ trans('mod-manager::mods.show_client_side') }}
+                </label>
+                <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                    <x-filament::input.checkbox wire:model.live="showDeprecated" />
+                    {{ trans('mod-manager::mods.show_deprecated') }}
+                </label>
+            @endif
         </form>
 
         {{-- while the next page loads the tiles stay and only fade, so nothing jumps --}}
