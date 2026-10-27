@@ -45,4 +45,10 @@ class ModProfile extends Model
     {
         return ($this->settings ?? [])[$key] ?? $default;
     }
+
+    /** @return string[] */
+    public function sources(): array
+    {
+        return array_values((array) $this->setting('sources', []));
+    }
 }

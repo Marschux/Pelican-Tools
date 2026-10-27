@@ -9,7 +9,9 @@
 require __DIR__ . '/src/Profiles/Presets.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
 require __DIR__ . '/src/Installer.php';
+require __DIR__ . '/src/GameVersion.php';
 
+use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Profiles\Presets;
 use Marschux\ModManager\Sources\Thunderstore;
@@ -20,16 +22,27 @@ foreach (Presets::all() as $key => $preset) {
     $settings = $preset['settings'];
 
     assert(Presets::options()[$key] === $preset['name']);
-    assert(isset(Presets::SOURCES[$settings['source']]), "$key: unknown source");
+    assert($settings['sources'] !== [] && array_diff($settings['sources'], array_keys(Presets::SOURCES)) === [], "$key: unknown source");
+    assert(($settings['mods_dir'] ?? '') !== '', "$key: mods_dir is needed");
 
-    foreach (['community', 'mods_dir', 'loader_check'] as $required) {
-        assert(($settings[$required] ?? '') !== '', "$key: $required is needed");
+    if (in_array('thunderstore', $settings['sources'], true)) {
+        assert(($settings['community'] ?? '') !== '', "$key: thunderstore needs a community");
     }
 
     // the loader is installed through its own button, so the browser never offers it
-    assert(in_array($settings['loader_package'], $settings['hidden_packages'], true), "$key: the loader has to be hidden");
+    if (isset($settings['loader_package'])) {
+        assert(($settings['loader_check'] ?? '') !== '', "$key: a loader needs a path to check");
+        assert(in_array($settings['loader_package'], $settings['hidden_packages'], true), "$key: the loader has to be hidden");
+    }
     assert(!str_starts_with($settings['mods_dir'], '/') && !str_contains($settings['mods_dir'], '..'), "$key: mods_dir stays inside the server");
 }
+
+// --- game version --------------------------------------------------------------------------------
+
+assert(GameVersion::fromFile('{"currentVersion": "26.3-226-main@4f49049 (MC: 26.3)"}') === '26.3');
+assert(GameVersion::fromFile('{"oldVersion": "git-Paper-1 (MC: 1.20.4)", "currentVersion": "1.21.4-232-main@abc (MC: 1.21.4)"}') === '1.21.4', 'the current one, not the old one');
+assert(GameVersion::fromFile('') === null);
+assert(GameVersion::fromFile('{"currentVersion": "something else"}') === null);
 
 // --- package ids ---------------------------------------------------------------------------------
 

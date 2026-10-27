@@ -102,19 +102,28 @@ class ModProfileResource extends Resource
                 ->columns(2)
                 ->columnSpanFull()
                 ->schema([
-                    Select::make('settings.source')
-                        ->label(trans($field('source')))
+                    Select::make('settings.sources')
+                        ->label(trans($field('sources')))
+                        ->helperText(trans($field('sources_hint')))
                         ->options(Presets::SOURCES)
+                        ->multiple()
+                        ->live()
                         ->required(),
                     TextInput::make('settings.community')
                         ->label(trans($field('community')))
                         ->helperText(trans($field('community_hint')))
-                        ->required(),
+                        ->required(fn (Get $get) => in_array('thunderstore', (array) $get('settings.sources'), true)),
                     TextInput::make('settings.mods_dir')
                         ->label(trans($field('mods_dir')))
                         ->required(),
                     TextInput::make('settings.config_dir')
                         ->label(trans($field('config_dir'))),
+                    TextInput::make('settings.version_file')
+                        ->label(trans($field('version_file')))
+                        ->helperText(trans($field('version_file_hint'))),
+                    TextInput::make('settings.version_variable')
+                        ->label(trans($field('version_variable')))
+                        ->helperText(trans($field('version_variable_hint'))),
                     TagsInput::make('settings.hidden_packages')
                         ->label(trans($field('hidden_packages')))
                         ->helperText(trans($field('hidden_packages_hint')))
@@ -154,10 +163,10 @@ class ModProfileResource extends Resource
                     ->label(trans('mod-manager::mods.profile.fields.name'))
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('source')
-                    ->label(trans('mod-manager::mods.profile.fields.source'))
+                TextColumn::make('sources')
+                    ->label(trans('mod-manager::mods.profile.fields.sources'))
                     ->badge()
-                    ->state(fn (ModProfile $record) => Presets::SOURCES[$record->setting('source')] ?? $record->setting('source')),
+                    ->state(fn (ModProfile $record) => array_map(fn (string $source) => Presets::SOURCES[$source] ?? $source, $record->sources())),
                 TextColumn::make('eggs_count')
                     ->label(trans('mod-manager::mods.profile.fields.eggs'))
                     ->counts('eggs')

@@ -12,6 +12,7 @@ use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
+use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
@@ -145,7 +146,7 @@ class ModsPage extends Page
     public function showDetails(string $id): void
     {
         try {
-            $this->details = $this->source()->details($id);
+            $this->details = $this->source()?->details($id);
         } catch (Throwable $exception) {
             report($exception);
             $this->details = null;
@@ -588,7 +589,7 @@ class ModsPage extends Page
     public function categories(): array
     {
         try {
-            return $this->source()->categories();
+            return $this->source()?->categories() ?? [];
         } catch (Throwable) {
             return [];
         }
@@ -622,8 +623,20 @@ class ModsPage extends Page
         ];
     }
 
+    /** @return array{version: string, from: string}|null */
+    public function gameVersion(): ?array
+    {
+        return once(fn () => GameVersion::of($this->server(), $this->profile()));
+    }
+
     private function fetch(): void
     {
+        if ($this->source() === null) {
+            $this->items = [];
+
+            return;
+        }
+
         try {
             $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->showClientSide, $this->showDeprecated);
         } catch (Throwable $exception) {
@@ -646,9 +659,14 @@ class ModsPage extends Page
         return 'mod-manager.browse.' . $this->server()->id;
     }
 
-    private function source(): Thunderstore
+    /** null until the profile's source can be browsed here - only Thunderstore so far */
+    private function source(): ?Thunderstore
     {
         $profile = $this->profile();
+
+        if (!in_array('thunderstore', $profile->sources(), true)) {
+            return null;
+        }
 
         return new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', []));
     }

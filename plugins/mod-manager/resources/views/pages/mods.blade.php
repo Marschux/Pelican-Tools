@@ -315,6 +315,9 @@
             </x-filament::section>
         @endif
     @else
+        @if ($gameVersion = $this->gameVersion())
+            <div style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</div>
+        @endif
         {{-- every change searches right away, typing waits for a short pause --}}
         <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
             <x-filament::input.wrapper prefix-icon="tabler-search" style="flex:1 1 16rem">
