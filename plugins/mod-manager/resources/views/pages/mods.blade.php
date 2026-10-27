@@ -3,10 +3,12 @@
     and only the utility classes Filament itself uses exist in its stylesheet.
 --}}
 @php
-    $loader = $this->loader();
-    $installed = $this->installed();
+    // browsing only needs which versions are installed - the rest asks Wings and stays on its tab
+    $onInstalled = $tab === 'installed';
+    $loader = $onInstalled ? $this->loader() : null;
+    $installed = $onInstalled ? $this->installed() : collect();
     $versions = $this->installedVersions();
-    $updates = $this->updates();
+    $updates = $onInstalled ? $this->updates() : [];
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
@@ -306,12 +308,11 @@
             </label>
         </form>
 
-        <div wire:loading.flex wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="justify-content:center;padding:2rem">
-            <x-filament::loading-indicator style="width:2rem;height:2rem" />
-        </div>
+        {{-- while the next page loads the tiles stay and only fade, so nothing jumps --}}
+        <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
 
         {{-- three tiles side by side, fewer when the page gets narrow --}}
-        <div wire:loading.remove wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
+        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
@@ -370,7 +371,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.remove wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)

@@ -69,11 +69,16 @@ class Thunderstore
         $count = 0;
 
         foreach (range($first, $last) as $sourcePage) {
-            $response = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", $query + ['page' => $sourcePage]);
-            $results = [...$results, ...$response->json('results', [])];
-            $count = (int) $response->json('count', 0);
+            // kept a few minutes, so paging back and forth does not ask again
+            $listing = Cache::remember(
+                "mod-manager:thunderstore:$this->community:listing:" . md5(json_encode($query + ['page' => $sourcePage])),
+                now()->addMinutes(5),
+                fn () => $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", $query + ['page' => $sourcePage])->json(),
+            );
+            $results = [...$results, ...($listing['results'] ?? [])];
+            $count = (int) ($listing['count'] ?? 0);
 
-            if ($response->json('next') === null) {
+            if (($listing['next'] ?? null) === null) {
                 break;
             }
         }
