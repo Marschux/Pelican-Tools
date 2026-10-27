@@ -169,7 +169,7 @@
         {
             "sort": 11,
             "name": "Server Name Color",
-            "description": "Change the Servernamecolor",
+            "description": "Color of the server name in the server browser.",
             "env_variable": "COLOR",
             "default_value": "white",
             "user_viewable": true,
