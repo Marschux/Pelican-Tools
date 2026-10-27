@@ -150,10 +150,11 @@ return [
 
     'messages' => [
         'core_config' => ':file is needed by AMX Mod X and not written again - edit it instead.',
+        'no_map' => 'No map (.bsp) in :file.',
         'bad_amxx' => 'Only a compiled plugin (.amxx) or a zip of plugins can be uploaded, with a plain name: :file',
         'source_only' => ':file only has source code (.sma) - compile it first, e.g. with the compiler on amxmodx.org.',
         'no_plugin' => 'No plugin (.amxx) in :file.',
-        'exists' => ':file is on the server already and was not uploaded here - remove it there first.',
+        'exists' => ':file is on the server already and did not come through this page - remove it there first.',
         'twin' => ':name is installed already, from :source. Remove it there first to switch sources.',
         'duplicate' => ':name is installed already - remove one of the two jars.',
         'no_version' => ':name has no version for :version. Pick one in the details.',

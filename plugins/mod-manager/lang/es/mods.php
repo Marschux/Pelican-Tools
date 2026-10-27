@@ -150,10 +150,11 @@ return [
 
     'messages' => [
         'core_config' => 'AMX Mod X necesita :file y no la vuelve a crear: edítala en su lugar.',
+        'no_map' => 'No hay ningún mapa (.bsp) en :file.',
         'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) o un zip de plugins, con un nombre simple: :file',
         'source_only' => ':file solo tiene código fuente (.sma): compílalo primero, p. ej. con el compilador de amxmodx.org.',
         'no_plugin' => 'No hay ningún plugin (.amxx) en :file.',
-        'exists' => ':file ya está en el servidor y no se subió aquí: quítalo primero.',
+        'exists' => ':file ya está en el servidor y no llegó desde esta página: quítalo primero.',
         'twin' => ':name ya está instalado, desde :source. Quítalo primero para cambiar de fuente.',
         'duplicate' => ':name ya está instalado - elimina uno de los dos jar.',
         'no_version' => ':name no tiene versión para :version. Elige una en los detalles.',

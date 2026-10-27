@@ -143,6 +143,23 @@ foreach ([
     assert(Installer::amxxPlacement($from) === $to, $from);
 }
 
+foreach ([
+    'de_x/cstrike/maps/de_x.bsp' => 'maps/de_x.bsp',
+    'maps/de_x.res' => 'maps/de_x.res',
+    'de_x.bsp' => 'maps/de_x.bsp',
+    'de_x.wad' => 'de_x.wad',
+    'pack/gfx/env/skyup.tga' => 'gfx/env/skyup.tga',
+    'skyup.tga' => 'gfx/env/skyup.tga',
+    'sound/ambience/x.wav' => 'sound/ambience/x.wav',
+    'x.wav' => 'sound/x.wav',
+    'overviews/de_x.bmp' => 'overviews/de_x.bmp',
+    'readme.txt' => null,
+    'de_x.rmf' => null,
+    'Maps/De_X.BSP' => 'maps/De_X.BSP',
+] as $from => $to) {
+    assert(Installer::mapPlacement($from) === $to, $from);
+}
+
 // --- server.properties ---------------------------------------------------------------------------
 
 $properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";

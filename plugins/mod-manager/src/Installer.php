@@ -847,6 +847,125 @@ class Installer
         };
     }
 
+    /**
+     * A map archive from GameBanana: pulled and unpacked on the server, sorted into the game
+     * folder (see mapPlacement). Files already there stay as they are and are not this map's -
+     * wads and sounds are shared between maps. A map whose .bsp is there and not from this
+     * install (de_dust2.bsp of the game) is not put over it.
+     *
+     * @param  array<string, mixed>  $package  from GameBanana::release()
+     */
+    private function installMap(array $package): ModInstall
+    {
+        $existing = $this->installs()->firstWhere('package', $package['id']);
+        $ours = $existing?->files ?? [];
+        $game = $this->gameDir();
+        $scratch = '.mod-manager/map';
+        $file = basename((string) $package['file']);
+
+        if (!preg_match('/^[\w .()\[\]+-]+\.\w+\z/', $file)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $file]));
+        }
+
+        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
+
+        try {
+            $this->files->pull($package['download'], $scratch, $file);
+            $this->files->decompress($scratch, $file);
+            $this->files->delete(["$scratch/$file"]);
+
+            $placed = [];
+
+            foreach ($this->files->walk($scratch) as $path) {
+                $to = self::mapPlacement($path);
+
+                if ($to !== null) {
+                    $placed["$game/$to"] = "$scratch/$path";
+                }
+            }
+
+            if (!array_filter(array_keys($placed), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $file]));
+            }
+
+            $moves = [];
+            $replace = [];
+            $listings = [];
+
+            foreach ($placed as $to => $from) {
+                $listings[dirname($to)] ??= $this->files->list(dirname($to));
+
+                if (isset($listings[dirname($to)][basename($to)])) {
+                    if (!in_array($to, $ours, true)) {
+                        if (str_ends_with(strtolower($to), '.bsp')) {
+                            throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
+                        }
+
+                        continue;
+                    }
+
+                    $replace[] = $to;
+                }
+
+                $moves[] = ['from' => $from, 'to' => $to];
+            }
+
+            $this->files->delete($replace);
+            $this->files->move($moves);
+        } finally {
+            $this->files->delete([$scratch]);
+        }
+
+        // what the version before brought and this one does not goes
+        $files = array_column($moves, 'to');
+        $this->files->delete(array_values(array_diff($ours, $files)));
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => $package['id']],
+            [
+                'name' => $package['name'],
+                'version' => $package['version'],
+                'icon' => $package['icon'],
+                'dependency' => false,
+                'requires' => [],
+                'files' => $files,
+                'pinned' => $package['pinned'] ?? false,
+                'size' => $package['size'] ?: null,
+            ],
+        );
+    }
+
+    /**
+     * Where a file of a map archive goes, relative to the game folder - null to leave it out.
+     * A game folder (maps/, sound/, gfx/, ...) counts from wherever it sits in the archive; loose
+     * files go by their type. Readmes, sources and the like stay out.
+     */
+    public static function mapPlacement(string $path): ?string
+    {
+        $parts = explode('/', str_replace('\\', '/', $path));
+        $lower = array_map('strtolower', $parts);
+        $file = end($parts);
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+        foreach (['maps', 'sound', 'models', 'sprites', 'gfx', 'overviews', 'resource'] as $folder) {
+            // the folder in lower case - Linux tells Maps/ from maps/, the game only looks in the latter
+            if (($index = array_search($folder, $lower, true)) !== false && $index < count($parts) - 1) {
+                return implode('/', [$folder, ...array_slice($parts, $index + 1)]);
+            }
+        }
+
+        return match ($extension) {
+            'bsp', 'res', 'nav' => "maps/$file",
+            'wad' => $file,
+            'mdl' => "models/$file",
+            'wav', 'mp3' => "sound/$file",
+            'spr' => "sprites/$file",
+            // loose skies: <name>up.tga, <name>dn.tga, ...
+            'tga' => "gfx/env/$file",
+            default => null,
+        };
+    }
+
     /** @return string[] the plugin files of an upload, by name */
     private function amxxFilesOf(ModInstall $install): array
     {
@@ -959,7 +1078,8 @@ class Installer
      */
     public function setEnabled(ModInstall $install, bool $enabled): void
     {
-        if ($install->enabled === $enabled) {
+        // a map is there or not - which ones run is up to mapcycle.txt
+        if ($install->enabled === $enabled || str_starts_with($install->package, GameBanana::PREFIX)) {
             return;
         }
 
@@ -1426,6 +1546,10 @@ class Installer
     /** @param  array<string, mixed>  $package */
     private function installPackage(array $package): ModInstall
     {
+        if (str_starts_with($package['id'], GameBanana::PREFIX)) {
+            return $this->installMap($package);
+        }
+
         if (isset($package['file'])) {
             return $this->installJar($package);
         }

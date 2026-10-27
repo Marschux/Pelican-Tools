@@ -150,10 +150,11 @@ return [
 
     'messages' => [
         'core_config' => ':file braucht AMX Mod X und legt sie nicht neu an - stattdessen bearbeiten.',
+        'no_map' => 'Keine Map (.bsp) in :file.',
         'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) oder ein Zip mit Plugins kann hochgeladen werden, mit einfachem Namen: :file',
         'source_only' => ':file enthält nur Quellcode (.sma) - erst kompilieren, z. B. mit dem Compiler auf amxmodx.org.',
         'no_plugin' => 'Kein Plugin (.amxx) in :file.',
-        'exists' => ':file liegt schon auf dem Server und wurde nicht hier hochgeladen - erst dort entfernen.',
+        'exists' => ':file liegt schon auf dem Server und kam nicht über diese Seite - erst dort entfernen.',
         'twin' => ':name ist schon installiert, von :source. Erst dort entfernen, um die Quelle zu wechseln.',
         'duplicate' => ':name ist schon installiert - entferne eine der beiden Jar-Dateien.',
         'no_version' => ':name hat keine Version für :version. Wähle eine in den Details.',

@@ -151,7 +151,9 @@
                                     $isLoader = $install->is($loaderInstall);
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
                                     // only plugins and mods write configs, packs do not
-                                    $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin';
+                                    // maps from GameBanana have none either, and nothing to switch: mapcycle.txt says which run
+                                    $isMap = str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
+                                    $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                     // the GoldSrc loader's settings are AMX Mod X's main config
                                     if ($isLoader && $this->canUpload()) {
@@ -247,7 +249,7 @@
                                             @endif
                                             {{-- one fixed slot per action, so switches, gears and bins line up from row to row --}}
                                             <span class="mod-slot">
-                                                @if (!$isLoader && $canUpdate)
+                                                @if (!$isLoader && !$isMap && $canUpdate)
                                                     <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
                                                         <x-filament::icon :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
                                                     </button>
