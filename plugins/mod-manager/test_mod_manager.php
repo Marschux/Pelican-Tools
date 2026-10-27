@@ -40,6 +40,10 @@ foreach (Presets::all() as $key => $preset) {
         assert(($settings['loader_check'] ?? '') !== '', "$key: a loader needs a path to check");
         assert(in_array($settings['loader_package'], $settings['hidden_packages'], true), "$key: the loader has to be hidden");
     }
+    if (($settings['loader_type'] ?? 'thunderstore') === 'goldsrc') {
+        assert(($settings['game_dir'] ?? '') !== '' && str_starts_with($settings['mods_dir'], $settings['game_dir'] . '/'), "$key: goldsrc mods live in the game folder");
+        assert(str_starts_with($settings['loader_check'] ?? '', $settings['game_dir'] . '/'), "$key: goldsrc needs a check path in the game folder");
+    }
     assert(!str_starts_with($settings['mods_dir'], '/') && !str_contains($settings['mods_dir'], '..'), "$key: mods_dir stays inside the server");
 }
 

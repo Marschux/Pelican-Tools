@@ -138,15 +138,28 @@ class ModProfileResource extends Resource
                 ->columns(2)
                 ->columnSpanFull()
                 ->schema([
+                    Select::make('settings.loader_type')
+                        ->label(trans($field('loader_type')))
+                        ->helperText(trans($field('loader_type_hint')))
+                        ->options(Presets::LOADER_TYPES)
+                        ->placeholder(Presets::LOADER_TYPES['thunderstore'])
+                        ->live(),
+                    TextInput::make('settings.game_dir')
+                        ->label(trans($field('game_dir')))
+                        ->helperText(trans($field('game_dir_hint')))
+                        ->visible(fn (Get $get) => $get('settings.loader_type') === 'goldsrc')
+                        ->required(fn (Get $get) => $get('settings.loader_type') === 'goldsrc'),
                     TextInput::make('settings.loader_name')
                         ->label(trans($field('loader_name'))),
                     TextInput::make('settings.loader_package')
+                        ->visible(fn (Get $get) => $get('settings.loader_type') !== 'goldsrc')
                         ->label(trans($field('loader_package')))
                         ->helperText(trans($field('loader_package_hint'))),
                     TextInput::make('settings.loader_check')
                         ->label(trans($field('loader_check')))
                         ->helperText(trans($field('loader_check_hint'))),
                     Textarea::make('settings.start_prefix')
+                        ->visible(fn (Get $get) => $get('settings.loader_type') !== 'goldsrc')
                         ->label(trans($field('start_prefix')))
                         ->helperText(trans($field('start_prefix_hint')))
                         ->rows(3)

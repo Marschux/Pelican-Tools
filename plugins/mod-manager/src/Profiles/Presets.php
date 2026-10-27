@@ -7,19 +7,24 @@ namespace Marschux\ModManager\Profiles;
  * fills the form; nothing is switched on until a profile is linked to an egg.
  *
  * Settings of a profile:
- * - sources: where mods come from (thunderstore, modrinth, hangar), the first one is opened first
+ * - sources: where mods come from (thunderstore, modrinth, hangar, gamebanana), the first one is opened first
  * - community: the game on Thunderstore, e.g. "valheim"
  * - modrinth_loaders: a Modrinth project needs one of these, e.g. paper
  * - mods_dir / config_dir: where mods and their configs live on the server
+ * - loader_type: thunderstore (a package of the site, the default) or goldsrc (Metamod-R and
+ *   AMX Mod X, hooked in through liblist.gam)
  * - loader_name / loader_package / loader_check: the mod loader, its package on the site and a
  *   path that exists once it is installed
+ * - game_dir: the mod folder of a GoldSrc game, e.g. cstrike
  * - start_prefix: put in front of the server's start command so the loader gets loaded
  * - hidden_packages: never offered in the browser and never installed as a dependency
  * - version_file / version_variable: where the server's game version can be read, see GameVersion
  */
 class Presets
 {
-    public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar'];
+    public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana'];
+
+    public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X'];
 
     /** @return array<string, array{name: string, settings: array<string, mixed>}> */
     public static function all(): array
@@ -51,6 +56,20 @@ class Presets
                     // older Paper wrote it next to server.jar, those fall back to PAPER_VERSION
                     'version_file' => '.paper/version_history.json',
                     'version_variable' => 'PAPER_VERSION',
+                    'hidden_packages' => [],
+                ],
+            ],
+            'counter-strike-16' => [
+                'name' => 'Counter-Strike 1.6',
+                'settings' => [
+                    // maps; AMX Mod X plugins have no site to browse, they are uploaded
+                    'sources' => ['gamebanana'],
+                    'game_dir' => 'cstrike',
+                    'mods_dir' => 'cstrike/addons/amxmodx/plugins',
+                    'config_dir' => 'cstrike/addons/amxmodx/configs',
+                    'loader_type' => 'goldsrc',
+                    'loader_name' => 'Metamod-R + AMX Mod X',
+                    'loader_check' => 'cstrike/addons/metamod/metamod_i386.so',
                     'hidden_packages' => [],
                 ],
             ],
