@@ -83,7 +83,7 @@
             <x-filament::section>
                 <x-slot name="afterHeader">
                     <div style="display:flex;gap:.5rem">
-                        <x-filament::button size="sm" color="gray" icon="tabler-users" wire:click="showPlayerList">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
+                        <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
                         @if ($updatable && $canUpdate)
                             <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
                         @endif
@@ -122,7 +122,7 @@
                                                 <div style="{{ $icon }};width:2.25rem;height:2.25rem"></div>
                                             @endif
                                             <div style="min-width:0">
-                                                <div style="font-weight:600;cursor:pointer" wire:click="showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
+                                                <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
                                                 <div style="{{ $muted }}">{{ trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
                                             </div>
                                         </div>
@@ -278,7 +278,7 @@
         <div wire:loading.remove wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
-                    <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" wire:click="showDetails({{ $js($item['id']) }})">
+                    <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
                         @if ($item['icon'])
                             <img src="{{ $item['icon'] }}" alt="" loading="lazy" style="{{ $icon }};width:4rem;height:4rem">
                         @else
@@ -321,7 +321,7 @@
                         @elseif ($canInstall)
                             <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                         @endif
-                        <x-filament::button size="sm" color="gray" icon="tabler-info-circle" wire:click="showDetails({{ $js($item['id']) }})">{{ trans('mod-manager::mods.details') }}</x-filament::button>
+                        <x-filament::button size="sm" color="gray" icon="tabler-info-circle" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">{{ trans('mod-manager::mods.details') }}</x-filament::button>
                     </div>
                 </div>
             @empty
@@ -348,9 +348,14 @@
     @endif
 
     <x-filament::modal id="mod-details" width="5xl">
+        <div wire:loading.flex wire:target="showDetails" style="justify-content:center;padding:3rem">
+            <x-filament::loading-indicator style="width:2rem;height:2rem" />
+        </div>
+        {{-- the details of the mod before stay hidden while the next ones load --}}
+        <div wire:loading.remove wire:target="showDetails" style="display:contents">
         @if ($details)
             <x-slot name="heading">
-                <div style="display:flex;gap:1rem;align-items:center">
+                <div wire:loading.remove wire:target="showDetails" style="display:flex;gap:1rem;align-items:center">
                     @if ($details['icon'])
                         <img src="{{ $details['icon'] }}" alt="" style="{{ $icon }};width:4rem;height:4rem">
                     @endif
@@ -431,6 +436,7 @@
                 @endif
             </div>
         @endif
+        </div>
     </x-filament::modal>
     <x-filament::modal id="mod-config" width="5xl" :close-by-clicking-away="false">
         <x-slot name="heading">{{ $configPath ? basename($configPath) : '' }}</x-slot>

@@ -145,13 +145,12 @@ class ModsPage extends Page
             $this->details = $this->source()->details($id);
         } catch (Throwable $exception) {
             report($exception);
+            $this->details = null;
+            // the modal opened with the click already
+            $this->dispatch('close-modal', id: 'mod-details');
 
             Notification::make()->title(trans('mod-manager::mods.messages.details_failed'))->danger()->send();
-
-            return;
         }
-
-        $this->dispatch('open-modal', id: 'mod-details');
     }
 
     /** Straight away when nothing else comes along, else the modal lists the dependencies first. */
@@ -328,11 +327,6 @@ class ModsPage extends Page
 
         $this->attempt(fn () => $this->installer()->writeConfig($this->configPath, $this->configText), trans('mod-manager::mods.messages.config_saved', ['file' => basename($this->configPath)]));
         $this->dispatch('close-modal', id: 'mod-config');
-    }
-
-    public function showPlayerList(): void
-    {
-        $this->dispatch('open-modal', id: 'mod-players');
     }
 
     public function restart(): void

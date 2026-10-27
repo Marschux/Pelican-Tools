@@ -3,6 +3,8 @@
 namespace Marschux\ModManager\Sources;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -15,6 +17,8 @@ use RuntimeException;
 class Thunderstore
 {
     private const SITE = 'https://thunderstore.io';
+
+    private const AGENT = 'Marschux/pelican-mod-manager';
 
     public const ORDERINGS = ['most-downloaded', 'top-rated', 'last-updated', 'newest'];
 
@@ -72,10 +76,25 @@ class Thunderstore
 
         return Cache::remember("mod-manager:thunderstore:$this->community:$id", now()->addMinutes(10), function () use ($namespace, $name) {
             $package = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/$namespace/$name/")->json();
-            $versions = $this->http()->get(self::SITE . "/api/cyberstorm/package/$namespace/$name/versions/")->json();
             $base = self::SITE . "/api/experimental/package/$namespace/$name/{$package['latest_version_number']}";
-            $readme = $this->http()->get("$base/readme/")->json('markdown', '');
-            $changelog = ($package['has_changelog'] ?? false) ? $this->http()->get("$base/changelog/")->json('markdown', '') : '';
+            // the rest at once - one after the other they made opening the details slow
+            $responses = Http::pool(fn (Pool $pool) => array_filter([
+                $pool->as('versions')->timeout(15)->withUserAgent(self::AGENT)->get(self::SITE . "/api/cyberstorm/package/$namespace/$name/versions/"),
+                $pool->as('readme')->timeout(15)->withUserAgent(self::AGENT)->get("$base/readme/"),
+                ($package['has_changelog'] ?? false) ? $pool->as('changelog')->timeout(15)->withUserAgent(self::AGENT)->get("$base/changelog/") : null,
+            ]));
+
+            foreach ($responses as $response) {
+                if (!$response instanceof Response) {
+                    throw $response;
+                }
+
+                $response->throw();
+            }
+
+            $versions = $responses['versions']->json();
+            $readme = $responses['readme']->json('markdown', '');
+            $changelog = isset($responses['changelog']) ? $responses['changelog']->json('markdown', '') : '';
 
             return $this->item($package) + [
                 'version' => $package['latest_version_number'],
@@ -200,6 +219,6 @@ class Thunderstore
 
     private function http(): PendingRequest
     {
-        return Http::timeout(15)->withUserAgent('Marschux/pelican-mod-manager')->throw();
+        return Http::timeout(15)->withUserAgent(self::AGENT)->throw();
     }
 }
