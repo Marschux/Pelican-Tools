@@ -124,8 +124,11 @@ After a change a banner offers to restart the server.
   to get them. Dependencies outside Hangar are only listed.
 - Recognising hand-installed jars reads each jar through the panel once (Wings has no checksum
   call), up to 64 MB.
-- Uploads pass through the panel: PHP's `upload_max_filesize` limits them (2 MB in the panel's
-  Docker image).
+- Uploads go from the browser straight to Wings, like Pelican's file manager; Wings' `upload_limit`
+  (100 MB by default) applies, not PHP's.
+- Uploaded AMX Mod X plugins load after those of `plugins.ini`, in the order they were uploaded. A
+  plugin that needs a library plugin uploaded after it: move the library's line up in
+  `plugins-modmanager.ini` with the config editor.
 
 ## Check
 

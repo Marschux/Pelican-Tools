@@ -104,6 +104,7 @@ return [
 
     'upload' => [
         'button' => 'Upload plugin or zip',
+        'busy' => 'Uploading …',
         'origin' => 'Uploaded',
     ],
 

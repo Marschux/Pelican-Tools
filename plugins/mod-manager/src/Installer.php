@@ -689,7 +689,7 @@ class Installer
      * into plugins-modmanager.ini - AMX Mod X reads every plugins-*.ini, so the plugins.ini the
      * admin keeps stays untouched. The same name again replaces it.
      */
-    public function installAmxx(string $name, string $content): ModInstall
+    private function installAmxx(string $name, string $directory): ModInstall
     {
         $name = self::amxxName($name);
         $package = self::UPLOAD . substr($name, 0, -5);
@@ -697,13 +697,18 @@ class Installer
         $path = $this->modsDir() . "/$name";
 
         // e.g. one AMX Mod X comes with - replacing it would be gone on the loader's next update
-        if (!$existing && $this->files->exists($path)) {
-            throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => $name]));
+        if ($this->files->exists($path)) {
+            if (!$existing) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => $name]));
+            }
+
+            // Wings will not move onto a file
+            $this->files->delete([$path]);
         }
 
         $enabled = $existing?->enabled ?? true;
 
-        $this->files->write($path, $content);
+        $this->files->move([['from' => "$directory/$name", 'to' => $path]]);
         $this->writeUploadedIni(fn (string $ini) => self::withAmxxPlugin(self::withAmxxLine($ini, $name), $name, $enabled));
 
         return ModInstall::query()->updateOrCreate(
@@ -717,7 +722,7 @@ class Installer
                 'requires' => [],
                 'files' => [$path],
                 'enabled' => $enabled,
-                'size' => strlen($content),
+                'size' => $this->files->size($path),
             ],
         );
     }
@@ -731,9 +736,25 @@ class Installer
     }
 
     /** An upload: a compiled plugin, or a zip with plugins and what they bring along. */
-    public function installUpload(string $name, string $content): ModInstall
+    public const UPLOADS = '.mod-manager/upload';
+
+    /**
+     * An upload the browser sent straight to Wings, into UPLOADS/<$token>/<$name>: a compiled
+     * plugin, or a zip with plugins and what they bring along. The token's folder goes afterwards.
+     */
+    public function installUpload(string $token, string $name): ModInstall
     {
-        return str_ends_with(strtolower($name), '.zip') ? $this->installAmxxArchive($name, $content) : $this->installAmxx($name, $content);
+        if (!preg_match('/^[a-f0-9]{32}$/', $token)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $name]));
+        }
+
+        $directory = self::UPLOADS . "/$token";
+
+        try {
+            return str_ends_with(strtolower($name), '.zip') ? $this->installAmxxArchive($name, $directory) : $this->installAmxx($name, $directory);
+        } finally {
+            $this->files->delete([$directory]);
+        }
     }
 
     /**
@@ -741,7 +762,7 @@ class Installer
      * amxxPlacement), every plugin in it gets its line. Configs and other files already there are
      * kept; a plugin file that is there and not from this upload stops it.
      */
-    public function installAmxxArchive(string $name, string $content): ModInstall
+    private function installAmxxArchive(string $name, string $scratch): ModInstall
     {
         if (!preg_match('/^\w[\w.-]*\.zip\z/i', $name)) {
             throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $name]));
@@ -750,12 +771,8 @@ class Installer
         $package = self::UPLOAD . substr($name, 0, -4);
         $existing = $this->installs()->firstWhere('package', $package);
         $game = $this->gameDir();
-        $scratch = '.mod-manager/upload';
-
-        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
 
         try {
-            $this->files->write("$scratch/$name", $content);
             $this->files->decompress($scratch, $name);
             $this->files->delete(["$scratch/$name"]);
 
@@ -833,7 +850,8 @@ class Installer
                 // kept configs stay tracked, so removing with the box ticked takes them along
                 'files' => array_values(array_unique([...array_column($moves, 'to'), ...$kept, ...array_intersect($ours, array_keys($placed))])),
                 'enabled' => $enabled,
-                'size' => strlen($content),
+                // the files it put there; a shared or kept one counts too
+                'size' => array_sum(array_map(fn (array $move) => $this->files->size($move['to']), $moves)),
             ],
         );
     }

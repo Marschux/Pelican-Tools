@@ -83,11 +83,40 @@
                 <x-slot name="afterHeader">
                     <div style="display:flex;gap:.5rem">
                         @if ($canInstall && $this->canUpload())
-                            {{-- picking the file uploads it, the page installs it once it is there --}}
-                            <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" wire:loading.attr="disabled" wire:target="upload">
-                                {{ trans('mod-manager::mods.upload.button') }}
-                                <input type="file" accept=".amxx,.zip" wire:model="upload" style="display:none">
-                            </x-filament::button>
+                            {{--
+                                picking the file sends it straight to Wings, like Pelican's file manager - not through
+                                the panel, so PHP's upload limit does not apply - and then the page installs it
+                            --}}
+                            <div x-data="{
+                                busy: false,
+                                async send(file) {
+                                    if (!file) return;
+                                    this.busy = true;
+                                    try {
+                                        const target = await $wire.uploadTarget();
+                                        const url = new URL(target.url);
+                                        url.searchParams.append('directory', target.directory);
+                                        const body = new FormData();
+                                        body.append('files', file);
+                                        const response = await fetch(url, { method: 'POST', body });
+                                        if (!response.ok) {
+                                            const answer = await response.json().catch(() => ({}));
+                                            throw new Error(answer.error || `HTTP ${response.status}`);
+                                        }
+                                        await $wire.installUploaded(target.token, file.name);
+                                    } catch (error) {
+                                        await $wire.uploadFailed(String(error?.message ?? error));
+                                    } finally {
+                                        this.busy = false;
+                                    }
+                                },
+                            }">
+                                <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" x-bind:class="busy && 'opacity-50 pointer-events-none'">
+                                    <span x-show="!busy">{{ trans('mod-manager::mods.upload.button') }}</span>
+                                    <span x-show="busy" x-cloak>{{ trans('mod-manager::mods.upload.busy') }}</span>
+                                    <input type="file" accept=".amxx,.zip" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
+                                </x-filament::button>
+                            </div>
                         @endif
                         <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
                         @if ($updatable && $canUpdate)

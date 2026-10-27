@@ -12,8 +12,9 @@ use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Livewire\WithFileUploads;
+use App\Enums\NodeJwtScope;
+use App\Services\Nodes\NodeJWTService;
+use Carbon\CarbonImmutable;
 use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
@@ -36,7 +37,6 @@ use Throwable;
 class ModsPage extends Page
 {
     use BlockAccessInConflict;
-    use WithFileUploads;
 
     protected string $view = 'mod-manager::pages.mods';
 
@@ -91,9 +91,6 @@ class ModsPage extends Page
 
     /** @var string[] the optional dependencies ticked in the install modal */
     public array $optionalPicked = [];
-
-    /** a compiled AMX Mod X plugin being uploaded, installed as soon as it is there */
-    public ?TemporaryUploadedFile $upload = null;
 
     /** the config open in the editor */
     public ?string $configPath = null;
@@ -345,26 +342,44 @@ class ModsPage extends Page
         );
     }
 
-    /** The upload finished: the plugin goes on the server straight away. */
-    public function updatedUpload(): void
+    /**
+     * Where the browser sends an upload: straight to Wings like Pelican's file manager does, into
+     * a folder of its own - so it never passes through the panel and PHP's upload limit.
+     *
+     * @return array{url: string, directory: string, token: string}
+     */
+    public function uploadTarget(): array
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
-        $file = $this->upload;
-        $this->upload = null;
+        $server = $this->server();
+        $token = bin2hex(random_bytes(16));
+        $jwt = app(NodeJWTService::class)
+            ->setExpiresAt(CarbonImmutable::now()->addMinutes(15))
+            ->setScopes(NodeJwtScope::FileUpload)
+            ->setUser(user())
+            ->setClaims(['server_uuid' => $server->uuid])
+            ->handle($server->node, user()->id . $server->uuid);
 
-        if (!$file instanceof TemporaryUploadedFile) {
-            return;
-        }
+        return [
+            'url' => $server->node->getConnectionAddress() . '/upload/file?token=' . $jwt->toString(),
+            'directory' => Installer::UPLOADS . "/$token",
+            'token' => $token,
+        ];
+    }
 
-        $name = $file->getClientOriginalName();
+    /** The browser's upload is on the server: the plugin goes where it belongs. */
+    public function installUploaded(string $token, string $name): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
 
-        $this->attempt(
-            fn () => $this->installer()->installUpload($name, (string) file_get_contents($file->getRealPath())),
-            trans('mod-manager::mods.messages.installed', ['name' => $name]),
-        );
+        $this->attempt(fn () => $this->installer()->installUpload($token, $name), trans('mod-manager::mods.messages.installed', ['name' => $name]));
+    }
 
-        $file->delete();
+    /** The upload to Wings itself failed, the browser says why. */
+    public function uploadFailed(string $reason): void
+    {
+        Notification::make()->title(trans('mod-manager::mods.messages.failed'))->body(mb_substr($reason, 0, 200))->danger()->send();
     }
 
     /** A config the page must not delete: AMX Mod X would not write it again. */
