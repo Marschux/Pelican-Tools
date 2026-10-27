@@ -475,6 +475,7 @@ class ModsPage extends Page
         $kind = Modrinth::kindOf($package);
 
         return match (true) {
+            $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             $kind !== null && $kind !== 'plugin' => $this->sourceName($package) . ' · ' . trans("mod-manager::mods.kind.$kind"),
             Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
