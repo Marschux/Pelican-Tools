@@ -23,6 +23,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Marschux\AccessLists\Lists\ListDefinition;
 use Marschux\AccessLists\Lists\ListFile;
 use Marschux\AccessLists\Lists\MinecraftUuid;
+use Marschux\AccessLists\Lists\Presets;
 use Marschux\AccessLists\Models\AccessList;
 use Throwable;
 
@@ -99,13 +100,13 @@ class AccessListsPage extends Page implements HasForms
                     ->inline(false),
                 TagsInput::make('entries')
                     ->label(trans('access-lists::lists.page.entries'))
-                    ->helperText(fn () => $this->definition()?->hint)
+                    ->helperText(fn () => Presets::hint($this->definition()?->hint))
                     ->placeholder(trans('access-lists::lists.page.add'))
                     ->visible(fn (Get $get) => !$get('raw') && !$this->definition()?->isPairs())
                     ->columnSpanFull(),
                 KeyValue::make('pairs')
                     ->label(trans('access-lists::lists.page.settings'))
-                    ->helperText(fn () => $this->definition()?->hint)
+                    ->helperText(fn () => Presets::hint($this->definition()?->hint))
                     ->keyLabel(trans('access-lists::lists.page.setting_key'))
                     ->valueLabel(trans('access-lists::lists.page.setting_value'))
                     ->addActionLabel(trans('access-lists::lists.page.add_setting'))
@@ -113,7 +114,7 @@ class AccessListsPage extends Page implements HasForms
                     ->visible(fn (Get $get) => !$get('raw') && (bool) $this->definition()?->isPairs())
                     ->columnSpanFull(),
                 Textarea::make('text')
-                    ->helperText(fn () => $this->definition()?->hint)
+                    ->helperText(fn () => Presets::hint($this->definition()?->hint))
                     ->label(trans('access-lists::lists.page.text'))
                     ->rows(18)
                     ->visible(fn (Get $get) => (bool) $get('raw'))

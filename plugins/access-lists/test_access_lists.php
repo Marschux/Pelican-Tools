@@ -21,6 +21,18 @@ use Marschux\AccessLists\Lists\Presets;
 
 $presets = Presets::all();
 
+// every preset hint is a key that all three languages translate, with nothing left over
+$hintKeys = array_unique(array_merge(...array_values(array_map(fn (array $preset) => array_column($preset['files'], 'hint'), $presets))));
+
+foreach (Presets::LANGUAGES as $language) {
+    $translated = array_keys((require __DIR__ . "/lang/$language/lists.php")['preset_hints']);
+    sort($translated);
+    $expected = array_values($hintKeys);
+    sort($expected);
+
+    assert($translated === $expected, "$language: preset hints and translations differ");
+}
+
 assert(count($presets['minecraft']['files']) === 5 && count($presets['valheim']['files']) === 3 && count($presets['teamspeak']['files']) === 2 && count($presets['cs2']['files']) === 3);
 
 foreach ($presets as $game => $preset) {

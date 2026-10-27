@@ -78,7 +78,11 @@ class AccessListResource extends Resource
                         return;
                     }
 
-                    $set('files', collect(Presets::formFiles($state))->keyBy(fn () => (string) Str::uuid())->all());
+                    $set('files', collect(Presets::formFiles($state))
+                        // the hint goes into the list as text, in the admin's language
+                        ->map(fn (array $file) => ['hint' => $file['hint'] === null ? null : trans("access-lists::lists.preset_hints.{$file['hint']}")] + $file)
+                        ->keyBy(fn () => (string) Str::uuid())
+                        ->all());
 
                     if (blank($get('name'))) {
                         $set('name', Presets::options()[$state]);

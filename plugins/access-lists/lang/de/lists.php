@@ -63,4 +63,25 @@ return [
         'no_lists' => 'Für dieses Egg ist keine Access List eingerichtet',
         'missing_file' => 'Die Datei gibt es noch nicht - beim Speichern wird sie angelegt',
     ],
+
+    // the hints the presets put into a list, see Presets::hint()
+    'preset_hints' => [
+        'mc_whitelist' => 'Spielername oder UUID eintragen, das Panel ermittelt das jeweils andere selbst. Gilt nur mit white-list=true in server.properties; ein laufender Server übernimmt Änderungen erst nach "whitelist reload" oder einem Neustart.',
+        'mc_ops' => 'Spielername oder UUID eintragen. Neue Admins bekommen Level 4, also volle Rechte. Wirkt nach einem Neustart.',
+        'mc_bans' => 'Spielername oder UUID eintragen, das Panel ermittelt das jeweils andere selbst. Wirkt nach einem Neustart.',
+        'mc_properties' => 'Die Einstellungen aus server.properties. Kommentarzeilen in der Datei bleiben erhalten. Ein laufender Server liest sie erst beim nächsten Start.',
+        'mc_ip_bans' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Wirkt nach einem Neustart.',
+        'valheim_id' => 'Eine ID pro Eintrag, mit Plattform-Präfix, z. B. Steam_76561197960287930. Die ID steht im Server-Log, wenn sich der Spieler verbindet.',
+        'valheim_whitelist' => 'Eine ID pro Eintrag, mit Plattform-Präfix, z. B. Steam_76561197960287930. Die ID steht im Server-Log, wenn sich der Spieler verbindet. Sobald es mindestens einen Eintrag gibt, dürfen nur noch diese Spieler beitreten.',
+        'cs2_bans' => 'Eine SteamID pro Eintrag, z. B. STEAM_1:0:12345678. Ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+        'cs2_ip_bans' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+        'server_cfg_rounds' => 'Die Cvars aus server.cfg, z. B. mp_maxrounds oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirkt nach "exec server.cfg" in der Konsole oder einem Neustart.',
+        'server_cfg_timelimit' => 'Die Cvars aus server.cfg, z. B. mp_timelimit oder sv_alltalk. Kommentarzeilen bleiben erhalten. Wirkt nach "exec server.cfg" in der Konsole oder einem Neustart.',
+        'source_bans' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. Der Server schreibt diese Datei selbst bei "writeid", ein laufender Server übernimmt Änderungen erst nach "exec banned_user.cfg" in der Konsole oder einem Neustart.',
+        'source_ip_bans' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. Der Server schreibt diese Datei selbst bei "writeip", ein laufender Server übernimmt Änderungen erst nach "exec banned_ip.cfg" in der Konsole oder einem Neustart.',
+        'goldsrc_bans' => 'Eine SteamID pro Eintrag, z. B. STEAM_0:0:12345678. HLDS schreibt diese Datei selbst bei "writeid", ein laufender Server übernimmt Änderungen erst nach "exec banned.cfg" in der Konsole oder einem Neustart.',
+        'goldsrc_ip_bans' => 'Eine IP-Adresse pro Eintrag, z. B. 203.0.113.7. HLDS schreibt diese Datei selbst bei "writeip", ein laufender Server übernimmt Änderungen erst nach "exec listip.cfg" in der Konsole oder einem Neustart.',
+        'ts_query_allowlist' => 'Eine IP-Adresse pro Eintrag. Diese Adressen dürfen ServerQuery erreichen und sind vom Flood-Schutz ausgenommen. Hat keinen Einfluss darauf, wer dem Sprachserver beitreten darf.',
+        'ts_query_denylist' => 'Eine IP-Adresse pro Eintrag. Diese Adressen sind von ServerQuery ausgesperrt. Hat keinen Einfluss darauf, wer dem Sprachserver beitreten darf.',
+    ],
 ];

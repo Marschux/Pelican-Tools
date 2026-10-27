@@ -2,7 +2,7 @@
     "id": "access-lists",
     "name": "Access Lists",
     "author": "Marschux",
-    "version": "1.19.1",
+    "version": "1.20.0",
     "description": "Edit a game server's admin, ban and whitelist files from the panel",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/access-lists",

@@ -63,4 +63,25 @@ return [
         'no_lists' => 'No access list is configured for this egg',
         'missing_file' => 'The file does not exist yet - saving will create it',
     ],
+
+    // the hints the presets put into a list, see Presets::hint()
+    'preset_hints' => [
+        'mc_whitelist' => 'Enter a player name or a UUID, the panel looks up the other one itself. Only applies with white-list=true in server.properties; a running server picks up changes only after "whitelist reload" or a restart.',
+        'mc_ops' => 'Enter a player name or a UUID. New admins get level 4, i.e. full permissions. Takes effect after a restart.',
+        'mc_bans' => 'Enter a player name or a UUID, the panel looks up the other one itself. Takes effect after a restart.',
+        'mc_properties' => 'The settings from server.properties. Comment lines in the file are kept. A running server only reads them on its next start.',
+        'mc_ip_bans' => 'One IP address per entry, e.g. 203.0.113.7. Takes effect after a restart.',
+        'valheim_id' => 'One ID per entry, with the platform prefix, e.g. Steam_76561197960287930. The ID shows up in the server log when the player connects.',
+        'valheim_whitelist' => 'One ID per entry, with the platform prefix, e.g. Steam_76561197960287930. The ID shows up in the server log when the player connects. Once there is at least one entry, only these players may join.',
+        'cs2_bans' => 'One SteamID per entry, e.g. STEAM_1:0:12345678. A running server picks up changes only after "exec banned_user.cfg" in the console or a restart.',
+        'cs2_ip_bans' => 'One IP address per entry, e.g. 203.0.113.7. A running server picks up changes only after "exec banned_ip.cfg" in the console or a restart.',
+        'server_cfg_rounds' => 'The cvars from server.cfg, e.g. mp_maxrounds or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
+        'server_cfg_timelimit' => 'The cvars from server.cfg, e.g. mp_timelimit or sv_alltalk. Comment lines are kept. Takes effect after "exec server.cfg" in the console or a restart.',
+        'source_bans' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. The server writes this file itself on "writeid", a running server picks up changes only after "exec banned_user.cfg" in the console or a restart.',
+        'source_ip_bans' => 'One IP address per entry, e.g. 203.0.113.7. The server writes this file itself on "writeip", a running server picks up changes only after "exec banned_ip.cfg" in the console or a restart.',
+        'goldsrc_bans' => 'One SteamID per entry, e.g. STEAM_0:0:12345678. HLDS writes this file itself on "writeid", a running server picks up changes only after "exec banned.cfg" in the console or a restart.',
+        'goldsrc_ip_bans' => 'One IP address per entry, e.g. 203.0.113.7. HLDS writes this file itself on "writeip", a running server picks up changes only after "exec listip.cfg" in the console or a restart.',
+        'ts_query_allowlist' => 'One IP address per entry. These addresses may reach ServerQuery and are exempt from flood protection. Does not affect who may join the voice server.',
+        'ts_query_denylist' => 'One IP address per entry. These addresses are locked out of ServerQuery. Does not affect who may join the voice server.',
+    ],
 ];
