@@ -142,8 +142,13 @@ class Installer
         // worked out before anything is deleted, while the configs are still listed
         $configs = $withConfigs ? $this->runtimeConfigs($removing) : [];
 
-        // configs an uploaded archive brought along are only deleted when asked, like those a mod wrote
-        $files = array_filter($removing->pluck('files')->flatten()->all(), fn (string $path) => !self::uploaded($install->package) || !$this->inConfigDir($path));
+        // configs an uploaded archive brought along are only deleted when asked, like those a mod wrote;
+        // a file another install also has (a wad two maps share) stays
+        $others = $this->filesOfOthers($install->package);
+        $files = array_filter(
+            $removing->pluck('files')->flatten()->all(),
+            fn (string $path) => (!self::uploaded($install->package) || !$this->inConfigDir($path)) && !in_array($path, $others, true),
+        );
 
         $this->files->delete([...$files, ...$configs]);
 
@@ -880,6 +885,7 @@ class Installer
     {
         $existing = $this->installs()->firstWhere('package', $package['id']);
         $ours = $existing?->files ?? [];
+        $others = $this->filesOfOthers($package['id']);
         $game = $this->gameDir();
         $scratch = '.mod-manager/map';
         $file = basename((string) $package['file']);
@@ -911,17 +917,22 @@ class Installer
 
             $moves = [];
             $replace = [];
+            $shared = [];
             $listings = [];
 
             foreach ($placed as $to => $from) {
                 $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
                 if (isset($listings[dirname($to)][basename($to)])) {
-                    // ponytail: a shared wad belongs to the map that brought it first - removing that one takes it
-                    // from the others too; a file count per path is the upgrade if map packs start to clash
                     if (!in_array($to, $ours, true)) {
                         if (str_ends_with(strtolower($to), '.bsp')) {
                             throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
+                        }
+
+                        // a wad or sound another installed map brought: this one needs it too, so it is
+                        // both maps' - removing either leaves it while the other is there
+                        if (in_array($to, $others, true)) {
+                            $shared[] = $to;
                         }
 
                         continue;
@@ -939,9 +950,9 @@ class Installer
             $this->files->delete([$scratch]);
         }
 
-        // what the version before brought and this one does not goes
-        $files = array_column($moves, 'to');
-        $this->files->delete(array_values(array_diff($ours, $files)));
+        // what the version before brought and this one does not goes - unless another map needs it
+        $files = array_values(array_unique([...array_column($moves, 'to'), ...$shared]));
+        $this->files->delete(array_values(array_diff($ours, $files, $others)));
 
         // a new map comes into the mapcycle; one taken out of it before stays out
         $enabled = $existing?->enabled ?? true;
@@ -1036,6 +1047,12 @@ class Installer
             'tga' => "gfx/env/$file",
             default => null,
         };
+    }
+
+    /** @return string[] the files every other install of this server has */
+    private function filesOfOthers(string $package): array
+    {
+        return $this->installs()->where('package', '!=', $package)->pluck('files')->flatten()->all();
     }
 
     /** @return string[] the plugin files of an upload, by name */

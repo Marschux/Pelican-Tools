@@ -70,7 +70,7 @@ Without a version picked, the newest one for the server's game version is instal
 | Plugin | `plugins/<file>.jar` |
 | Datapack | `<world>/datapacks/<file>.zip`, the world named by `level-name` in `server.properties` |
 | Resource pack | nothing on the server: `resource-pack` and `resource-pack-sha1` in `server.properties` point to Modrinth, players are offered it on join. One at a time - a new one switches the one before off |
-| Map (GameBanana) | unpacked on the server (zip, rar, 7z) and sorted into `cstrike/`: `maps/`, `sound/`, `gfx/` ... from wherever they sit in the archive, loose `.bsp`/`.wad`/`.wav`/... by type. Files already there stay and are not the map's; a `.bsp` that is there already and not from this page stops it. A new map goes into `mapcycle.txt` |
+| Map (GameBanana) | unpacked on the server (zip, rar, 7z) and sorted into `cstrike/`: `maps/`, `sound/`, `gfx/` ... from wherever they sit in the archive, loose `.bsp`/`.wad`/`.wav`/... by type. Files already there stay; one another installed map brought (a shared `.wad`) is both maps', and removing either leaves it while the other is there. A `.bsp` that is there already and not from this page stops it. A new map goes into `mapcycle.txt` |
 
 **AMX Mod X plugins** (Counter-Strike 1.6). AMX Mod X has no site to browse:
 - Its own plugins, as listed in `plugins.ini`, have a section with a switch each (the line
@@ -126,8 +126,6 @@ After a change a banner offers to restart the server.
   call), up to 64 MB.
 - Uploads pass through the panel: PHP's `upload_max_filesize` limits them (2 MB in the panel's
   Docker image).
-- Two maps sharing a `.wad`: it belongs to the one that brought it first, removing that one takes
-  it from the other too.
 
 ## Check
 
