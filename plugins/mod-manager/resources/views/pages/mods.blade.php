@@ -225,9 +225,17 @@
                                             @if ($isLoader)
                                                 <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
                                             @endif
-                                            @if ($isMap)
-                                                {{-- maps and plugins share the table, this tells them apart at a glance --}}
-                                                <x-filament::badge color="info" size="sm" icon="tabler-map">{{ trans('mod-manager::mods.kind.map') }}</x-filament::badge>
+                                            {{-- maps and packs share the table with plugins, this tells them apart at a glance --}}
+                                            @php
+                                                $kindBadge = match (true) {
+                                                    $isMap => ['map', 'tabler-map'],
+                                                    \Marschux\ModManager\Installer::kind($install->package) === 'datapack' => ['datapack', 'tabler-package'],
+                                                    \Marschux\ModManager\Installer::kind($install->package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
+                                                    default => null,
+                                                };
+                                            @endphp
+                                            @if ($kindBadge)
+                                                <x-filament::badge color="info" size="sm" :icon="$kindBadge[1]">{{ trans('mod-manager::mods.kind.' . $kindBadge[0]) }}</x-filament::badge>
                                             @endif
                                         </div>
                                     </td>
