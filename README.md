@@ -33,7 +33,7 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 |---|---|---|
 | [Access Lists](plugins/access-lists/README.md) | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
 | [Game Query](plugins/game-query/README.md) | Query players, map and server info | Admin + Server |
-| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim, Minecraft Paper) | Admin + Server |
+| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim, Minecraft Paper, Counter-Strike 1.6) | Admin + Server |
 | [Server Navigation](plugins/server-navigation/README.md) | Hide sidebar entries per server | Admin + Server |
 | [Server Resources](plugins/server-resources/README.md) | Resources of host, nodes and servers on the admin dashboard | Admin |
 
@@ -48,6 +48,10 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 On a Minecraft Paper server - plugins from Modrinth and Hangar next to datapacks:
 
 ![Mod Manager on a Paper server](assets/screenshots/mod-manager-paper.png)
+
+On a Counter-Strike 1.6 server - Metamod-R + AMX Mod X as the loader, maps from GameBanana, the plugins of AMX Mod X:
+
+![Mod Manager on a Counter-Strike 1.6 server](assets/screenshots/mod-manager-cs16.png)
 
 **Server Resources** - panel host, nodes and their servers on the admin dashboard:
 
