@@ -31,6 +31,11 @@
 @endphp
 
 <x-filament-panels::page>
+    {{-- "installed" next to buttons: as tall as they are, text in the middle - filament's badge keeps its own height --}}
+    <style>
+        .mod-installed { align-self: stretch; display: inline-flex; align-items: center; gap: .35rem; padding: 0 .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: rgb(21,128,61); background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); }
+        .dark .mod-installed { color: rgb(74,222,128); }
+    </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
             <x-filament::icon icon="tabler-refresh-alert" style="width:1.25rem;height:1.25rem;color:rgb(234,179,8)" />
@@ -354,7 +359,7 @@
 
                     <div style="display:flex;gap:.5rem;align-items:center">
                         @if (isset($versions[$item['id']]))
-                            <x-filament::badge color="success" icon="tabler-check" style="align-self:stretch;display:inline-flex;align-items:center">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
+                            <span class="mod-installed"><x-filament::icon icon="tabler-check" style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.is_installed') }}</span>
                         @elseif ($canInstall)
                             <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                         @endif
@@ -410,7 +415,7 @@
 
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
                 @if (isset($versions[$details['id']]))
-                    <x-filament::badge color="success" icon="tabler-check" style="align-self:stretch;display:inline-flex;align-items:center">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
+                    <span class="mod-installed"><x-filament::icon icon="tabler-check" style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.is_installed') }}</span>
                 @elseif ($canInstall)
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif

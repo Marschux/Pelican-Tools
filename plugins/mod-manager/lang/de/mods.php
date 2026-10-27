@@ -40,7 +40,7 @@ return [
         'server' => 'Serverseitig',
         'client' => 'Nur Client',
     ],
-    'installed_version' => 'Installiert :version',
+    'is_installed' => 'Installiert',
     'remove' => 'Entfernen',
     'cancel' => 'Abbrechen',
     'update_all' => 'Alle aktualisieren (:count)',
