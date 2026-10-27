@@ -40,24 +40,6 @@
         </div>
     @endif
 
-    {{-- the mod loader: only shown while something is wrong, once it runs it is a row in the table --}}
-    @if ($loader && !($loader['installed'] && $loader['started']))
-        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(127,127,127,.2)">
-            <span style="font-weight:600">{{ $loader['name'] }}</span>
-            @if ($loader['installed'])
-                <x-filament::badge color="warning" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
-            @else
-                <x-filament::badge color="danger" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
-            @endif
-            <span style="{{ $muted }};flex:1">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
-            @if ($canLoader)
-                <x-filament::button size="sm" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
-                    {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
-                </x-filament::button>
-            @endif
-        </div>
-    @endif
-
     <x-filament::tabs>
         <x-filament::tabs.item icon="tabler-package" :active="$tab === 'installed'" wire:click="setTab('installed')">
             {{ trans('mod-manager::mods.tabs.installed') }}
@@ -68,17 +50,7 @@
     </x-filament::tabs>
 
     @if ($tab === 'installed')
-        @if ($installed->isEmpty() && !$unmanaged && !$loaderInstall)
-            <x-filament::section>
-                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                    <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
-                    <x-filament::button color="gray" icon="tabler-search" wire:click="setTab('browse')">{{ trans('mod-manager::mods.tabs.browse') }}</x-filament::button>
-                </div>
-            </x-filament::section>
-        @endif
-
-        @if ($installed->isNotEmpty() || $loaderInstall)
+        @if ($installed->isNotEmpty() || $loaderInstall || $loader)
             @php
                 $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
             @endphp
@@ -108,6 +80,44 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @if ($loader && !$loaderInstall)
+                                {{-- the loader before it was installed through this page: what is wrong and the button to fix it --}}
+                                <tr wire:key="loader-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                    <td style="padding:.6rem .5rem .6rem 0">
+                                        <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
+                                            <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
+                                                <x-filament::icon icon="tabler-plug" style="width:1.25rem;height:1.25rem;opacity:.6" />
+                                            </div>
+                                            <div style="min-width:0">
+                                                <div style="font-weight:600">{{ $loader['name'] }}</div>
+                                                <div style="{{ $muted }}">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding:.6rem .5rem">–</td>
+                                    <td style="padding:.6rem .5rem;text-align:right">–</td>
+                                    <td style="padding:.6rem .5rem .6rem 2rem;{{ $muted }}">–</td>
+                                    <td style="padding:.6rem .5rem">
+                                        <div style="display:flex;gap:.25rem;flex-wrap:wrap">
+                                                @if ($loader['installed'])
+                                                    <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
+                                                @else
+                                                    <x-filament::badge color="danger" size="sm" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
+                                                @endif
+                                            <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
+                                        </div>
+                                    </td>
+                                    <td style="padding:.6rem .5rem">
+                                        <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
+                                                @if ($canLoader)
+                                                    <x-filament::button size="xs" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled" style="white-space:nowrap">
+                                                        {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
+                                                    </x-filament::button>
+                                                @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endif
                             @foreach (collect([$loaderInstall])->filter()->concat($installed) as $install)
                                 @php
                                     // the loader: no switch and no remove, without it no mod runs
@@ -159,6 +169,12 @@
                                             @endif
                                             @if (!$install->enabled)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans('mod-manager::mods.off') }}</x-filament::badge>
+                                            @elseif ($isLoader && !$loaderRuns)
+                                                @if ($loader['installed'])
+                                                    <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
+                                                @else
+                                                    <x-filament::badge color="danger" size="sm" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
+                                                @endif
                                             @elseif (!$isLoader && !$loaderRuns)
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle" :tooltip="trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']])">{{ trans('mod-manager::mods.not_loaded') }}</x-filament::badge>
                                             @elseif (!isset($updates[$install->package]))
@@ -171,7 +187,13 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">
                                         <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
-                                            @if (isset($updates[$install->package]) && ($isLoader ? $canLoader : $canUpdate))
+                                            @if ($isLoader && !$loaderRuns)
+                                                @if ($canLoader)
+                                                    <x-filament::button size="xs" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled" style="white-space:nowrap">
+                                                        {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
+                                                    </x-filament::button>
+                                                @endif
+                                            @elseif (isset($updates[$install->package]) && ($isLoader ? $canLoader : $canUpdate))
                                                 {{-- shows the jump: from what is there to what is out --}}
                                                 @if ($isLoader)
                                                     <x-filament::button size="xs" icon="tabler-arrow-up" wire:click="installLoader" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
@@ -203,6 +225,16 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+            </x-filament::section>
+        @endif
+
+        @if ($installed->isEmpty() && !$unmanaged)
+            <x-filament::section>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
+                    <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
+                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
+                    <x-filament::button color="gray" icon="tabler-search" wire:click="setTab('browse')">{{ trans('mod-manager::mods.tabs.browse') }}</x-filament::button>
                 </div>
             </x-filament::section>
         @endif
