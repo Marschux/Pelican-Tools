@@ -10,6 +10,7 @@ return [
 
     'nothing_installed' => 'Noch keine Mods installiert.',
     'search_placeholder' => 'Mods suchen',
+    'search_maps' => 'Maps suchen',
     'game_version' => 'Spielversion :version (aus :from)',
     'all_categories' => 'Alle Kategorien',
     'orderings' => [
@@ -52,6 +53,7 @@ return [
         'resourcepack' => 'Resource-Packs',
     ],
     'kind' => [
+        'map' => 'Map',
         'datapack' => 'Datapack',
         'resourcepack' => 'Resource-Pack',
     ],

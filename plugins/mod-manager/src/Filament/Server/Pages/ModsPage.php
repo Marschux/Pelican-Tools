@@ -545,7 +545,7 @@ class ModsPage extends Page
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
-            str_starts_with($package, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
+            str_starts_with($package, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'] . ' · ' . trans('mod-manager::mods.kind.map'),
             $kind !== null && $kind !== 'plugin' => $this->sourceName($package) . ' · ' . trans("mod-manager::mods.kind.$kind"),
             Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),

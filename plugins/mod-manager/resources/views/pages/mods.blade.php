@@ -225,6 +225,10 @@
                                             @if ($isLoader)
                                                 <x-filament::badge color="primary" size="sm" icon="tabler-plug">{{ trans('mod-manager::mods.loader_dependency') }}</x-filament::badge>
                                             @endif
+                                            @if ($isMap)
+                                                {{-- maps and plugins share the table, this tells them apart at a glance --}}
+                                                <x-filament::badge color="info" size="sm" icon="tabler-map">{{ trans('mod-manager::mods.kind.map') }}</x-filament::badge>
+                                            @endif
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
@@ -425,7 +429,7 @@
         {{-- every change searches right away, typing waits for a short pause --}}
         <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
             <x-filament::input.wrapper prefix-icon="tabler-search" style="flex:1 1 16rem">
-                <x-filament::input type="search" wire:model.live.debounce.500ms="query" :placeholder="trans('mod-manager::mods.search_placeholder')" />
+                <x-filament::input type="search" wire:model.live.debounce.500ms="query" :placeholder="trans($this->sourceKey() === 'gamebanana' ? 'mod-manager::mods.search_maps' : 'mod-manager::mods.search_placeholder')" />
             </x-filament::input.wrapper>
             <x-filament::input.wrapper style="flex:0 1 14rem">
                 <x-filament::input.select wire:model.live="category">

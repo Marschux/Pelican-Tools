@@ -10,6 +10,7 @@ return [
 
     'nothing_installed' => 'No mods installed yet.',
     'search_placeholder' => 'Search mods',
+    'search_maps' => 'Search maps',
     'game_version' => 'Game version :version (from :from)',
     'all_categories' => 'All categories',
     'orderings' => [
@@ -52,6 +53,7 @@ return [
         'resourcepack' => 'Resource packs',
     ],
     'kind' => [
+        'map' => 'Map',
         'datapack' => 'Datapack',
         'resourcepack' => 'Resource pack',
     ],
