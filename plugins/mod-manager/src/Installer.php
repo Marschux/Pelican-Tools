@@ -630,6 +630,23 @@ class Installer
     }
 
     /**
+     * A plugin of plugins.ini gone: its file and its line. One AMX Mod X comes with is back as a
+     * file after the next loader update - without a line, so it is not loaded.
+     */
+    public function deleteAmxxPlugin(string $file): void
+    {
+        $path = $this->configDir() . '/plugins.ini';
+        $ini = (string) $this->files->read($path);
+
+        if (!in_array($file, array_column(self::parseAmxxPlugins($ini), 'file'), true)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        $this->files->delete([$this->modsDir() . '/' . self::amxxName($file)]);
+        $this->files->write($path, self::withoutAmxxPlugin($ini, $file));
+    }
+
+    /**
      * The plugin lines of an AMX Mod X plugins.ini. A line "; Basic" heads the plugins below it,
      * a plugin commented out (";telemenu.amxx") is one switched off.
      *
@@ -1500,11 +1517,6 @@ class Installer
     public function deleteConfig(string $path): void
     {
         $this->assertConfig($path);
-
-        // AMX Mod X does not write these anew - without plugins.ini no plugin loads
-        if ($this->goldsrc() && self::amxxCore($path)) {
-            throw new RuntimeException(trans('mod-manager::mods.messages.core_config', ['file' => basename($path)]));
-        }
 
         $this->files->delete([$path]);
     }

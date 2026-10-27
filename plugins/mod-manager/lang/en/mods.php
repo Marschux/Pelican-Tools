@@ -110,6 +110,7 @@ return [
     'amxx' => [
         'heading' => 'Plugins of AMX Mod X',
         'hint' => 'The plugins in plugins.ini - those AMX Mod X comes with, and any put there by hand. Switched off, the line is commented out.',
+        'confirm_delete' => 'Delete :file and its line in plugins.ini? A plugin that comes with AMX Mod X is back as a file after the next loader update, but stays off.',
         'missing' => 'File missing',
     ],
 
@@ -128,7 +129,7 @@ return [
         'save' => 'Save',
         'confirm_delete' => 'Delete :file? The mod writes a fresh one with its defaults on the next start.',
         'delete' => 'Delete',
-        'keep_hint' => 'AMX Mod X needs it and does not write it again - edit it instead',
+        'confirm_delete_core' => 'Delete :file? AMX Mod X does not write it again - without plugins.ini no plugin loads, without modules.ini modules are missing. Only delete it if you put a copy back.',
         'delete_hint' => 'Delete - the mod writes a fresh one on its next start',
         'restart_note' => 'Most mods read their config only on start.',
     ],
@@ -156,7 +157,6 @@ return [
     ],
 
     'messages' => [
-        'core_config' => ':file is needed by AMX Mod X and not written again - edit it instead.',
         'no_map' => 'No map (.bsp) in :file.',
         'bad_amxx' => 'Only a compiled plugin (.amxx) or a zip of plugins can be uploaded, with a plain name: :file',
         'source_only' => ':file only has source code (.sma) - compile it first, e.g. with the compiler on amxmodx.org.',

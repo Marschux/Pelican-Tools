@@ -110,6 +110,7 @@ return [
     'amxx' => [
         'heading' => 'Plugins von AMX Mod X',
         'hint' => 'Die Plugins aus plugins.ini - die mitgelieferten und von Hand eingetragene. Aus heißt: die Zeile ist auskommentiert.',
+        'confirm_delete' => ':file und seine Zeile in plugins.ini löschen? Ein mitgeliefertes Plugin ist nach dem nächsten Loader-Update als Datei wieder da, bleibt aber aus.',
         'missing' => 'Datei fehlt',
     ],
 
@@ -128,7 +129,7 @@ return [
         'save' => 'Speichern',
         'confirm_delete' => ':file löschen? Der Mod schreibt beim nächsten Start eine neue mit seinen Standardwerten.',
         'delete' => 'Löschen',
-        'keep_hint' => 'AMX Mod X braucht die Datei und legt sie nicht neu an - stattdessen bearbeiten',
+        'confirm_delete_core' => ':file löschen? AMX Mod X legt die Datei nicht neu an - ohne plugins.ini lädt kein Plugin, ohne modules.ini fehlen Module. Nur löschen, wenn du eine Kopie zurücklegst.',
         'delete_hint' => 'Löschen - der Mod schreibt beim nächsten Start eine neue',
         'restart_note' => 'Die meisten Mods lesen ihre Config nur beim Start.',
     ],
@@ -156,7 +157,6 @@ return [
     ],
 
     'messages' => [
-        'core_config' => ':file braucht AMX Mod X und legt sie nicht neu an - stattdessen bearbeiten.',
         'no_map' => 'Keine Map (.bsp) in :file.',
         'bad_amxx' => 'Nur ein kompiliertes Plugin (.amxx) oder ein Zip mit Plugins kann hochgeladen werden, mit einfachem Namen: :file',
         'source_only' => ':file enthält nur Quellcode (.sma) - erst kompilieren, z. B. mit dem Compiler auf amxmodx.org.',

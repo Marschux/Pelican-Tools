@@ -390,6 +390,14 @@ class ModsPage extends Page
         );
     }
 
+    /** A plugin of AMX Mod X's plugins.ini deleted, file and line. */
+    public function deleteAmxx(string $file): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->attempt(fn () => $this->installer()->deleteAmxxPlugin($file), trans('mod-manager::mods.messages.removed', ['name' => $file]));
+    }
+
     /** @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}> */
     public function amxxPlugins(): array
     {

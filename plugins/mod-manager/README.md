@@ -71,7 +71,8 @@ Without a version picked, the newest one for the server's game version is instal
 
 **AMX Mod X plugins** (Counter-Strike 1.6). AMX Mod X has no site to browse:
 - Its own plugins, as listed in `plugins.ini`, have a section with a switch each (the line
-  commented out or back in), grouped by the comment lines of the file.
+  commented out or back in), grouped by the comment lines of the file. Deleting one removes file
+  and line; after a loader update the file is back, without a line, so it stays off.
 - "Upload plugin or zip" takes a compiled `.amxx`, or a zip of plugins with what they bring along:
   `addons/amxmodx/{plugins,configs,data,modules}` and game folders from wherever they sit in the
   zip, loose `.amxx`/`.cfg`/`.ini`/`lang/*.txt` into AMX Mod X's folders. Source code (`.sma`) is
@@ -94,8 +95,8 @@ Without a version picked, the newest one for the server's game version is instal
   (SHA1) or Hangar (SHA256) knows, can be taken over; anything there can be deleted.
 - Configs: the gear next to a mod opens its config in an editor (for a plugin
   `plugins/<Name>/config.yml` first; for the AMX Mod X loader `amxx.cfg`), the "Configs" section
-  lists all. AMX Mod X's own configs (`plugins.ini`, `users.ini`, ...) and `plugins-*.ini` can be
-  edited but not deleted - AMX Mod X does not write them again.
+  lists all. Deleting one of AMX Mod X's own configs (`plugins.ini`, `users.ini`, ...) or a
+  `plugins-*.ini` asks with a warning - AMX Mod X does not write them again.
 - Mod list for players: names, versions and links to copy.
 
 After a change a banner offers to restart the server.

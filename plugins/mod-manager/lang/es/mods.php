@@ -110,6 +110,7 @@ return [
     'amxx' => [
         'heading' => 'Plugins de AMX Mod X',
         'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',
+        'confirm_delete' => '¿Borrar :file y su línea en plugins.ini? Un plugin que trae AMX Mod X vuelve como archivo tras la próxima actualización del cargador, pero queda desactivado.',
         'missing' => 'Falta el archivo',
     ],
 
@@ -128,7 +129,7 @@ return [
         'save' => 'Guardar',
         'confirm_delete' => '¿Borrar :file? El mod escribe uno nuevo con sus valores por defecto en el próximo arranque.',
         'delete' => 'Borrar',
-        'keep_hint' => 'AMX Mod X la necesita y no la vuelve a crear: edítala en su lugar',
+        'confirm_delete_core' => '¿Borrar :file? AMX Mod X no lo vuelve a crear: sin plugins.ini no carga ningún plugin, sin modules.ini faltan módulos. Bórralo solo si vas a reponer una copia.',
         'delete_hint' => 'Borrar - el mod escribe uno nuevo en el próximo arranque',
         'restart_note' => 'La mayoría de los mods solo leen su configuración al arrancar.',
     ],
@@ -156,7 +157,6 @@ return [
     ],
 
     'messages' => [
-        'core_config' => 'AMX Mod X necesita :file y no la vuelve a crear: edítala en su lugar.',
         'no_map' => 'No hay ningún mapa (.bsp) en :file.',
         'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) o un zip de plugins, con un nombre simple: :file',
         'source_only' => ':file solo tiene código fuente (.sma): compílalo primero, p. ej. con el compilador de amxmodx.org.',

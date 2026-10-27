@@ -352,6 +352,11 @@
                             @if (!$plugin['exists'])
                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.amxx.missing') }}</x-filament::badge>
                             @endif
+                            @if ($canDelete)
+                                <button type="button" class="mod-action mod-danger" wire:click="deleteAmxx({{ $js($plugin['file']) }})" wire:confirm="{{ trans('mod-manager::mods.amxx.confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
+                                    <x-filament::icon icon="tabler-trash" />
+                                </button>
+                            @endif
                         </div>
                     @endforeach
                 @endforeach
@@ -374,8 +379,8 @@
                                 </button>
                             @endif
                             @if ($canDelete && $this->keepsConfig($config))
-                                {{-- greyed rather than gone, so the buttons stay in line --}}
-                                <button type="button" class="mod-action mod-danger" disabled title="{{ trans('mod-manager::mods.config.keep_hint') }}" aria-label="{{ trans('mod-manager::mods.config.keep_hint') }}">
+                                {{-- AMX Mod X does not write these anew: deleting asks with a warning, not the usual "fresh one on the next start" --}}
+                                <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete_core', ['file' => $config]) }}" title="{{ trans('mod-manager::mods.config.delete') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
                                     <x-filament::icon icon="tabler-trash" />
                                 </button>
                             @elseif ($canDelete)
