@@ -94,10 +94,11 @@ class ServerFiles
         Activity::event('server:file.write')->property('file', $path)->log();
     }
 
-    public function read(string $path): ?string
+    /** @param  int  $limit  bytes - a bigger file counts as unreadable */
+    public function read(string $path, int $limit = 1048576): ?string
     {
         try {
-            return (string) $this->repository->getContent($path, 1048576);
+            return (string) $this->repository->getContent($path, $limit);
         } catch (Throwable) {
             return null;
         }
@@ -116,6 +117,24 @@ class ServerFiles
 
         foreach (array_is_list($entries) ? $entries : [] as $entry) {
             $list[$entry['name']] = (bool) ($entry['directory'] ?? false);
+        }
+
+        return $list;
+    }
+
+    /** @return array<string, array{directory: bool, size: int, modified: string}> name => what Wings says about it */
+    public function entries(string $directory): array
+    {
+        try {
+            $entries = $this->repository->getDirectory($directory === '' ? '/' : $directory);
+        } catch (Throwable) {
+            return [];
+        }
+
+        $list = [];
+
+        foreach (array_is_list($entries) ? $entries : [] as $entry) {
+            $list[$entry['name']] = ['directory' => (bool) ($entry['directory'] ?? false), 'size' => (int) ($entry['size'] ?? 0), 'modified' => (string) ($entry['modified'] ?? '')];
         }
 
         return $list;

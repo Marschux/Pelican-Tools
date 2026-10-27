@@ -193,6 +193,47 @@ class Modrinth
         return $this->release($id, null, $gameVersion)['version'];
     }
 
+    /**
+     * Which versions these jars are, by their SHA1 - for jars put on the server by hand. A
+     * version for none of the profile's loaders does not count.
+     *
+     * @param  string[]  $hashes  sha1
+     * @return array<string, array{id: string, name: string, version: string, icon: ?string, requires: string[]}> hash => found ones only
+     */
+    public function byHashes(array $hashes): array
+    {
+        if ($hashes === []) {
+            return [];
+        }
+
+        $versions = array_filter(
+            $this->http()->post(self::API . '/version_files', ['hashes' => array_values($hashes), 'algorithm' => 'sha1'])->json() ?: [],
+            // e.g. the fabric build of a project that also has a paper one: a mod, not a plugin here
+            fn (array $version) => array_intersect($version['loaders'] ?? [], $this->loaders) !== [],
+        );
+        $projectIds = array_values(array_unique(array_column($versions, 'project_id')));
+        $projects = $projectIds === [] ? [] : collect($this->http()->get(self::API . '/projects', ['ids' => json_encode($projectIds)])->json())->keyBy('id')->all();
+        $found = [];
+
+        foreach ($versions as $hash => $version) {
+            $project = $projects[$version['project_id']] ?? [];
+
+            $found[$hash] = [
+                'id' => self::PREFIX . $version['project_id'],
+                'name' => (string) ($project['title'] ?? $version['name'] ?? $version['project_id']),
+                'version' => (string) $version['version_number'],
+                'icon' => ($project['icon_url'] ?? null) ?: null,
+                'requires' => collect($version['dependencies'] ?? [])
+                    ->filter(fn (array $dependency) => $dependency['dependency_type'] === 'required' && filled($dependency['project_id']))
+                    ->map(fn (array $dependency) => self::PREFIX . $dependency['project_id'])
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        return $found;
+    }
+
     /** @return array<string, mixed> */
     private function project(string $project): array
     {

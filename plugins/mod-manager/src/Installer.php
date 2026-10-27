@@ -4,6 +4,7 @@ namespace Marschux\ModManager;
 
 use App\Models\Server;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Sources\Hangar;
@@ -438,13 +439,17 @@ class Installer
     public function unmanaged(): array
     {
         $known = $this->installs()->pluck('files')->flatten()->all();
+
+        if ($this->jarMods()) {
+            return $this->unmanagedJars($known);
+        }
+
         $found = [];
 
         foreach ($this->files->list($this->modsDir()) as $name => $isDirectory) {
             $path = $this->modsDir() . "/$name";
 
-            // ponytail: next to plugin jars sit their data folders, only jars count - recognising them comes later
-            if (in_array($path, $known, true) || ($this->jarMods() && ($isDirectory || !str_ends_with(strtolower($name), '.jar')))) {
+            if (in_array($path, $known, true)) {
                 continue;
             }
 
@@ -462,6 +467,76 @@ class Installer
         return $found;
     }
 
+    /**
+     * The jars in the plugins folder the plugin did not put there, recognised by their hash on
+     * Modrinth or Hangar. Data folders and other files next to them are left out.
+     *
+     * @param  string[]  $known  paths of what is installed through the plugin
+     * @return array<int, array{path: string, name: string, version: ?string, package: ?string, icon: ?string, requires: string[]}>
+     */
+    private function unmanagedJars(array $known): array
+    {
+        $found = [];
+
+        foreach ($this->files->entries($this->modsDir()) as $name => $entry) {
+            $path = $this->modsDir() . "/$name";
+
+            if ($entry['directory'] || !str_ends_with(strtolower($name), '.jar') || in_array($path, $known, true)) {
+                continue;
+            }
+
+            $match = $this->identify($path, $entry);
+
+            $found[] = [
+                'path' => $path,
+                'name' => $match['name'] ?? $name,
+                'version' => $match['version'] ?? null,
+                'package' => $match['id'] ?? null,
+                'icon' => $match['icon'] ?? null,
+                'requires' => $match['requires'] ?? [],
+            ];
+        }
+
+        return $found;
+    }
+
+    /**
+     * What a jar is, by its hash: asked once per file content and kept, the tab lists these on
+     * every visit.
+     *
+     * @param  array{size: int, modified: string}  $entry
+     * @return array<string, mixed>|null
+     */
+    private function identify(string $path, array $entry): ?array
+    {
+        $key = 'mod-manager:jar:' . $this->server->uuid . ':' . md5("$path:{$entry['size']}:{$entry['modified']}");
+
+        // not found is kept too ([]), else every visit would read the jar and ask again
+        $match = Cache::remember($key, now()->addDay(), function () use ($path) {
+            // ponytail: the jar passes through the panel once to be hashed; Wings has no checksum call
+            $content = $this->files->read($path, 64 * 1048576);
+
+            if ($content === null) {
+                return [];
+            }
+
+            $sources = $this->profile->sources();
+            $sha1 = sha1($content);
+
+            if (in_array('modrinth', $sources, true)) {
+                $found = (new Modrinth((array) $this->profile->setting('modrinth_loaders', [])))->byHashes([$sha1])[$sha1] ?? null;
+
+                if ($found) {
+                    return $found;
+                }
+            }
+
+            return in_array('hangar', $sources, true) ? ((new Hangar())->byHash(hash('sha256', $content)) ?? []) : [];
+        });
+
+        return $match ?: null;
+    }
+
     /** Takes a hand-installed package over as it is, so it gets update hints and can be removed. */
     public function adopt(string $path): ModInstall
     {
@@ -469,6 +544,25 @@ class Installer
 
         if (!$entry || !$entry['package']) {
             throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        if ($this->jarMods()) {
+            // the same plugin twice: Paper refuses to load either, so one has to go
+            if ($this->installs()->contains('package', $entry['package'])) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.duplicate', ['name' => $entry['name']]));
+            }
+
+            return ModInstall::query()->create([
+                'server_id' => $this->server->id,
+                'package' => $entry['package'],
+                'name' => $entry['name'],
+                'version' => (string) ($entry['version'] ?? '0'),
+                'icon' => $entry['icon'],
+                'dependency' => false,
+                'requires' => $entry['requires'],
+                'files' => [$path],
+                'size' => $this->files->size($path),
+            ]);
         }
 
         // asks the source, so only packages that really exist there are taken over

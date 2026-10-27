@@ -4,6 +4,7 @@ namespace Marschux\ModManager\Sources;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -181,6 +182,44 @@ class Hangar
     public function latestVersion(string $id, ?string $gameVersion = null): string
     {
         return $this->release($id, null, $gameVersion)['version'];
+    }
+
+    /**
+     * Which project a jar belongs to, by its SHA256 - for jars put on the server by hand. Hangar
+     * names only the project, the version is looked up among its newest ones.
+     *
+     * @return array{id: string, name: string, version: ?string, icon: ?string, requires: string[]}|null
+     */
+    public function byHash(string $sha256): ?array
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $sha256)) {
+            return null;
+        }
+
+        try {
+            $project = $this->http()->get(self::API . "/versions/hash/$sha256")->json();
+        } catch (RequestException $exception) {
+            if ($exception->response->status() === 404) {
+                return null;
+            }
+
+            throw $exception;
+        }
+
+        $slug = (string) $project['namespace']['slug'];
+        $version = collect($this->versions($slug, null))->first(fn (array $version) => ($version['downloads'][self::PLATFORM]['fileInfo']['sha256Hash'] ?? null) === $sha256);
+
+        return [
+            'id' => self::PREFIX . $slug,
+            'name' => (string) $project['name'],
+            'version' => $version['name'] ?? null,
+            'icon' => ($project['avatarUrl'] ?? null) ?: null,
+            'requires' => collect($version['pluginDependencies'][self::PLATFORM] ?? [])
+                ->filter(fn (array $dependency) => ($dependency['required'] ?? false) && isset($dependency['projectId']))
+                ->map(fn (array $dependency) => self::PREFIX . $this->project((string) $dependency['projectId'])['namespace']['slug'])
+                ->values()
+                ->all(),
+        ];
     }
 
     /** @return array<string, mixed> by slug or by hangar's numeric id */

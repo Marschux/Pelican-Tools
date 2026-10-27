@@ -123,6 +123,7 @@ return [
     ],
 
     'messages' => [
+        'duplicate' => ':name is installed already - remove one of the two jars.',
         'no_version' => ':name has no version for :version. Pick one in the details.',
         'external_only' => ':name is only available from :url - install it by hand.',
         'bad_file' => 'Not a plugin file: :file',
