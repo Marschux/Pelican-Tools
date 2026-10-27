@@ -993,6 +993,10 @@ class Installer
     {
         $known = $this->installs()->pluck('files')->flatten()->all();
 
+        if ($this->goldsrc()) {
+            return $this->unmanagedAmxx($known);
+        }
+
         if ($this->jarMods()) {
             return $this->unmanagedJars($known);
         }
@@ -1014,6 +1018,45 @@ class Installer
                 'name' => is_array($manifest) && isset($manifest['name']) ? str_replace('_', ' ', (string) $manifest['name']) : $name,
                 'version' => is_array($manifest) ? ($manifest['version_number'] ?? null) : null,
                 'package' => $package,
+            ];
+        }
+
+        return $found;
+    }
+
+    /**
+     * Compiled plugins in AMX Mod X's plugins folder that no plugins*.ini names - put there by
+     * hand and never loaded. Those an ini names are AMX Mod X's own or registered by hand, the
+     * section of plugins.ini shows them.
+     *
+     * @param  string[]  $known  paths of what is installed through the plugin
+     * @return array<int, array{path: string, name: string, version: ?string, package: ?string}>
+     */
+    private function unmanagedAmxx(array $known): array
+    {
+        $registered = [];
+
+        foreach (array_keys(array_filter($this->files->list($this->configDir()), fn (bool $isDirectory) => !$isDirectory)) as $file) {
+            if (preg_match('/^plugins(-.+)?\.ini$/i', $file)) {
+                $registered = [...$registered, ...array_column(self::parseAmxxPlugins((string) $this->files->read($this->configDir() . "/$file")), 'file')];
+            }
+        }
+
+        $found = [];
+
+        foreach ($this->files->list($this->modsDir()) as $name => $isDirectory) {
+            $path = $this->modsDir() . "/$name";
+
+            if ($isDirectory || !str_ends_with(strtolower($name), '.amxx') || in_array($name, $registered, true) || in_array($path, $known, true)) {
+                continue;
+            }
+
+            $found[] = [
+                'path' => $path,
+                'name' => substr($name, 0, -5),
+                'version' => null,
+                // a name that cannot go into an ini line cannot be taken over
+                'package' => preg_match('/^\w[\w.-]*\.amxx\z/i', $name) ? self::UPLOAD . substr($name, 0, -5) : null,
             ];
         }
 
@@ -1097,6 +1140,23 @@ class Installer
 
         if (!$entry || !$entry['package']) {
             throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        // registered in plugins-modmanager.ini like an upload, switched on
+        if ($this->goldsrc()) {
+            $this->writeUploadedIni(fn (string $ini) => self::withAmxxPlugin(self::withAmxxLine($ini, basename($path)), basename($path), true));
+
+            return ModInstall::query()->create([
+                'server_id' => $this->server->id,
+                'package' => $entry['package'],
+                'name' => $entry['name'],
+                'version' => '-',
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                'files' => [$path],
+                'size' => $this->files->size($path),
+            ]);
         }
 
         if ($this->jarMods()) {

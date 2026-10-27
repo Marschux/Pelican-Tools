@@ -89,6 +89,7 @@ return [
     'unmanaged' => [
         'heading' => 'Von Hand installiert',
         'hint' => 'Liegt im Mod-Ordner, wurde aber nicht über diese Seite installiert. Ein Paket lässt sich übernehmen, dann gibt es auch Update-Hinweise.',
+        'hint_amxx' => 'Kompilierte Plugins im plugins-Ordner, die in keiner plugins.ini stehen - AMX Mod X lädt sie nicht. Übernehmen trägt sie ein und schaltet sie hier an.',
         'adopt' => 'Übernehmen',
         'confirm_delete' => ':path vom Server löschen?',
     ],
