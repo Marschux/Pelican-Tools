@@ -315,8 +315,24 @@
             </x-filament::section>
         @endif
     @else
-        @if ($gameVersion = $this->gameVersion())
-            <div style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</div>
+        @php
+            $sources = $this->sources();
+            $gameVersion = $this->gameVersion();
+        @endphp
+        @if (count($sources) > 1 || $gameVersion)
+            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+                @if (count($sources) > 1)
+                    {{-- every source has its own categories, switching starts the search over --}}
+                    <div style="display:flex;gap:.25rem">
+                        @foreach ($sources as $key => $name)
+                            <x-filament::button size="sm" :color="$key === $this->sourceKey() ? 'primary' : 'gray'" :outlined="$key !== $this->sourceKey()" wire:click="$set('source', {{ $js($key) }})">{{ $name }}</x-filament::button>
+                        @endforeach
+                    </div>
+                @endif
+                @if ($gameVersion)
+                    <span style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</span>
+                @endif
+            </div>
         @endif
         {{-- every change searches right away, typing waits for a short pause --}}
         <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
@@ -349,13 +365,19 @@
                     {{ trans('mod-manager::mods.show_deprecated') }}
                 </label>
             @endif
+            @if ($gameVersion)
+                <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                    <x-filament::input.checkbox wire:model.live="showAll" />
+                    {{ trans('mod-manager::mods.show_all_versions', ['version' => $gameVersion['version']]) }}
+                </label>
+            @endif
         </form>
 
         {{-- while the next page loads the tiles stay and only fade, so nothing jumps --}}
         <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
 
         {{-- three tiles side by side, fewer when the page gets narrow; every row as tall as the tallest, so all tiles are the same size --}}
-        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,showClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
+        <div wire:loading.class="mod-loading" wire:target="search,goToPage,source,query,category,ordering,showClientSide,showDeprecated,showAll" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
@@ -414,7 +436,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,showClientSide,showDeprecated">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,source,query,category,ordering,showClientSide,showDeprecated,showAll">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)
@@ -443,8 +465,10 @@
                         <div>{{ $details['name'] }} <span style="{{ $muted }}">{{ $details['version'] }}</span></div>
                         <div style="{{ $muted }};font-weight:400">
                             {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
-                            ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }} ·
-                            {{ \Illuminate\Support\Number::fileSize($details['size']) }}
+                            ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }}
+                            @if ($details['size'])
+                                · {{ \Illuminate\Support\Number::fileSize($details['size']) }}
+                            @endif
                             {{-- not every source counts who depends on a package --}}
                             @if ($details['dependants'] !== null)
                                 · {{ trans_choice('mod-manager::mods.used_by', $details['dependants'], ['count' => number_format($details['dependants'])]) }}
@@ -457,7 +481,7 @@
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
                 @if (isset($versions[$details['id']]))
                     <span class="mod-installed"><x-filament::icon icon="tabler-check" style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.is_installed') }}</span>
-                @elseif ($canInstall)
+                @elseif ($canInstall && $details['versions'] !== [])
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
                 <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">{{ \Marschux\ModManager\Profiles\Presets::SOURCES[$this->sourceKey()] ?? '' }}</x-filament::button>
@@ -491,19 +515,24 @@
                     @php
                         $current = $versions[$details['id']] ?? null;
                     @endphp
-                    <div x-data="{ picked: {{ \Illuminate\Support\Js::from($details['versions'][0]['number'] ?? '') }}, current: {{ \Illuminate\Support\Js::from($current) }} }" wire:key="versions-{{ md5($details['id']) }}" style="display:flex;gap:.5rem;align-items:center">
-                        <x-filament::input.wrapper style="flex:1">
-                            <x-filament::input.select x-model="picked">
-                                @foreach ($details['versions'] as $version)
-                                    <option value="{{ $version['number'] }}">
-                                        {{ $version['number'] }} · {{ \Illuminate\Support\Carbon::parse($version['date'])->isoFormat('L') }} · ⬇ {{ \Illuminate\Support\Number::abbreviate($version['downloads']) }}{{ $version['number'] === $current ? ' · ' . trans('mod-manager::mods.current') : '' }}
-                                    </option>
-                                @endforeach
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
-                        <x-filament::button icon="tabler-download" x-show="{{ $canInstall ? 'picked !== current' : 'false' }}" x-on:click="$wire.install({{ \Illuminate\Support\Js::from($details['id']) }}, picked)">{{ trans('mod-manager::mods.install') }}</x-filament::button>
-                        <x-filament::badge color="success" icon="tabler-check" x-show="picked === current" x-cloak>{{ trans('mod-manager::mods.current') }}</x-filament::badge>
-                    </div>
+                    @if ($details['versions'] === [])
+                        {{-- the version filter left nothing: made for other game versions only --}}
+                        <span style="{{ $muted }}">{{ trans('mod-manager::mods.no_versions') }}</span>
+                    @else
+                        <div x-data="{ picked: {{ \Illuminate\Support\Js::from($details['versions'][0]['number'] ?? '') }}, current: {{ \Illuminate\Support\Js::from($current) }} }" wire:key="versions-{{ md5($details['id']) }}" style="display:flex;gap:.5rem;align-items:center">
+                            <x-filament::input.wrapper style="flex:1">
+                                <x-filament::input.select x-model="picked">
+                                    @foreach ($details['versions'] as $version)
+                                        <option value="{{ $version['number'] }}">
+                                            {{ $version['number'] }} · {{ \Illuminate\Support\Carbon::parse($version['date'])->isoFormat('L') }} · ⬇ {{ \Illuminate\Support\Number::abbreviate($version['downloads']) }}{{ $version['number'] === $current ? ' · ' . trans('mod-manager::mods.current') : '' }}
+                                        </option>
+                                    @endforeach
+                                </x-filament::input.select>
+                            </x-filament::input.wrapper>
+                            <x-filament::button icon="tabler-download" x-show="{{ $canInstall ? 'picked !== current' : 'false' }}" x-on:click="$wire.install({{ \Illuminate\Support\Js::from($details['id']) }}, picked)">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                            <x-filament::badge color="success" icon="tabler-check" x-show="picked === current" x-cloak>{{ trans('mod-manager::mods.current') }}</x-filament::badge>
+                        </div>
+                    @endif
                 </div>
             </div>
 

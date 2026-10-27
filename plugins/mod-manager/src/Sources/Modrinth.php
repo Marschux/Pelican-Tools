@@ -43,16 +43,18 @@ class Modrinth
     }
 
     /**
-     * One page of 12 projects. The last two flags are Thunderstore's and mean nothing here.
+     * One page of 12 projects, only those for $gameVersion when one is given. The two flags
+     * are Thunderstore's and mean nothing here.
      *
      * @return array{items: array<int, array<string, mixed>>, pages: int}
      */
-    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $showClientSide = true, bool $showDeprecated = false): array
+    public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $showClientSide = true, bool $showDeprecated = false, ?string $gameVersion = null): array
     {
         $facets = array_values(array_filter([
             // one of the loaders (OR), and the category (AND)
             array_map(fn (string $loader) => "categories:$loader", $this->loaders),
             $category ? ["categories:$category"] : null,
+            $gameVersion ? ["versions:$gameVersion"] : null,
         ]));
 
         $params = [
@@ -74,20 +76,21 @@ class Modrinth
     }
 
     /**
-     * Everything the detail view shows. Modrinth keeps a changelog per version, the newest few
+     * Everything the detail view shows; versions only for $gameVersion when one is given.
+     * Modrinth keeps a changelog per version, the newest few
      * are put together into one.
      *
      * @return array<string, mixed>
      */
-    public function details(string $id): array
+    public function details(string $id, ?string $gameVersion = null): array
     {
         $project = self::split($id);
 
-        return Cache::remember("mod-manager:modrinth:details:$project:" . implode(',', $this->loaders), now()->addMinutes(10), function () use ($id, $project) {
+        return Cache::remember("mod-manager:modrinth:details:$project:" . implode(',', $this->loaders) . ":$gameVersion", now()->addMinutes(10), function () use ($id, $project, $gameVersion) {
             // at once - one after the other they make opening the details slow
             $responses = Http::pool(fn (Pool $pool) => [
                 $pool->as('project')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project"),
-                $pool->as('versions')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project/version", ['loaders' => json_encode($this->loaders)]),
+                $pool->as('versions')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project/version", array_filter(['loaders' => json_encode($this->loaders), 'game_versions' => $gameVersion ? json_encode([$gameVersion]) : null])),
                 $pool->as('members')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project/members"),
             ]);
 

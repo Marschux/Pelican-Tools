@@ -16,6 +16,8 @@ use Marschux\ModManager\GameVersion;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
+use Marschux\ModManager\Profiles\Presets;
+use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
 use RuntimeException;
@@ -53,6 +55,12 @@ class ModsPage extends Page
     public bool $showClientSide = false;
 
     public bool $showDeprecated = false;
+
+    /** the source the browse tab shows, one of the profile's - see sourceKey() */
+    public string $source = '';
+
+    /** also mods made for other game versions than the server runs */
+    public bool $showAll = false;
 
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
@@ -99,7 +107,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated'];
+    private const REMEMBERED = ['source', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
 
     public function mount(): void
     {
@@ -122,7 +130,12 @@ class ModsPage extends Page
     /** Every filter change searches right away, typing included (debounced in the view). */
     public function updated(string $property): void
     {
-        if (in_array($property, ['query', 'category', 'ordering', 'showClientSide', 'showDeprecated'], true)) {
+        // categories are the source's own
+        if ($property === 'source') {
+            $this->category = '';
+        }
+
+        if (in_array($property, ['source', 'query', 'category', 'ordering', 'showClientSide', 'showDeprecated', 'showAll'], true)) {
             $this->search();
         }
     }
@@ -147,7 +160,7 @@ class ModsPage extends Page
     public function showDetails(string $id): void
     {
         try {
-            $this->details = $this->source()?->details($id);
+            $this->details = $this->source()?->details($id, $this->versionFilter());
         } catch (Throwable $exception) {
             report($exception);
             $this->details = null;
@@ -639,7 +652,7 @@ class ModsPage extends Page
         }
 
         try {
-            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->showClientSide, $this->showDeprecated);
+            $result = $this->source()->search(trim($this->query), $this->category ?: null, $this->ordering, $this->page, $this->showClientSide, $this->showDeprecated, $this->versionFilter());
         } catch (Throwable $exception) {
             report($exception);
             $this->items = [];
@@ -660,19 +673,37 @@ class ModsPage extends Page
         return 'mod-manager.browse.' . $this->server()->id;
     }
 
-    /** The source the browse tab shows: the profile's first one that can be browsed here, null for none. */
+    /** The source the browse tab shows: the one picked, else the profile's first. */
     public function sourceKey(): ?string
     {
-        return collect($this->profile()->sources())->first(fn (string $source) => in_array($source, ['thunderstore', 'modrinth'], true));
+        $sources = array_keys($this->sources());
+
+        return in_array($this->source, $sources, true) ? $this->source : ($sources[0] ?? null);
     }
 
-    private function source(): Thunderstore|Modrinth|null
+    /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
+    public function sources(): array
+    {
+        return collect($this->profile()->sources())
+            ->filter(fn (string $source) => isset(Presets::SOURCES[$source]))
+            ->mapWithKeys(fn (string $source) => [$source => Presets::SOURCES[$source]])
+            ->all();
+    }
+
+    /** The game version mods have to fit, null to show all. */
+    private function versionFilter(): ?string
+    {
+        return $this->showAll ? null : ($this->gameVersion()['version'] ?? null);
+    }
+
+    private function source(): Thunderstore|Modrinth|Hangar|null
     {
         $profile = $this->profile();
 
         return match ($this->sourceKey()) {
             'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', [])),
+            'hangar' => new Hangar(),
             default => null,
         };
     }

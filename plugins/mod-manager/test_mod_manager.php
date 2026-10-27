@@ -9,6 +9,7 @@
 require __DIR__ . '/src/Profiles/Presets.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
 require __DIR__ . '/src/Sources/Modrinth.php';
+require __DIR__ . '/src/Sources/Hangar.php';
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
@@ -50,6 +51,19 @@ assert(Marschux\ModManager\Sources\Modrinth::split('modrinth:luckperms-gui') ===
 foreach (['hXiIvTyT', 'modrinth:', 'modrinth:../x', 'thunderstore:a-b'] as $bad) {
     try {
         Marschux\ModManager\Sources\Modrinth::split($bad);
+        assert(false, "$bad should not pass");
+    } catch (RuntimeException) {
+    }
+}
+
+// --- hangar ids ---------------------------------------------------------------------------------
+
+assert(Marschux\ModManager\Sources\Hangar::split('hangar:ViaBackwards') === 'ViaBackwards');
+assert(Marschux\ModManager\Sources\Hangar::split('hangar:Plan.Player-Analytics') === 'Plan.Player-Analytics');
+
+foreach (['ViaBackwards', 'hangar:', 'hangar:..', 'hangar:a/b', 'modrinth:abc'] as $bad) {
+    try {
+        Marschux\ModManager\Sources\Hangar::split($bad);
         assert(false, "$bad should not pass");
     } catch (RuntimeException) {
     }
