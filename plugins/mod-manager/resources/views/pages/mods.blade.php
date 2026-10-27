@@ -354,7 +354,7 @@
 
                     <div style="display:flex;gap:.5rem;align-items:center">
                         @if (isset($versions[$item['id']]))
-                            <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
+                            <x-filament::badge color="success" icon="tabler-check" style="align-self:stretch;display:inline-flex;align-items:center">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
                         @elseif ($canInstall)
                             <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                         @endif
@@ -410,7 +410,7 @@
 
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
                 @if (isset($versions[$details['id']]))
-                    <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
+                    <x-filament::badge color="success" icon="tabler-check" style="align-self:stretch;display:inline-flex;align-items:center">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
                 @elseif ($canInstall)
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
