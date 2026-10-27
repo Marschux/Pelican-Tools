@@ -91,6 +91,21 @@ assert(Installer::goldsrcTarget('addons/amxmodx/dlls/amxmodx_mm_i386.so') === 'a
 assert(Installer::keptOnUpdate('addons/amxmodx/configs/users.ini') && Installer::keptOnUpdate('addons/amxmodx/configs/amxx.cfg'));
 assert(!Installer::keptOnUpdate('addons/amxmodx/data/lang/admin.txt'));
 
+$ini = "; AMX Mod X plugins\r\n\r\n; Admin Base - Always one has to be activated\r\nadmin.amxx\t\t; admin base (required for any admin-related)\r\n;admin_sql.amxx\t\t; admin base - SQL version (comment admin.amxx)\r\n\r\n; Basic\r\nadmincmd.amxx debug\r\n; telemenu.amxx\t\t; teleport menu\r\n\r\n; Custom - Add 3rd party plugins here\r\n";
+$plugins = Installer::parseAmxxPlugins($ini);
+assert(array_column($plugins, 'file') === ['admin.amxx', 'admin_sql.amxx', 'admincmd.amxx', 'telemenu.amxx']);
+assert(array_column($plugins, 'enabled') === [true, false, true, false]);
+assert($plugins[0]['note'] === 'admin base (required for any admin-related)' && $plugins[0]['group'] === 'Admin Base - Always one has to be activated');
+assert($plugins[2]['group'] === 'Basic' && $plugins[2]['note'] === '', 'a flag is not a note');
+
+$off = Installer::withAmxxPlugin($ini, 'admin.amxx', false);
+assert(str_contains($off, ";admin.amxx\t\t; admin base (required for any admin-related)\r\n") && !Installer::parseAmxxPlugins($off)[0]['enabled']);
+assert(Installer::withAmxxPlugin($off, 'admin.amxx', true) === $ini, 'back on as it was');
+assert(Installer::parseAmxxPlugins(Installer::withAmxxPlugin($ini, 'telemenu.amxx', true))[3]['enabled']);
+assert(Installer::withAmxxPlugin($ini, 'admin', false) === $ini, 'only a whole file name');
+assert(str_contains($off, ";admin_sql.amxx		; admin base - SQL version (comment admin.amxx)
+"), 'a note naming the file is not its line');
+
 // --- server.properties ---------------------------------------------------------------------------
 
 $properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";

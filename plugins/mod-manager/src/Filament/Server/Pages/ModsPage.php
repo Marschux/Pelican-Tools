@@ -338,6 +338,23 @@ class ModsPage extends Page
         );
     }
 
+    /** A plugin of AMX Mod X's plugins.ini on or off. */
+    public function toggleAmxx(string $file, bool $enabled): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $this->attempt(
+            fn () => $this->installer()->setAmxxPlugin($file, $enabled),
+            trans($enabled ? 'mod-manager::mods.messages.enabled' : 'mod-manager::mods.messages.disabled', ['name' => $file]),
+        );
+    }
+
+    /** @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}> */
+    public function amxxPlugins(): array
+    {
+        return $this->installer()->amxxPlugins();
+    }
+
     public function adopt(string $path): void
     {
         $this->requirePermission(SubuserPermission::FileUpdate);

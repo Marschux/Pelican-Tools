@@ -93,6 +93,12 @@ return [
         'confirm_delete' => 'Delete :path from the server?',
     ],
 
+    'amxx' => [
+        'heading' => 'Plugins of AMX Mod X',
+        'hint' => 'The plugins in plugins.ini - those AMX Mod X comes with, and any put there by hand. Switched off, the line is commented out.',
+        'missing' => 'File missing',
+    ],
+
     'restart' => [
         'hint' => 'Changes take effect after the server restarts.',
         'button' => 'Restart now',

@@ -570,6 +570,72 @@ class Installer
         return in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['ini', 'cfg'], true);
     }
 
+    /**
+     * The plugins AMX Mod X lists in its plugins.ini - those it comes with, and any put there by
+     * hand - with whether the file is there at all.
+     *
+     * @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}>
+     */
+    public function amxxPlugins(): array
+    {
+        if (!$this->goldsrc()) {
+            return [];
+        }
+
+        $present = $this->files->list($this->modsDir());
+
+        return array_map(
+            fn (array $plugin) => $plugin + ['exists' => isset($present[$plugin['file']])],
+            self::parseAmxxPlugins((string) $this->files->read($this->configDir() . '/plugins.ini')),
+        );
+    }
+
+    /** Switches a plugin of plugins.ini on or off: its line commented out or back in. */
+    public function setAmxxPlugin(string $file, bool $enabled): void
+    {
+        $path = $this->configDir() . '/plugins.ini';
+        $ini = (string) $this->files->read($path);
+
+        if (!in_array($file, array_column(self::parseAmxxPlugins($ini), 'file'), true)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+        }
+
+        $this->files->write($path, self::withAmxxPlugin($ini, $file, $enabled));
+    }
+
+    /**
+     * The plugin lines of an AMX Mod X plugins.ini. A line "; Basic" heads the plugins below it,
+     * a plugin commented out (";telemenu.amxx") is one switched off.
+     *
+     * @return array<int, array{file: string, enabled: bool, note: string, group: string}>
+     */
+    public static function parseAmxxPlugins(string $ini): array
+    {
+        $plugins = [];
+        $group = '';
+
+        foreach (preg_split('/\r?\n/', $ini) as $line) {
+            if (preg_match('/^\s*(;\s*)?([\w.-]+\.amxx)(?=[\s;]|$)[^;]*(?:;\s*(.*))?$/i', $line, $match)) {
+                $plugins[] = ['file' => $match[2], 'enabled' => $match[1] === '', 'note' => trim($match[3] ?? ''), 'group' => $group];
+            } elseif (preg_match('/^\s*;\s*(.+?)\s*$/', $line, $match)) {
+                $group = $match[1];
+            }
+        }
+
+        return $plugins;
+    }
+
+    /** plugins.ini with $file's line commented in or out - only that line changes. */
+    public static function withAmxxPlugin(string $ini, string $file, bool $enabled): string
+    {
+        return (string) preg_replace_callback(
+            '/^[ \t]*(?:;[ \t]*)?(' . preg_quote($file, '/') . '(?=[ \t;\r]|$).*)$/m',
+            fn (array $match) => ($enabled ? '' : ';') . $match[1],
+            $ini,
+            1,
+        );
+    }
+
     private function goldsrc(): bool
     {
         return $this->profile->setting('loader_type') === 'goldsrc';

@@ -93,6 +93,12 @@ return [
         'confirm_delete' => ':path vom Server löschen?',
     ],
 
+    'amxx' => [
+        'heading' => 'Plugins von AMX Mod X',
+        'hint' => 'Die Plugins aus plugins.ini - die mitgelieferten und von Hand eingetragene. Aus heißt: die Zeile ist auskommentiert.',
+        'missing' => 'Datei fehlt',
+    ],
+
     'restart' => [
         'hint' => 'Änderungen wirken erst nach einem Neustart des Servers.',
         'button' => 'Jetzt neu starten',

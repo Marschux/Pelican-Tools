@@ -93,6 +93,12 @@ return [
         'confirm_delete' => '¿Borrar :path del servidor?',
     ],
 
+    'amxx' => [
+        'heading' => 'Plugins de AMX Mod X',
+        'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',
+        'missing' => 'Falta el archivo',
+    ],
+
     'restart' => [
         'hint' => 'Los cambios se aplican tras reiniciar el servidor.',
         'button' => 'Reiniciar ahora',

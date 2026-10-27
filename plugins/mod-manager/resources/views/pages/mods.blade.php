@@ -11,6 +11,8 @@
     $updates = $onInstalled ? $this->updates() : [];
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
+    // GoldSrc only: the plugins of AMX Mod X's plugins.ini
+    $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // without a running loader no mod loads, switched on or not
@@ -264,7 +266,36 @@
             </x-filament::section>
         @endif
 
-        @if ($installed->isEmpty() && !$unmanaged)
+        @if ($amxx)
+            <x-filament::section collapsible>
+                <x-slot name="heading">{{ trans('mod-manager::mods.amxx.heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
+                <x-slot name="description">{{ trans('mod-manager::mods.amxx.hint') }}</x-slot>
+
+                @foreach (collect($amxx)->groupBy('group') as $group => $plugins)
+                    @if ($group !== '')
+                        <div style="{{ $muted }};font-weight:600;margin:{{ $loop->first ? '0' : '.75rem' }} 0 .25rem">{{ $group }}</div>
+                    @endif
+                    @foreach ($plugins as $plugin)
+                        <div wire:key="amxx-{{ md5($plugin['file']) }}" style="display:flex;gap:.75rem;align-items:center;padding:.3rem 0;border-top:1px solid rgba(127,127,127,.15)">
+                            <span class="mod-slot">
+                                @if ($canUpdate)
+                                    <button type="button" @class(['mod-action', 'mod-on' => $plugin['enabled']]) wire:click="toggleAmxx({{ $js($plugin['file']) }}, {{ $plugin['enabled'] ? 'false' : 'true' }})" title="{{ trans($plugin['enabled'] ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($plugin['enabled'] ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $plugin['enabled'] ? 'true' : 'false' }}">
+                                        <x-filament::icon :icon="$plugin['enabled'] ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
+                                    </button>
+                                @endif
+                            </span>
+                            <span style="font-family:monospace;font-size:.875rem;min-width:11rem;{{ $plugin['enabled'] ? '' : 'opacity:.5' }}">{{ $plugin['file'] }}</span>
+                            <span style="{{ $muted }};flex:1">{{ $plugin['note'] }}</span>
+                            @if (!$plugin['exists'])
+                                <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.amxx.missing') }}</x-filament::badge>
+                            @endif
+                        </div>
+                    @endforeach
+                @endforeach
+            </x-filament::section>
+        @endif
+
+        @if ($installed->isEmpty() && !$unmanaged && !$amxx)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
