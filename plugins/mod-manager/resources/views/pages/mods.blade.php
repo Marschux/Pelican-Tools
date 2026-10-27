@@ -224,18 +224,18 @@
                                                     </x-filament::button>
                                                 @endif
                                             @endif
-                                            {{-- one fixed slot per action, so gears, switches and bins line up from row to row --}}
-                                            <span class="mod-slot">
-                                                @if ($config && $canReadConfig)
-                                                    <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ basename($config) }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
-                                                        <x-filament::icon icon="tabler-settings" />
-                                                    </button>
-                                                @endif
-                                            </span>
+                                            {{-- one fixed slot per action, so switches, gears and bins line up from row to row --}}
                                             <span class="mod-slot">
                                                 @if (!$isLoader && $canUpdate)
                                                     <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
                                                         <x-filament::icon icon="tabler-power" />
+                                                    </button>
+                                                @endif
+                                            </span>
+                                            <span class="mod-slot">
+                                                @if ($config && $canReadConfig)
+                                                    <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ basename($config) }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                                        <x-filament::icon icon="tabler-settings" />
                                                     </button>
                                                 @endif
                                             </span>
