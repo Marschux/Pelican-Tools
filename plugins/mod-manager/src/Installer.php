@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
+use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
@@ -1638,10 +1639,11 @@ class Installer
         return array_intersect($this->profile->sources(), ['modrinth', 'hangar']) !== [];
     }
 
-    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc
+    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|GameBanana
     {
         return match (true) {
             $package === GoldSrc::PACKAGE => new GoldSrc(),
+            str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),
             default => $this->source,

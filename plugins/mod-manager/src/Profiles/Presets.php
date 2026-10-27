@@ -10,6 +10,7 @@ namespace Marschux\ModManager\Profiles;
  * - sources: where mods come from (thunderstore, modrinth, hangar, gamebanana), the first one is opened first
  * - community: the game on Thunderstore, e.g. "valheim"
  * - modrinth_loaders: a Modrinth project needs one of these, e.g. paper
+ * - gamebanana_game / gamebanana_category: the game and the category on GameBanana, by number
  * - mods_dir / config_dir: where mods and their configs live on the server
  * - loader_type: thunderstore (a package of the site, the default) or goldsrc (Metamod-R and
  *   AMX Mod X, hooked in through liblist.gam)
@@ -64,6 +65,9 @@ class Presets
                 'settings' => [
                     // maps; AMX Mod X plugins have no site to browse, they are uploaded
                     'sources' => ['gamebanana'],
+                    // Counter-Strike 1.6, its category Maps
+                    'gamebanana_game' => 4254,
+                    'gamebanana_category' => 5474,
                     'game_dir' => 'cstrike',
                     'mods_dir' => 'cstrike/addons/amxmodx/plugins',
                     'config_dir' => 'cstrike/addons/amxmodx/configs',

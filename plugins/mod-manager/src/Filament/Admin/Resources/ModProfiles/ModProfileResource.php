@@ -118,6 +118,18 @@ class ModProfileResource extends Resource
                         ->helperText(trans($field('modrinth_loaders_hint')))
                         ->required(fn (Get $get) => in_array('modrinth', (array) $get('settings.sources'), true))
                         ->columnSpanFull(),
+                    TextInput::make('settings.gamebanana_game')
+                        ->label(trans($field('gamebanana_game')))
+                        ->helperText(trans($field('gamebanana_game_hint')))
+                        ->numeric()
+                        ->visible(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true))
+                        ->required(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true)),
+                    TextInput::make('settings.gamebanana_category')
+                        ->label(trans($field('gamebanana_category')))
+                        ->helperText(trans($field('gamebanana_category_hint')))
+                        ->numeric()
+                        ->visible(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true))
+                        ->required(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true)),
                     TextInput::make('settings.mods_dir')
                         ->label(trans($field('mods_dir')))
                         ->required(),

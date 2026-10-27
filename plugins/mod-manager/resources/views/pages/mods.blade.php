@@ -425,7 +425,7 @@
             <x-filament::input.wrapper style="flex:0 1 14rem">
                 <x-filament::input.select wire:model.live="ordering">
                     @foreach (\Marschux\ModManager\Sources\Thunderstore::ORDERINGS as $order)
-                        <option value="{{ $order }}">{{ trans("mod-manager::mods.orderings.$order") }}</option>
+                        <option value="{{ $order }}">{{ trans($order === 'most-downloaded' && $this->sourceKey() === 'gamebanana' ? 'mod-manager::mods.orderings.most-viewed' : "mod-manager::mods.orderings.$order") }}</option>
                     @endforeach
                 </x-filament::input.select>
             </x-filament::input.wrapper>
@@ -465,7 +465,12 @@
                             <div style="font-weight:600;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $item['name'] }}</div>
                             <div style="{{ $muted }}">{{ trans('mod-manager::mods.by', ['author' => $item['author']]) }}</div>
                             <div style="{{ $muted }};display:flex;gap:.75rem">
-                                <span title="{{ trans('mod-manager::mods.downloads') }}">⬇ {{ \Illuminate\Support\Number::abbreviate($item['downloads']) }}</span>
+                                @if (isset($item['views']))
+                                    {{-- a source that lists no downloads --}}
+                                    <span title="{{ trans('mod-manager::mods.views') }}">👁 {{ \Illuminate\Support\Number::abbreviate($item['views']) }}</span>
+                                @else
+                                    <span title="{{ trans('mod-manager::mods.downloads') }}">⬇ {{ \Illuminate\Support\Number::abbreviate($item['downloads']) }}</span>
+                                @endif
                                 <span title="{{ trans('mod-manager::mods.rating') }}">★ {{ $item['rating'] }}</span>
                                 @if ($item['updated'])
                                     <span>{{ \Illuminate\Support\Carbon::parse($item['updated'])->diffForHumans() }}</span>

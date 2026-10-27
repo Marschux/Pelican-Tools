@@ -10,6 +10,7 @@ require __DIR__ . '/src/Profiles/Presets.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
 require __DIR__ . '/src/Sources/Modrinth.php';
 require __DIR__ . '/src/Sources/Hangar.php';
+require __DIR__ . '/src/Sources/GameBanana.php';
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
@@ -158,6 +159,15 @@ assert(Installer::withProperties($set, ['resource-pack' => '', 'resource-pack-sh
 assert(Installer::withProperties('', ['resource-pack' => 'u']) === "resource-pack=u\n", 'no file yet');
 assert(Installer::withProperties("a=1", ['b' => "x\ny"]) === "a=1\nb=xy\n", 'one line only');
 assert(Installer::withProperties("a=1\r\nb=2\r\n", ['a' => '$1']) === "a=\$1\r\nb=2\r\n", 'no regex back references');
+
+assert(Marschux\ModManager\Sources\GameBanana::split('gamebanana:83688') === '83688');
+foreach (['gamebanana:', 'gamebanana:12a', 'gamebanana:../1', '83688'] as $bad) {
+    try {
+        Marschux\ModManager\Sources\GameBanana::split($bad);
+        assert(false, "$bad should not pass");
+    } catch (RuntimeException) {
+    }
+}
 
 // --- hangar ids ---------------------------------------------------------------------------------
 

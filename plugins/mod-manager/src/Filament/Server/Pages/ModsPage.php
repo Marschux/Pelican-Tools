@@ -19,6 +19,7 @@ use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Profiles\Presets;
+use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
@@ -521,6 +522,7 @@ class ModsPage extends Page
     {
         return match (true) {
             $id === GoldSrc::PACKAGE => 'AMX Mod X',
+            str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
             str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
             default => Presets::SOURCES['thunderstore'],
@@ -817,7 +819,7 @@ class ModsPage extends Page
         return $this->showAll ? null : ($this->gameVersion()['version'] ?? null);
     }
 
-    private function source(): Thunderstore|Modrinth|Hangar|null
+    private function source(): Thunderstore|Modrinth|Hangar|GameBanana|null
     {
         $profile = $this->profile();
 
@@ -825,17 +827,24 @@ class ModsPage extends Page
             'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
+            'gamebanana' => $this->gameBanana(),
             default => null,
         };
     }
 
+    private function gameBanana(): GameBanana
+    {
+        return new GameBanana((int) $this->profile()->setting('gamebanana_game'), (int) $this->profile()->setting('gamebanana_category'));
+    }
+
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|GameBanana
     {
         $profile = $this->profile();
 
         return match (true) {
             $id === GoldSrc::PACKAGE => new GoldSrc(),
+            str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),
             default => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
