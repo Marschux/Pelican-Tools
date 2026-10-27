@@ -36,6 +36,15 @@
         .mod-installed { align-self: stretch; display: inline-flex; align-items: center; gap: .35rem; padding: 0 .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: rgb(21,128,61); background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); }
         .dark .mod-installed { color: rgb(74,222,128); }
         .mod-slot { display: inline-flex; justify-content: center; width: 2.5rem; }
+        {{-- the row actions: one square button each - gear in the text colour, power green while on, bin red --}}
+        .mod-action { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: .5rem; border: 1px solid rgba(127,127,127,.35); background: transparent; color: inherit; cursor: pointer; transition: background .15s; }
+        .mod-action:hover { background: rgba(127,127,127,.15); }
+        .mod-action svg { width: 1.1rem; height: 1.1rem; }
+        .mod-action.mod-on { color: rgb(22,163,74); border-color: rgba(34,197,94,.45); }
+        .mod-action[aria-pressed="false"] { opacity: .6; }
+        .mod-action.mod-danger { color: rgb(220,38,38); border-color: rgba(239,68,68,.45); }
+        .dark .mod-action.mod-on { color: rgb(74,222,128); }
+        .dark .mod-action.mod-danger { color: rgb(248,113,113); }
     </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
@@ -218,17 +227,23 @@
                                             {{-- one fixed slot per action, so gears, switches and bins line up from row to row --}}
                                             <span class="mod-slot">
                                                 @if ($config && $canReadConfig)
-                                                    <x-filament::button size="sm" color="gray" outlined icon="tabler-settings" label-sr-only wire:click="openConfig({{ $js($config) }})" :tooltip="basename($config)">{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}</x-filament::button>
+                                                    <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ basename($config) }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                                        <x-filament::icon icon="tabler-settings" />
+                                                    </button>
                                                 @endif
                                             </span>
                                             <span class="mod-slot">
                                                 @if (!$isLoader && $canUpdate)
-                                                    <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
+                                                    <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
+                                                        <x-filament::icon icon="tabler-power" />
+                                                    </button>
                                                 @endif
                                             </span>
                                             <span class="mod-slot">
                                                 @if ($isLoader ? $canRemoveLoader : $canDelete)
-                                                    <x-filament::button size="sm" color="danger" outlined icon="tabler-trash" label-sr-only wire:click="{{ $isLoader ? 'removeLoader' : 'remove(' . $install->id . ')' }}" :tooltip="trans('mod-manager::mods.remove')">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                                                    <button type="button" class="mod-action mod-danger" wire:click="{{ $isLoader ? 'removeLoader' : 'remove(' . $install->id . ')' }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
+                                                        <x-filament::icon icon="tabler-trash" />
+                                                    </button>
                                                 @endif
                                             </span>
                                         </div>
