@@ -11,6 +11,8 @@
     $configs = $tab === 'installed' ? $this->configs() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
+    // without a running loader no mod loads, switched on or not
+    $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
@@ -157,6 +159,8 @@
                                             @endif
                                             @if (!$install->enabled)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans('mod-manager::mods.off') }}</x-filament::badge>
+                                            @elseif (!$isLoader && !$loaderRuns)
+                                                <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle" :tooltip="trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']])">{{ trans('mod-manager::mods.not_loaded') }}</x-filament::badge>
                                             @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif

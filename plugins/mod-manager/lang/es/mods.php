@@ -52,6 +52,7 @@ return [
     'current' => 'Instalada',
     'requires' => 'Necesita: :names',
     'needed_by' => 'Lo necesita: :names',
+    'not_loaded' => 'No se carga',
     'active' => 'Activo',
     'columns' => [
         'mod' => 'Mod',
