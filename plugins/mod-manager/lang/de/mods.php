@@ -101,6 +101,12 @@ return [
         'origin' => 'Hochgeladen',
     ],
 
+    'mapcycle' => [
+        'add' => 'In mapcycle.txt aufnehmen',
+        'remove' => 'Aus mapcycle.txt nehmen',
+        'out' => 'Nicht im Mapcycle',
+    ],
+
     'amxx' => [
         'heading' => 'Plugins von AMX Mod X',
         'hint' => 'Die Plugins aus plugins.ini - die mitgelieferten und von Hand eingetragene. Aus heißt: die Zeile ist auskommentiert.',

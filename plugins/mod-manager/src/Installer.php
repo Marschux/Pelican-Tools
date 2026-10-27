@@ -155,6 +155,10 @@ class Installer
             $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withoutAmxxPlugin($ini, $file), $ini));
         }
 
+        if (str_starts_with($install->package, GameBanana::PREFIX)) {
+            $this->writeMapcycle(fn (string $cycle) => self::withMaps($cycle, self::mapNames($install->files), false));
+        }
+
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
 
         return $removing->pluck('name')->all();
@@ -896,6 +900,8 @@ class Installer
                 $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
                 if (isset($listings[dirname($to)][basename($to)])) {
+                    // ponytail: a shared wad belongs to the map that brought it first - removing that one takes it
+                    // from the others too; a file count per path is the upgrade if map packs start to clash
                     if (!in_array($to, $ours, true)) {
                         if (str_ends_with(strtolower($to), '.bsp')) {
                             throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
@@ -920,6 +926,12 @@ class Installer
         $files = array_column($moves, 'to');
         $this->files->delete(array_values(array_diff($ours, $files)));
 
+        // a new map comes into the mapcycle; one taken out of it before stays out
+        $enabled = $existing?->enabled ?? true;
+        $previousMaps = $existing ? self::mapNames($existing->files) : [];
+
+        $this->writeMapcycle(fn (string $cycle) => self::withMaps(self::withMaps($cycle, $previousMaps, false), self::mapNames($files), $enabled));
+
         return ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => $package['id']],
             [
@@ -930,9 +942,52 @@ class Installer
                 'requires' => [],
                 'files' => $files,
                 'pinned' => $package['pinned'] ?? false,
+                'enabled' => $enabled,
                 'size' => $package['size'] ?: null,
             ],
         );
+    }
+
+    /** @param  callable(string): string  $change */
+    private function writeMapcycle(callable $change): void
+    {
+        $path = $this->gameDir() . '/mapcycle.txt';
+
+        $this->files->write($path, $change((string) $this->files->read($path)));
+    }
+
+    /**
+     * The maps among these files, by name: the .bsp files in the maps folder.
+     *
+     * @param  string[]  $files
+     * @return string[]
+     */
+    public static function mapNames(array $files): array
+    {
+        return array_values(array_map(
+            fn (string $path) => pathinfo($path, PATHINFO_FILENAME),
+            array_filter($files, fn (string $path) => (bool) preg_match('#(^|/)maps/[^/]+\.bsp$#i', $path)),
+        ));
+    }
+
+    /**
+     * mapcycle.txt with these maps in it (appended, unless there) or out of it. Other lines stay.
+     *
+     * @param  string[]  $maps
+     */
+    public static function withMaps(string $cycle, array $maps, bool $in): string
+    {
+        $lines = $cycle === '' ? [] : preg_split('/\r?\n/', rtrim($cycle, "\r\n"));
+        $eol = str_contains($cycle, "\r\n") ? "\r\n" : "\n";
+
+        if ($in) {
+            $there = array_map('trim', $lines);
+            $lines = [...$lines, ...array_values(array_filter($maps, fn (string $map) => !in_array($map, $there, true)))];
+        } else {
+            $lines = array_values(array_filter($lines, fn (string $line) => !in_array(trim($line), $maps, true)));
+        }
+
+        return $lines === [] ? '' : implode($eol, $lines) . $eol;
     }
 
     /**
@@ -1078,8 +1133,15 @@ class Installer
      */
     public function setEnabled(ModInstall $install, bool $enabled): void
     {
-        // a map is there or not - which ones run is up to mapcycle.txt
-        if ($install->enabled === $enabled || str_starts_with($install->package, GameBanana::PREFIX)) {
+        if ($install->enabled === $enabled) {
+            return;
+        }
+
+        // a map stays where it is: on means it is in mapcycle.txt
+        if (str_starts_with($install->package, GameBanana::PREFIX)) {
+            $this->writeMapcycle(fn (string $cycle) => self::withMaps($cycle, self::mapNames($install->files), $enabled));
+            $install->update(['enabled' => $enabled]);
+
             return;
         }
 

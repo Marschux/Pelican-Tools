@@ -160,6 +160,13 @@ foreach ([
     assert(Installer::mapPlacement($from) === $to, $from);
 }
 
+assert(Installer::mapNames(['cstrike/maps/fy_a.bsp', 'cstrike/maps/fy_a.res', 'cstrike/de_x.wad', 'cstrike/maps/sub/x.bsp', 'cstrike/maps/fy_b.BSP']) === ['fy_a', 'fy_b']);
+$cycle = "de_dust2\r\nde_aztec\r\n";
+assert(Installer::withMaps($cycle, ['fy_a', 'de_aztec'], true) === "de_dust2\r\nde_aztec\r\nfy_a\r\n", 'appended once, line ends kept');
+assert(Installer::withMaps("de_dust2\nfy_a \n", ['fy_a'], false) === "de_dust2\n");
+assert(Installer::withMaps('', ['fy_a'], true) === "fy_a\n" && Installer::withMaps("fy_a\n", ['fy_a'], false) === '');
+assert(Installer::withMaps($cycle, ['de_dust'], false) === $cycle, 'only whole names');
+
 // --- server.properties ---------------------------------------------------------------------------
 
 $properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";

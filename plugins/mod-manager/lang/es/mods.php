@@ -101,6 +101,12 @@ return [
         'origin' => 'Subido',
     ],
 
+    'mapcycle' => [
+        'add' => 'Añadir a mapcycle.txt',
+        'remove' => 'Quitar de mapcycle.txt',
+        'out' => 'Fuera del mapcycle',
+    ],
+
     'amxx' => [
         'heading' => 'Plugins de AMX Mod X',
         'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',

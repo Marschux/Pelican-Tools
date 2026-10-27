@@ -151,7 +151,7 @@
                                     $isLoader = $install->is($loaderInstall);
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
                                     // only plugins and mods write configs, packs do not
-                                    // maps from GameBanana have none either, and nothing to switch: mapcycle.txt says which run
+                                    // maps from GameBanana have none either
                                     $isMap = str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
                                     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
@@ -208,7 +208,7 @@
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
                                             @endif
                                             @if (!$install->enabled)
-                                                <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans('mod-manager::mods.off') }}</x-filament::badge>
+                                                <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans($isMap ? 'mod-manager::mods.mapcycle.out' : 'mod-manager::mods.off') }}</x-filament::badge>
                                             @elseif ($isLoader && !$loaderRuns)
                                                 @if ($loader['installed'])
                                                     <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
@@ -249,8 +249,14 @@
                                             @endif
                                             {{-- one fixed slot per action, so switches, gears and bins line up from row to row --}}
                                             <span class="mod-slot">
-                                                @if (!$isLoader && !$isMap && $canUpdate)
-                                                    <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
+                                                @php
+                                                    // a map's switch puts it in and out of mapcycle.txt
+                                                    $switchLabel = $isMap
+                                                        ? trans($install->enabled ? 'mod-manager::mods.mapcycle.remove' : 'mod-manager::mods.mapcycle.add')
+                                                        : trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable');
+                                                @endphp
+                                                @if (!$isLoader && $canUpdate)
+                                                    <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ $switchLabel }}" aria-label="{{ $switchLabel }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
                                                         <x-filament::icon :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
                                                     </button>
                                                 @endif
