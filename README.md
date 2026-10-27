@@ -33,7 +33,7 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 |---|---|---|
 | [Access Lists](plugins/access-lists/README.md) | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
 | [Game Query](plugins/game-query/README.md) | Query players, map and server info | Admin + Server |
-| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim so far) | Admin + Server |
+| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim, Minecraft Paper) | Admin + Server |
 | [Server Navigation](plugins/server-navigation/README.md) | Hide sidebar entries per server | Admin + Server |
 | [Server Resources](plugins/server-resources/README.md) | Resources of host, nodes and servers on the admin dashboard | Admin |
 
@@ -44,6 +44,10 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 ![Mod Manager, installed mods](assets/screenshots/mod-manager-installed.png)
 
 ![Mod Manager, browsing Thunderstore](assets/screenshots/mod-manager-browse.png)
+
+On a Minecraft Paper server - plugins from Modrinth and Hangar next to datapacks:
+
+![Mod Manager on a Paper server](assets/screenshots/mod-manager-paper.png)
 
 **Server Resources** - panel host, nodes and their servers on the admin dashboard:
 
