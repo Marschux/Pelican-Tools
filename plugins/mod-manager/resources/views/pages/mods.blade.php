@@ -657,7 +657,12 @@
     {{-- for players: the same mods on their side, to paste into chat or a server description --}}
     <x-filament::modal id="mod-players" width="3xl">
         <x-slot name="heading">{{ trans('mod-manager::mods.players.heading') }}</x-slot>
-        <x-slot name="description">{{ trans($tab === 'installed' && $this->jarMods() ? 'mod-manager::mods.players.hint_plugins' : 'mod-manager::mods.players.hint') }}</x-slot>
+        <x-slot name="description">{{ trans(match (true) {
+            $tab !== 'installed' => 'mod-manager::mods.players.hint',
+            $this->canUpload() => 'mod-manager::mods.players.hint_goldsrc',
+            $this->jarMods() => 'mod-manager::mods.players.hint_plugins',
+            default => 'mod-manager::mods.players.hint',
+        }) }}</x-slot>
 
         @php
             $playerList = $tab === 'installed' ? $this->playerList() : '';

@@ -1531,6 +1531,10 @@ class Installer
                     }
                 }
 
+                if (str_starts_with($install->package, GameBanana::PREFIX)) {
+                    return "$install->name - https://gamebanana.com/mods/" . GameBanana::split($install->package);
+                }
+
                 // e.g. the GoldSrc loader: nothing to link to
                 if (!preg_match('/^\w+-\w+$/', $install->package)) {
                     return "$install->name $install->version";
