@@ -17,6 +17,7 @@ use Marschux\ModManager\Installer;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Profiles\Presets;
+use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
@@ -689,8 +690,10 @@ class ModsPage extends Page
         return [
             'name' => (string) $profile->setting('loader_name', $check),
             'installed' => $installed,
-            // started through the loader: this server's start command carries the prefix
-            'started' => $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
+            // started through the loader: liblist.gam loads Metamod, or this server's start command carries the prefix
+            'started' => $profile->setting('loader_type') === 'goldsrc'
+                ? $installed && $this->installer()->loaderHooked()
+                : $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
             'update' => $this->updates()[(string) $profile->setting('loader_package')] ?? null,
         ];
     }
@@ -767,11 +770,12 @@ class ModsPage extends Page
     }
 
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc
     {
         $profile = $this->profile();
 
         return match (true) {
+            $id === GoldSrc::PACKAGE => new GoldSrc(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),
             default => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),

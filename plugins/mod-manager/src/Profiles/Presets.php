@@ -69,8 +69,12 @@ class Presets
                     'config_dir' => 'cstrike/addons/amxmodx/configs',
                     'loader_type' => 'goldsrc',
                     'loader_name' => 'Metamod-R + AMX Mod X',
-                    'loader_check' => 'cstrike/addons/metamod/metamod_i386.so',
-                    'hidden_packages' => [],
+                    // Sources\GoldSrc::PACKAGE
+                    'loader_package' => 'goldsrc:loader',
+                    'loader_check' => 'cstrike/addons/metamod/metamod.so',
+                    // what liblist.gam loads again once Metamod is removed
+                    'game_dll' => 'dlls/cs.so',
+                    'hidden_packages' => ['goldsrc:loader'],
                 ],
             ],
         ];

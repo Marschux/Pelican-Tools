@@ -68,6 +68,29 @@ assert(Modrinth::kindOf('hangar:a') === null && Modrinth::kindOf('Foo-Bar') === 
 assert(Installer::kind('modrinth-datapack:a') === 'datapack' && Installer::kind('hangar:a') === 'plugin' && Installer::kind('A-B') === 'plugin');
 assert(Installer::jarPackage('modrinth-resourcepack:a'));
 
+// --- goldsrc loader ------------------------------------------------------------------------------
+
+$liblist = "game \"Counter-Strike\"\r\ngamedll \"dlls\\mp.dll\"\r\ngamedll_linux \"dlls/cs.so\"\r\ngamedll_osx \"dlls/cs.dylib\"\r\n";
+assert(Installer::gameDll($liblist) === 'dlls/cs.so');
+$hooked = Installer::withGameDll($liblist, 'addons/metamod/metamod_i386.so');
+assert(Installer::gameDll($hooked) === 'addons/metamod/metamod_i386.so' && str_contains($hooked, "gamedll \"dlls\\mp.dll\"\r\n") && str_contains($hooked, 'gamedll_osx'));
+assert(Installer::withGameDll($hooked, 'dlls/cs.so') === $liblist, 'unhooked again');
+assert(Installer::gameDll(Installer::withGameDll("game \"x\"", 'a.so')) === 'a.so', 'line added');
+
+$amxx = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
+assert(Installer::withMetamodPlugin('', $amxx) === "linux $amxx\n");
+assert(Installer::withMetamodPlugin("linux addons/x.so\n", $amxx) === "linux addons/x.so\nlinux $amxx\n");
+assert(Installer::withMetamodPlugin("linux $amxx\r\n", $amxx) === "linux $amxx\r\n", 'there already');
+assert(Installer::withMetamodPlugin("; linux $amxx\n", $amxx) === "; linux $amxx\nlinux $amxx\n", 'commented out is not there');
+
+assert(Installer::goldsrcFile('addons/metamod/metamod_i386.so') && !Installer::goldsrcFile('addons/metamod/metamod.dll'));
+assert(Installer::goldsrcFile('addons/amxmodx/plugins/admin.amxx') && !Installer::goldsrcFile('addons/amxmodx/scripting/admin.sma'));
+assert(!Installer::goldsrcFile('example_plugin/Makefile'));
+assert(Installer::goldsrcTarget('addons/metamod/metamod_i386.so') === 'addons/metamod/metamod.so', 'HLDS will not load a game library named _i386');
+assert(Installer::goldsrcTarget('addons/amxmodx/dlls/amxmodx_mm_i386.so') === 'addons/amxmodx/dlls/amxmodx_mm_i386.so', 'metamod loads its plugins by any name');
+assert(Installer::keptOnUpdate('addons/amxmodx/configs/users.ini') && Installer::keptOnUpdate('addons/amxmodx/configs/amxx.cfg'));
+assert(!Installer::keptOnUpdate('addons/amxmodx/data/lang/admin.txt'));
+
 // --- server.properties ---------------------------------------------------------------------------
 
 $properties = "#Minecraft server properties\nlevel-name=my world\nresource-pack=\nresource-pack-sha1=\nresource-pack-prompt=\nmotd=a\:b\n";

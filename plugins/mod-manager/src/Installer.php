@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
+use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
@@ -23,6 +24,15 @@ use RuntimeException;
  */
 class Installer
 {
+    /**
+     * what liblist.gam loads once Metamod is in, and what Metamod loads. Not metamod_i386.so as
+     * it comes: current HLDS fails to load a game library with "_i386" in its name ("Couldn't
+     * get DLL API" with a garbled path), so it is put there under this name.
+     */
+    private const METAMOD_DLL = 'addons/metamod/metamod.so';
+
+    private const AMXX_DLL = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
+
     /** where Minecraft keeps its settings: the world's name and the resource pack */
     private const PROPERTIES = 'server.properties';
 
@@ -254,6 +264,10 @@ class Installer
      */
     public function installLoader(?string $version = null): ModInstall
     {
+        if ($this->goldsrc()) {
+            return $this->installGoldSrcLoader();
+        }
+
         $package = $this->source->release((string) $this->profile->setting('loader_package'), $version);
         $scratch = '.mod-manager/loader';
 
@@ -318,8 +332,17 @@ class Installer
         $loader = $this->installs()->firstWhere('package', (string) $this->profile->setting('loader_package'));
 
         if ($loader) {
-            $this->files->delete(self::loaderPaths($loader->files, $this->keptDirs()));
+            // AMX Mod X keeps what plugins saved (vaults, languages) in its data folder
+            $kept = $this->goldsrc() ? [...$this->keptDirs(), $this->gameDir() . '/addons/amxmodx/data'] : $this->keptDirs();
+
+            $this->files->delete(self::loaderPaths($loader->files, $kept));
             $loader->delete();
+        }
+
+        if ($this->goldsrc()) {
+            $this->hookGoldSrc(false);
+
+            return;
         }
 
         $prefix = trim((string) $this->profile->setting('start_prefix'));
@@ -401,6 +424,163 @@ class Installer
         return trim((string) $this->profile->setting('config_dir'), '/');
     }
 
+    /**
+     * Metamod-R and AMX Mod X: every archive unpacked on the server, its addons/ folder sorted
+     * into the game folder - the game's AMX Mod X addon after the base, so its files win. Configs
+     * already on the server stay, they may have been changed. Then liblist.gam loads Metamod
+     * instead of the game, and Metamod loads AMX Mod X.
+     */
+    private function installGoldSrcLoader(): ModInstall
+    {
+        $release = (new GoldSrc())->release();
+        $game = $this->gameDir();
+        $scratch = '.mod-manager/loader';
+        $moves = [];
+        $replace = [];
+        $listings = [];
+
+        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
+
+        try {
+            foreach ($release['parts'] as $part) {
+                $directory = "$scratch/{$part['name']}";
+                $file = basename((string) parse_url($part['url'], PHP_URL_PATH));
+
+                $this->files->pull($part['url'], $directory, $file);
+                $this->files->decompress($directory, $file);
+
+                foreach ($this->files->walk("$directory/addons") as $path) {
+                    $path = "addons/$path";
+
+                    if (!self::goldsrcFile($path)) {
+                        continue;
+                    }
+
+                    $to = "$game/" . self::goldsrcTarget($path);
+                    $listings[dirname($to)] ??= $this->files->list(dirname($to));
+
+                    if (isset($listings[dirname($to)][basename($to)])) {
+                        if (self::keptOnUpdate($path)) {
+                            continue;
+                        }
+
+                        $replace[$to] = $to;
+                    }
+
+                    $moves[$to] = ['from' => "$directory/$path", 'to' => $to];
+                }
+            }
+
+            // Wings refuses to move onto an existing file
+            $this->files->delete(array_values($replace));
+            $this->files->move(array_values($moves));
+        } finally {
+            $this->files->delete([$scratch]);
+        }
+
+        $this->hookGoldSrc(true);
+
+        $previous = $this->installs()->firstWhere('package', GoldSrc::PACKAGE)?->files ?? [];
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => GoldSrc::PACKAGE],
+            [
+                'name' => (string) $this->profile->setting('loader_name', $release['name']),
+                'version' => $release['version'],
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                // what the version before put there stays tracked, so removing the loader takes it along
+                'files' => array_values(array_unique([...array_keys($moves), ...$previous])),
+            ],
+        );
+    }
+
+    /**
+     * Hooks Metamod in (liblist.gam loads it instead of the game, Metamod's plugins.ini loads
+     * AMX Mod X) or out again.
+     */
+    private function hookGoldSrc(bool $on): void
+    {
+        $game = $this->gameDir();
+        $liblist = "$game/liblist.gam";
+
+        $this->files->write($liblist, self::withGameDll((string) $this->files->read($liblist), $on ? self::METAMOD_DLL : (string) $this->profile->setting('game_dll', 'dlls/cs.so')));
+
+        if ($on) {
+            $plugins = "$game/addons/metamod/plugins.ini";
+
+            $this->files->write($plugins, self::withMetamodPlugin((string) $this->files->read($plugins), self::AMXX_DLL));
+        }
+    }
+
+    /** Metamod is in: liblist.gam loads it. Off when e.g. a "validate" of steamcmd restored the file. */
+    public function loaderHooked(): bool
+    {
+        return self::gameDll((string) $this->files->read($this->gameDir() . '/liblist.gam')) === self::METAMOD_DLL;
+    }
+
+    /** What liblist.gam loads on Linux, null without the line. */
+    public static function gameDll(string $liblist): ?string
+    {
+        return preg_match('/^[ \t]*gamedll_linux[ \t]+"([^"]*)"/m', $liblist, $match) ? $match[1] : null;
+    }
+
+    /** liblist.gam loading $dll on Linux; everything else stays. */
+    public static function withGameDll(string $liblist, string $dll): string
+    {
+        $line = 'gamedll_linux "' . str_replace('"', '', $dll) . '"';
+        $replaced = preg_replace_callback('/^[ \t]*gamedll_linux[ \t]+"[^"]*"/m', fn () => $line, $liblist, 1, $count);
+
+        return $count ? $replaced : rtrim($liblist, "\r\n") . "\n$line\n";
+    }
+
+    /** Metamod's plugins.ini with a line loading $dll on Linux, unless one does already. */
+    public static function withMetamodPlugin(string $ini, string $dll): string
+    {
+        foreach (preg_split('/\r?\n/', $ini) as $line) {
+            if (preg_match('/^\s*linux\s+(\S+)/', $line, $match) && $match[1] === $dll) {
+                return $ini;
+            }
+        }
+
+        return ($ini === '' ? '' : rtrim($ini, "\r\n") . "\n") . "linux $dll\n";
+    }
+
+    /**
+     * What of the loader archives goes on the server: the Linux builds, not AMX Mod X's
+     * scripting folder - its compiler cannot run from the panel, and it is most of the files.
+     */
+    public static function goldsrcFile(string $path): bool
+    {
+        return str_starts_with($path, 'addons/')
+            && !str_starts_with($path, 'addons/amxmodx/scripting/')
+            && strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'dll';
+    }
+
+    /** Where a file of the loader archives goes below the game folder - Metamod renamed, see METAMOD_DLL. */
+    public static function goldsrcTarget(string $path): string
+    {
+        return $path === 'addons/metamod/metamod_i386.so' ? self::METAMOD_DLL : $path;
+    }
+
+    /** A config of the loader: one on the server already is kept through an update. */
+    public static function keptOnUpdate(string $path): bool
+    {
+        return in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['ini', 'cfg'], true);
+    }
+
+    private function goldsrc(): bool
+    {
+        return $this->profile->setting('loader_type') === 'goldsrc';
+    }
+
+    /** e.g. cstrike */
+    private function gameDir(): string
+    {
+        return trim((string) $this->profile->setting('game_dir'), '/');
+    }
+
     /** Only this server's start command changes, the egg stays as it is. */
     public function applyStartPrefix(): void
     {
@@ -430,7 +610,7 @@ class Installer
 
             // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
             // there the newest for the game version simply differs from what is installed
-            if (self::jarPackage($install->package) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
+            if (self::jarPackage($install->package) || $install->package === GoldSrc::PACKAGE ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -1052,9 +1232,10 @@ class Installer
         return array_intersect($this->profile->sources(), ['modrinth', 'hangar']) !== [];
     }
 
-    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar
+    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc
     {
         return match (true) {
+            $package === GoldSrc::PACKAGE => new GoldSrc(),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),
             default => $this->source,
