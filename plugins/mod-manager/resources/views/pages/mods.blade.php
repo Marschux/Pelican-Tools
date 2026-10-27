@@ -35,6 +35,7 @@
     <style>
         .mod-installed { align-self: stretch; display: inline-flex; align-items: center; gap: .35rem; padding: 0 .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: rgb(21,128,61); background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); }
         .dark .mod-installed { color: rgb(74,222,128); }
+        .mod-slot { display: inline-flex; justify-content: center; width: 2.5rem; }
     </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
@@ -214,20 +215,22 @@
                                                     </x-filament::button>
                                                 @endif
                                             @endif
-                                            @if ($config && $canReadConfig)
-                                                {{-- the text colour, so white on dark and dark on light --}}
-                                                <x-filament::icon-button icon="tabler-settings" size="lg" style="color:inherit" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
-                                            @endif
-                                            @unless ($isLoader)
-                                                @if ($canUpdate)
-                                            <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
+                                            {{-- one fixed slot per action, so gears, switches and bins line up from row to row --}}
+                                            <span class="mod-slot">
+                                                @if ($config && $canReadConfig)
+                                                    <x-filament::button size="sm" color="gray" outlined icon="tabler-settings" label-sr-only wire:click="openConfig({{ $js($config) }})" :tooltip="basename($config)">{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}</x-filament::button>
                                                 @endif
-                                                @if ($canDelete)
-                                            <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
+                                            </span>
+                                            <span class="mod-slot">
+                                                @if (!$isLoader && $canUpdate)
+                                                    <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
                                                 @endif
-                                            @elseif ($canRemoveLoader)
-                                                <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="removeLoader" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
-                                            @endunless
+                                            </span>
+                                            <span class="mod-slot">
+                                                @if ($isLoader ? $canRemoveLoader : $canDelete)
+                                                    <x-filament::button size="sm" color="danger" outlined icon="tabler-trash" label-sr-only wire:click="{{ $isLoader ? 'removeLoader' : 'remove(' . $install->id . ')' }}" :tooltip="trans('mod-manager::mods.remove')">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                                                @endif
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>
