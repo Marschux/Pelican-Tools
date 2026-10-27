@@ -76,32 +76,11 @@ class Installer
         }
     }
 
-    /**
-     * Dependencies nothing needs any more once $install is gone - also the ones only those
-     * needed.
-     *
-     * @return Collection<int, ModInstall>
-     */
-    public function orphans(ModInstall $install): Collection
-    {
-        $remaining = $this->installs()->reject(fn (ModInstall $other) => $other->id === $install->id);
-        $orphans = new Collection();
-
-        do {
-            $required = $remaining->pluck('requires')->flatten()->unique()->all();
-            $found = $remaining->filter(fn (ModInstall $other) => $other->dependency && !in_array($other->package, $required, true));
-
-            $orphans = $orphans->merge($found);
-            $remaining = $remaining->diff($found);
-        } while ($found->isNotEmpty());
-
-        return $orphans->values();
-    }
-
     /** @return string[] the names removed */
-    public function uninstall(ModInstall $install, bool $withOrphans, bool $withConfigs = false): array
+    public function uninstall(ModInstall $install, bool $withConfigs = false): array
     {
-        $removing = $withOrphans ? $this->orphans($install)->prepend($install) : new Collection([$install]);
+        // only this mod - its dependencies stay, another mod may come along that needs them
+        $removing = new Collection([$install]);
         // worked out before anything is deleted, while the configs are still listed
         $configs = $withConfigs ? $this->runtimeConfigs($removing) : [];
 

@@ -52,6 +52,7 @@ return [
     'current' => 'Instalada',
     'requires' => 'Necesita: :names',
     'needed_by' => 'Lo necesita: :names',
+    'missing' => 'Falta: :names',
     'not_loaded' => 'No se carga',
     'active' => 'Activo',
     'columns' => [
@@ -108,10 +109,8 @@ return [
         'install_body' => 'Estos se instalan junto con :name:',
         'install_all' => 'Instalar todo',
         'remove_heading' => '¿Quitar :name?',
-        'orphans' => 'Ningún otro mod necesita estas dependencias después:',
+        'needed_by' => '{1} :names lo necesita y dejará de cargarse.|[2,*] :names lo necesitan y dejarán de cargarse.',
         'remove_configs' => 'Borrar también los ajustes que escribió el mod:',
-        'remove_with' => 'Quitar con dependencias',
-        'remove_only' => 'Quitar solo :name',
     ],
 
     'messages' => [

@@ -205,27 +205,28 @@ class ModsPage extends Page
         $this->requirePermission(SubuserPermission::FileDelete);
 
         $install = $this->findInstall($installId);
-        $orphans = $this->installer()->orphans($install);
 
         $this->removeConfigs = false;
         $this->confirm = [
             'type' => 'remove',
             'id' => $install->id,
             'name' => $install->name,
-            'packages' => $orphans->map(fn (ModInstall $orphan) => ['name' => $orphan->name, 'version' => $orphan->version, 'icon' => $orphan->icon])->all(),
+            'packages' => [],
+            // mods that stop loading without it
+            'needed_by' => $this->installed()->filter(fn (ModInstall $other) => $other->enabled && in_array($install->package, $other->requires, true))->pluck('name')->all(),
             // only shown - what gets deleted is worked out again on confirm
-            'configs' => $this->installer()->runtimeConfigs($orphans->prepend($install)),
+            'configs' => $this->installer()->runtimeConfigs(new Collection([$install])),
         ];
         $this->dispatch('open-modal', id: 'mod-confirm');
     }
 
-    public function confirmRemove(bool $withDependencies): void
+    public function confirmRemove(): void
     {
         $this->requirePermission(SubuserPermission::FileDelete);
 
         if (($this->confirm['type'] ?? null) === 'remove') {
             try {
-                $names = $this->installer()->uninstall($this->findInstall($this->confirm['id']), $withDependencies, $this->removeConfigs);
+                $names = $this->installer()->uninstall($this->findInstall($this->confirm['id']), $this->removeConfigs);
 
                 $this->markRestart();
 
@@ -464,7 +465,7 @@ class ModsPage extends Page
      * Who needs whom, in names: what a mod requires and which mods require it. The loader is
      * left out - every mod needs it.
      *
-     * @return array<string, array{requires: string[], needed_by: string[]}> package => names
+     * @return array<string, array{requires: string[], missing: string[], needed_by: string[]}> package => names
      */
     public function relations(): array
     {
@@ -477,6 +478,11 @@ class ModsPage extends Page
             $relations[$install->package]['requires'] = array_values(array_map(
                 fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
                 array_diff($install->requires, $hidden),
+            ));
+            // required, but not there or switched off - the mod will not load
+            $relations[$install->package]['missing'] = array_values(array_map(
+                fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
+                array_filter(array_diff($install->requires, $hidden), fn (string $package) => !$installs->contains(fn (ModInstall $other) => $other->package === $package && $other->enabled)),
             ));
             $relations[$install->package]['needed_by'] = $installs
                 ->filter(fn (ModInstall $other) => in_array($install->package, $other->requires, true))

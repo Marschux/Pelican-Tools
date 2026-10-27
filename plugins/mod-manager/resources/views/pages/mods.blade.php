@@ -129,7 +129,7 @@
                                 @php
                                     // the loader: no switch and no remove, without it no mod runs
                                     $isLoader = $install->is($loaderInstall);
-                                    $relation = $relations[$install->package] ?? ['requires' => [], 'needed_by' => []];
+                                    $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
                                     $config = \Marschux\ModManager\Installer::configFor($install->name, $configs);
                                 @endphp
                                 <tr wire:key="install-{{ $install->id }}" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
@@ -184,6 +184,8 @@
                                                 @endif
                                             @elseif (!$isLoader && !$loaderRuns)
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle" :tooltip="trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']])">{{ trans('mod-manager::mods.not_loaded') }}</x-filament::badge>
+                                            @elseif ($relation['missing'])
+                                                <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.missing', ['names' => implode(', ', $relation['missing'])]) }}</x-filament::badge>
                                             @elseif (!isset($updates[$install->package]))
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
@@ -524,7 +526,7 @@
 
             @if ($confirm['packages'])
                 <div style="{{ $muted }};font-size:.875rem">
-                    {{ trans($confirm['type'] === 'install' ? 'mod-manager::mods.confirm.install_body' : 'mod-manager::mods.confirm.orphans', ['name' => $confirm['name']]) }}
+                    {{ trans('mod-manager::mods.confirm.install_body', ['name' => $confirm['name']]) }}
                 </div>
                 <div>
                     @foreach ($confirm['packages'] as $package)
@@ -535,6 +537,12 @@
                             <span>{{ $package['name'] }} <span style="{{ $muted }}">{{ $package['version'] }}</span></span>
                         </div>
                     @endforeach
+                </div>
+            @endif
+
+            @if (($confirm['type'] === 'remove') && ($confirm['needed_by'] ?? []))
+                <div style="font-size:.875rem;color:rgb(234,179,8)">
+                    {{ trans_choice('mod-manager::mods.confirm.needed_by', count($confirm['needed_by']), ['names' => implode(', ', $confirm['needed_by'])]) }}
                 </div>
             @endif
 
@@ -557,11 +565,8 @@
                     <x-filament::button icon="tabler-download" wire:click="confirmInstall">{{ trans('mod-manager::mods.confirm.install_all') }}</x-filament::button>
                 @elseif ($confirm['type'] === 'remove_loader')
                     <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveLoader">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
-                @elseif ($confirm['packages'])
-                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove(true)">{{ trans('mod-manager::mods.confirm.remove_with') }}</x-filament::button>
-                    <x-filament::button color="danger" outlined wire:click="confirmRemove(false)">{{ trans('mod-manager::mods.confirm.remove_only', ['name' => $confirm['name']]) }}</x-filament::button>
                 @else
-                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove(false)">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
+                    <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove">{{ trans('mod-manager::mods.remove') }}</x-filament::button>
                 @endif
                 <x-filament::button color="gray" wire:click="closeConfirm">{{ trans('mod-manager::mods.cancel') }}</x-filament::button>
             </x-slot>
