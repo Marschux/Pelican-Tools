@@ -111,11 +111,12 @@ class Installer
 
     /**
      * The mod loader: its pack folder's content goes to the server root, then this server's
-     * start command gets the profile's prefix. Configs the loader already has are kept.
+     * start command gets the profile's prefix. Configs the loader already has are kept. The
+     * newest version without $version.
      */
-    public function installLoader(): ModInstall
+    public function installLoader(?string $version = null): ModInstall
     {
-        $package = $this->source->latest((string) $this->profile->setting('loader_package'));
+        $package = $this->source->release((string) $this->profile->setting('loader_package'), $version);
         $scratch = '.mod-manager/loader';
 
         $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
@@ -151,6 +152,13 @@ class Installer
             // Wings refuses to move onto an existing file, so an update removes the old one first
             $this->files->delete($replace);
             $this->files->move($moves);
+
+            // what only the version before had - left in place it could break an older version
+            $previous = $this->installs()->firstWhere('package', $package['id'])?->files ?? [];
+            $this->files->delete(array_values(array_filter(
+                array_diff($previous, array_column($moves, 'to')),
+                fn (string $path) => $configDir === '' || !str_starts_with($path, "$configDir/"),
+            )));
         } finally {
             $this->files->delete([$scratch]);
         }

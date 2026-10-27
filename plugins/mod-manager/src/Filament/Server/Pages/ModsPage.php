@@ -158,6 +158,13 @@ class ModsPage extends Page
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
+        // the loader is hidden from the plan, a version of it picked in the details goes its own way
+        if ($id === (string) $this->profile()->setting('loader_package')) {
+            $this->installLoader($version);
+
+            return;
+        }
+
         try {
             $plan = $this->installer()->plan($id, $version);
         } catch (Throwable $exception) {
@@ -231,14 +238,14 @@ class ModsPage extends Page
     }
 
     /** Installs or updates the mod loader and starts this server through it from then on. */
-    public function installLoader(): void
+    public function installLoader(?string $version = null): void
     {
         $this->requirePermission(SubuserPermission::FileCreate);
         // it also changes this server's start command
         $this->requirePermission(SubuserPermission::StartupUpdate);
 
         try {
-            $loader = $this->installer()->installLoader();
+            $loader = $this->installer()->installLoader($version);
         } catch (Throwable $exception) {
             $this->fail($exception);
 
@@ -482,6 +489,11 @@ class ModsPage extends Page
     /** @param  array<int, array<string, mixed>>  $plan */
     private function runInstall(array $plan): void
     {
+        // nothing to do, e.g. a hidden package - no "installed" and no restart for that
+        if ($plan === []) {
+            return;
+        }
+
         try {
             $this->installer()->install($plan);
         } catch (Throwable $exception) {
