@@ -91,6 +91,7 @@ return [
     ],
 
     'config' => [
+        'none_yet' => 'Aún sin configuración - el mod la escribe en su primer inicio',
         'heading' => 'Configuraciones',
         'hint' => 'Ajustes que los mods escribieron en su primer arranque. Un mod que nunca se ejecutó aún no tiene.',
         'open' => 'Editar',

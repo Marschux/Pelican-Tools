@@ -39,6 +39,7 @@
         {{-- the row actions: one square button each - gear in the text colour, power green while on, bin red --}}
         .mod-action { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: .5rem; border: 1px solid rgba(127,127,127,.35); background: transparent; color: inherit; cursor: pointer; transition: background .15s; }
         .mod-action:hover { background: rgba(127,127,127,.15); }
+        .mod-action:disabled { opacity: .3; cursor: not-allowed; background: transparent; }
         .mod-action svg { width: 1.1rem; height: 1.1rem; }
         .mod-action.mod-on { color: rgb(22,163,74); border-color: rgba(34,197,94,.45); }
         .mod-action[aria-pressed="false"] { opacity: .6; }
@@ -236,6 +237,11 @@
                                             <span class="mod-slot">
                                                 @if ($config && $canReadConfig)
                                                     <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ basename($config) }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
+                                                        <x-filament::icon icon="tabler-settings" />
+                                                    </button>
+                                                @elseif ($canReadConfig)
+                                                    {{-- greyed out rather than gone, so it is clear where the config will be --}}
+                                                    <button type="button" class="mod-action" disabled title="{{ trans('mod-manager::mods.config.none_yet') }}" aria-label="{{ trans('mod-manager::mods.config.none_yet') }}">
                                                         <x-filament::icon icon="tabler-settings" />
                                                     </button>
                                                 @endif
