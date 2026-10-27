@@ -376,7 +376,7 @@
             @php
                 $shown = collect([1, $pages, ...range(max(1, $page - 2), min($pages, $page + 2))])->unique()->sort()->values();
             @endphp
-            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
+            <div style="display:flex;justify-content:center;align-items:center;gap:.25rem;flex-wrap:wrap" wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated">
                 <x-filament::icon-button icon="tabler-chevron-left" color="gray" :disabled="$page <= 1" wire:click="goToPage({{ $page - 1 }})" :label="trans('mod-manager::mods.previous')" />
                 @foreach ($shown as $index => $number)
                     @if ($index > 0 && $number - $shown[$index - 1] > 1)
