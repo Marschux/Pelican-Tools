@@ -15,6 +15,15 @@
     $icon = 'flex:none;border-radius:.5rem;object-fit:cover;background:rgba(127,127,127,.15)';
     $muted = 'font-size:.8rem;opacity:.7';
     $js = fn (string $value) => \Illuminate\Support\Js::from($value);
+    // buttons a subuser may not press are left out, the actions check again
+    $permission = \App\Enums\SubuserPermission::class;
+    $canInstall = $this->may($permission::FileCreate);
+    $canUpdate = $this->may($permission::FileUpdate);
+    $canDelete = $this->may($permission::FileDelete);
+    $canLoader = $this->may($permission::FileCreate, $permission::StartupUpdate);
+    $canRemoveLoader = $this->may($permission::FileDelete, $permission::StartupUpdate);
+    $canReadConfig = $this->may($permission::FileReadContent);
+    $canRestart = $this->may($permission::ControlRestart);
 @endphp
 
 <x-filament-panels::page>
@@ -22,7 +31,7 @@
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
             <x-filament::icon icon="tabler-refresh-alert" style="width:1.25rem;height:1.25rem;color:rgb(234,179,8)" />
             <span style="flex:1">{{ trans('mod-manager::mods.restart.hint') }}</span>
-            @if ($this->canRestart())
+            @if ($canRestart)
                 <x-filament::button size="sm" color="warning" icon="tabler-refresh" wire:click="restart">{{ trans('mod-manager::mods.restart.button') }}</x-filament::button>
             @endif
             <x-filament::icon-button color="gray" icon="tabler-x" wire:click="dismissRestart" :label="trans('mod-manager::mods.restart.dismiss')" />
@@ -39,9 +48,11 @@
                 <x-filament::badge color="danger" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
             @endif
             <span style="{{ $muted }};flex:1">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
-            <x-filament::button size="sm" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
-                {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
-            </x-filament::button>
+            @if ($canLoader)
+                <x-filament::button size="sm" :icon="$loader['installed'] ? 'tabler-tool' : 'tabler-download'" wire:click="installLoader" wire:loading.attr="disabled">
+                    {{ trans($loader['installed'] ? 'mod-manager::mods.loader.repair' : 'mod-manager::mods.install') }}
+                </x-filament::button>
+            @endif
         </div>
     @endif
 
@@ -73,7 +84,7 @@
                 <x-slot name="afterHeader">
                     <div style="display:flex;gap:.5rem">
                         <x-filament::button size="sm" color="gray" icon="tabler-users" wire:click="showPlayerList">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
-                        @if ($updatable)
+                        @if ($updatable && $canUpdate)
                             <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
                         @endif
                     </div>
@@ -156,7 +167,7 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">
                                         <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
-                                            @if (isset($updates[$install->package]))
+                                            @if (isset($updates[$install->package]) && ($isLoader ? $canLoader : $canUpdate))
                                                 {{-- shows the jump: from what is there to what is out --}}
                                                 @if ($isLoader)
                                                     <x-filament::button size="xs" icon="tabler-arrow-up" wire:click="installLoader" :tooltip="trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]])" style="white-space:nowrap">
@@ -168,14 +179,18 @@
                                                     </x-filament::button>
                                                 @endif
                                             @endif
-                                            @if ($config)
+                                            @if ($config && $canReadConfig)
                                                 {{-- the text colour, so white on dark and dark on light --}}
                                                 <x-filament::icon-button icon="tabler-settings" size="lg" style="color:inherit" wire:click="openConfig({{ $js($config) }})" :label="trans('mod-manager::mods.config.edit', ['file' => basename($config)])" :tooltip="basename($config)" />
                                             @endif
                                             @unless ($isLoader)
+                                                @if ($canUpdate)
                                             <x-filament::icon-button :color="$install->enabled ? 'success' : 'gray'" size="xl" :icon="$install->enabled ? 'tabler-toggle-right-filled' : 'tabler-toggle-left'" wire:click="toggle({{ $install->id }})" :label="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" :tooltip="trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable')" />
+                                                @endif
+                                                @if ($canDelete)
                                             <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="remove({{ $install->id }})" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
-                                            @else
+                                                @endif
+                                            @elseif ($canRemoveLoader)
                                                 <x-filament::icon-button color="danger" icon="tabler-trash" size="lg" wire:click="removeLoader" :label="trans('mod-manager::mods.remove')" :tooltip="trans('mod-manager::mods.remove')" />
                                             @endunless
                                         </div>
@@ -199,10 +214,12 @@
                             <div style="font-weight:600">{{ $entry['name'] }} <span style="{{ $muted }};font-weight:400">{{ $entry['version'] }}</span></div>
                             <div style="{{ $muted }};font-family:monospace">{{ $entry['path'] }}</div>
                         </div>
-                        @if ($entry['package'])
+                        @if ($entry['package'] && $canUpdate)
                             <x-filament::button size="sm" color="gray" icon="tabler-download" wire:click="adopt({{ $js($entry['path']) }})">{{ trans('mod-manager::mods.unmanaged.adopt') }}</x-filament::button>
                         @endif
+                        @if ($canDelete)
                         <x-filament::icon-button color="danger" icon="tabler-trash" wire:click="removeUnmanaged({{ $js($entry['path']) }})" wire:confirm="{{ trans('mod-manager::mods.unmanaged.confirm_delete', ['path' => $entry['path']]) }}" :label="trans('mod-manager::mods.remove')" />
+                        @endif
                     </div>
                 @endforeach
             </x-filament::section>
@@ -215,7 +232,9 @@
                 @foreach ($configs as $config)
                     <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
                         <span style="flex:1;font-family:monospace;font-size:.875rem">{{ $config }}</span>
-                        <x-filament::button size="sm" color="gray" icon="tabler-pencil" wire:click="openConfig({{ $js($config) }})">{{ trans('mod-manager::mods.config.open') }}</x-filament::button>
+                        @if ($canReadConfig)
+                            <x-filament::button size="sm" color="gray" icon="tabler-pencil" wire:click="openConfig({{ $js($config) }})">{{ trans('mod-manager::mods.config.open') }}</x-filament::button>
+                        @endif
                     </div>
                 @endforeach
             </x-filament::section>
@@ -299,7 +318,7 @@
                     <div style="display:flex;gap:.5rem">
                         @if (isset($versions[$item['id']]))
                             <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
-                        @else
+                        @elseif ($canInstall)
                             <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                         @endif
                         <x-filament::button size="sm" color="gray" icon="tabler-info-circle" wire:click="showDetails({{ $js($item['id']) }})">{{ trans('mod-manager::mods.details') }}</x-filament::button>
@@ -341,7 +360,7 @@
                             {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
                             ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }} ·
                             {{ \Illuminate\Support\Number::fileSize($details['size']) }} ·
-                            {{ trans('mod-manager::mods.used_by', ['count' => number_format($details['dependants'])]) }}
+                            {{ trans_choice('mod-manager::mods.used_by', $details['dependants'], ['count' => number_format($details['dependants'])]) }}
                         </div>
                     </div>
                 </div>
@@ -350,7 +369,7 @@
             <div style="display:flex;gap:.5rem;flex-wrap:wrap">
                 @if (isset($versions[$details['id']]))
                     <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
-                @else
+                @elseif ($canInstall)
                     <x-filament::button icon="tabler-download" wire:click="install({{ $js($details['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
                 <x-filament::button color="gray" icon="tabler-external-link" tag="a" :href="$details['url']" target="_blank">Thunderstore</x-filament::button>
@@ -392,7 +411,7 @@
                                 @endforeach
                             </x-filament::input.select>
                         </x-filament::input.wrapper>
-                        <x-filament::button icon="tabler-download" x-show="picked !== current" x-on:click="$wire.install({{ \Illuminate\Support\Js::from($details['id']) }}, picked)">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                        <x-filament::button icon="tabler-download" x-show="{{ $canInstall ? 'picked !== current' : 'false' }}" x-on:click="$wire.install({{ \Illuminate\Support\Js::from($details['id']) }}, picked)">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                         <x-filament::badge color="success" icon="tabler-check" x-show="picked === current" x-cloak>{{ trans('mod-manager::mods.current') }}</x-filament::badge>
                     </div>
                 </div>
@@ -417,10 +436,12 @@
         <x-slot name="heading">{{ $configPath ? basename($configPath) : '' }}</x-slot>
         <x-slot name="description">{{ trans('mod-manager::mods.config.restart_note') }}</x-slot>
 
-        <textarea wire:model="configText" spellcheck="false" rows="24" style="width:100%;font-family:monospace;font-size:.8rem;line-height:1.4;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit;resize:vertical"></textarea>
+        <textarea wire:model="configText" @readonly(!$canUpdate) spellcheck="false" rows="24" style="width:100%;font-family:monospace;font-size:.8rem;line-height:1.4;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit;resize:vertical"></textarea>
 
         <x-slot name="footerActions">
-            <x-filament::button icon="tabler-device-floppy" wire:click="saveConfig">{{ trans('mod-manager::mods.config.save') }}</x-filament::button>
+            @if ($canUpdate)
+                <x-filament::button icon="tabler-device-floppy" wire:click="saveConfig">{{ trans('mod-manager::mods.config.save') }}</x-filament::button>
+            @endif
             <x-filament::button color="gray" x-on:click="close">{{ trans('mod-manager::mods.cancel') }}</x-filament::button>
         </x-slot>
     </x-filament::modal>
@@ -450,7 +471,7 @@
             </x-slot>
 
             @if ($confirm['type'] === 'remove_loader')
-                <div style="font-size:.875rem">{{ trans('mod-manager::mods.confirm.loader_body', ['name' => $confirm['name'], 'count' => $confirm['mods']]) }}</div>
+                <div style="font-size:.875rem">{{ trans_choice('mod-manager::mods.confirm.loader_body', $confirm['mods'], ['name' => $confirm['name']]) }}</div>
             @endif
 
             @if ($confirm['packages'])

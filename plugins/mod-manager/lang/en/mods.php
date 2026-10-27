@@ -33,7 +33,7 @@ return [
     'loader_dependency' => 'Mod loader',
     'hide_client_side' => 'Hide client-only mods',
     'show_deprecated' => 'Show deprecated',
-    'used_by' => 'used by :count mods',
+    'used_by' => '{0} used by no other mod|{1} used by 1 mod|[2,*] used by :count mods',
     'readme' => 'Description',
     'changelog' => 'Changelog',
     'side' => [
@@ -102,7 +102,7 @@ return [
     ],
 
     'confirm' => [
-        'loader_body' => 'Without :name, the :count installed mods no longer load. They stay installed, as do all configs, and work again once :name is back. The start command of this server goes back to normal.',
+        'loader_body' => '{0} No mods are installed. The start command of this server goes back to normal.|{1} Without :name, the installed mod no longer loads. It stays installed, as do all configs, and works again once :name is back. The start command of this server goes back to normal.|[2,*] Without :name, the :count installed mods no longer load. They stay installed, as do all configs, and work again once :name is back. The start command of this server goes back to normal.',
         'install_heading' => ':name needs more mods',
         'install_body' => 'These are installed along with :name:',
         'install_all' => 'Install all',

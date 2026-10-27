@@ -33,7 +33,7 @@ return [
     'loader_dependency' => 'Cargador de mods',
     'hide_client_side' => 'Ocultar mods solo de cliente',
     'show_deprecated' => 'Mostrar obsoletos',
-    'used_by' => 'usado por :count mods',
+    'used_by' => '{0} no lo usa ningún otro mod|{1} usado por 1 mod|[2,*] usado por :count mods',
     'readme' => 'Descripción',
     'changelog' => 'Registro de cambios',
     'side' => [
@@ -102,7 +102,7 @@ return [
     ],
 
     'confirm' => [
-        'loader_body' => 'Sin :name, los :count mods instalados ya no se cargan. Siguen instalados, igual que las configuraciones, y vuelven a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.',
+        'loader_body' => '{0} No hay mods instalados. El comando de inicio de este servidor vuelve a ser el normal.|{1} Sin :name, el mod instalado ya no se carga. Sigue instalado, igual que las configuraciones, y vuelve a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.|[2,*] Sin :name, los :count mods instalados ya no se cargan. Siguen instalados, igual que las configuraciones, y vuelven a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.',
         'install_heading' => ':name necesita más mods',
         'install_body' => 'Estos se instalan junto con :name:',
         'install_all' => 'Instalar todo',

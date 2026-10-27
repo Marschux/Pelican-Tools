@@ -33,11 +33,11 @@ return [
     'loader_dependency' => 'Mod-Loader',
     'hide_client_side' => 'Nur-Client-Mods ausblenden',
     'show_deprecated' => 'Veraltete zeigen',
-    'used_by' => 'von :count Mods benutzt',
+    'used_by' => '{0} von keinem anderen Mod benutzt|{1} von 1 Mod benutzt|[2,*] von :count Mods benutzt',
     'readme' => 'Beschreibung',
     'changelog' => 'Changelog',
     'side' => [
-        'server' => 'Server-side',
+        'server' => 'Serverseitig',
         'client' => 'Nur Client',
     ],
     'installed_version' => 'Installiert :version',
@@ -102,7 +102,7 @@ return [
     ],
 
     'confirm' => [
-        'loader_body' => 'Ohne :name laden die :count installierten Mods nicht mehr. Sie bleiben installiert, ebenso alle Configs, und laufen wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.',
+        'loader_body' => '{0} Es sind keine Mods installiert. Der Startbefehl dieses Servers wird zurückgesetzt.|{1} Ohne :name lädt der installierte Mod nicht mehr. Er bleibt installiert, ebenso alle Configs, und läuft wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.|[2,*] Ohne :name laden die :count installierten Mods nicht mehr. Sie bleiben installiert, ebenso alle Configs, und laufen wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.',
         'install_heading' => ':name braucht weitere Mods',
         'install_body' => 'Diese werden mit :name zusammen installiert:',
         'install_all' => 'Alle installieren',

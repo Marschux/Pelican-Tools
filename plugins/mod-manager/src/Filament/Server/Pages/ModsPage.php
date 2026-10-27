@@ -363,9 +363,16 @@ class ModsPage extends Page
         return (bool) session($this->restartKey(), false);
     }
 
-    public function canRestart(): bool
+    /** For the view: a button the user may not press is not shown, the action checks again. */
+    public function may(SubuserPermission ...$permissions): bool
     {
-        return (bool) user()?->can(SubuserPermission::ControlRestart, $this->server());
+        foreach ($permissions as $permission) {
+            if (!user()?->can($permission, $this->server())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** @return string[] */
