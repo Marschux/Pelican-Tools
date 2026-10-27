@@ -351,7 +351,7 @@
                         </div>
                     @endif
 
-                    <div style="display:flex;gap:.5rem">
+                    <div style="display:flex;gap:.5rem;align-items:center">
                         @if (isset($versions[$item['id']]))
                             <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$item['id']]]) }}</x-filament::badge>
                         @elseif ($canInstall)
@@ -407,7 +407,7 @@
                 </div>
             </x-slot>
 
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
                 @if (isset($versions[$details['id']]))
                     <x-filament::badge color="success" icon="tabler-check">{{ trans('mod-manager::mods.installed_version', ['version' => $versions[$details['id']]]) }}</x-filament::badge>
                 @elseif ($canInstall)

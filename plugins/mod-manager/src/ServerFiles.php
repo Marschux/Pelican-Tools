@@ -5,6 +5,7 @@ namespace Marschux\ModManager;
 use App\Facades\Activity;
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonFileRepository;
+use Illuminate\Http\Client\RequestException;
 use RuntimeException;
 use Throwable;
 
@@ -63,13 +64,22 @@ class ServerFiles
         }
 
         // Wings fails the whole call over one missing file - someone may have removed it by
-        // hand, so that case goes file by file, skipping what is gone already
-        if ($this->repository->deleteFiles('/', $paths)->status() === 404) {
-            foreach ($paths as $path) {
-                $response = $this->repository->deleteFiles('/', [$path]);
+        // hand, so that case goes file by file, skipping what is gone already. Pelican's client
+        // throws on any error status, so the 404 arrives as an exception.
+        try {
+            $this->repository->deleteFiles('/', array_values(array_unique($paths)))->throw();
+        } catch (RequestException $exception) {
+            if ($exception->response->status() !== 404) {
+                throw $exception;
+            }
 
-                if ($response->status() !== 404) {
-                    $response->throw();
+            foreach (array_unique($paths) as $path) {
+                try {
+                    $this->repository->deleteFiles('/', [$path])->throw();
+                } catch (RequestException $missing) {
+                    if ($missing->response->status() !== 404) {
+                        throw $missing;
+                    }
                 }
             }
         }

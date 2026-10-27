@@ -20,6 +20,12 @@ class Thunderstore
 
     private const AGENT = 'Marschux/pelican-mod-manager';
 
+    /** mods per page in the browser: four rows of three */
+    private const PER_PAGE = 12;
+
+    /** what thunderstore puts on one of its pages */
+    private const SOURCE_PAGE = 20;
+
     public const ORDERINGS = ['most-downloaded', 'top-rated', 'last-updated', 'newest'];
 
     /** @param  string[]  $hidden  packages never shown, as "Namespace-Name" */
@@ -44,7 +50,7 @@ class Thunderstore
      */
     public function search(string $query = '', ?string $category = null, string $ordering = 'most-downloaded', int $page = 1, bool $hideClientSide = false, bool $showDeprecated = false): array
     {
-        $response = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", array_filter([
+        $query = array_filter([
             'q' => $query,
             'included_categories' => $category,
             // client-only mods do nothing on a server
@@ -52,17 +58,34 @@ class Thunderstore
             // thunderstore leaves deprecated packages out unless asked
             'deprecated' => $showDeprecated ? 'true' : null,
             'ordering' => in_array($ordering, self::ORDERINGS, true) ? $ordering : 'most-downloaded',
-            'page' => $page,
-        ]));
+        ]);
 
-        $items = collect($response->json('results', []))
+        // thunderstore pages hold 20 and ignore a page size; pages of 12 fill the three columns,
+        // so one page here takes its slice out of one or two of theirs
+        $start = (max(1, $page) - 1) * self::PER_PAGE;
+        $first = intdiv($start, self::SOURCE_PAGE) + 1;
+        $last = intdiv($start + self::PER_PAGE - 1, self::SOURCE_PAGE) + 1;
+        $results = [];
+        $count = 0;
+
+        foreach (range($first, $last) as $sourcePage) {
+            $response = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/", $query + ['page' => $sourcePage]);
+            $results = [...$results, ...$response->json('results', [])];
+            $count = (int) $response->json('count', 0);
+
+            if ($response->json('next') === null) {
+                break;
+            }
+        }
+
+        // hidden packages make a page a little shorter, never shift the count
+        $items = collect(array_slice($results, $start - ($first - 1) * self::SOURCE_PAGE, self::PER_PAGE))
             ->reject(fn (array $package) => in_array("{$package['namespace']}-{$package['name']}", $this->hidden, true))
             ->map(fn (array $package) => $this->item($package))
             ->values()
             ->all();
 
-        // pages of 20; hidden packages make a page a little shorter, never shift the count
-        return ['items' => $items, 'pages' => max(1, (int) ceil($response->json('count', 0) / 20))];
+        return ['items' => $items, 'pages' => max(1, (int) ceil($count / self::PER_PAGE))];
     }
 
     /**

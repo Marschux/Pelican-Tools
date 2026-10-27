@@ -547,7 +547,7 @@ class Installer
 
         // a reinstall or update starts from empty folders - configs stay, they may have been changed
         $this->files->delete(array_values(array_filter(
-            [...($existing?->files ?? []), $directory],
+            array_unique([...($existing?->files ?? []), $directory]),
             fn (string $path) => !$isConfig($path) && $this->files->exists($path),
         )));
         $this->files->pull($package['download'], $directory, 'package.zip');
