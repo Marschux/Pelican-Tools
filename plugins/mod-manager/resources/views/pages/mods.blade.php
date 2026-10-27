@@ -302,15 +302,13 @@
                 @foreach ($configs as $config)
                     <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
                         <span style="flex:1;font-family:monospace;font-size:.875rem">{{ $config }}</span>
-                        {{-- the same square buttons as the rows of the installed table --}}
-                        <span class="mod-slot">
+                        {{-- the same square buttons as the rows of the installed table, side by side --}}
+                        <span style="display:inline-flex;gap:.25rem">
                             @if ($canReadConfig)
                                 <button type="button" class="mod-action" wire:click="openConfig({{ $js($config) }})" title="{{ trans('mod-manager::mods.config.open') }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => basename($config)]) }}">
                                     <x-filament::icon icon="tabler-pencil" />
                                 </button>
                             @endif
-                        </span>
-                        <span class="mod-slot">
                             @if ($canDelete)
                                 <button type="button" class="mod-action mod-danger" wire:click="deleteConfig({{ $js($config) }})" wire:confirm="{{ trans('mod-manager::mods.config.confirm_delete', ['file' => basename($config)]) }}" title="{{ trans('mod-manager::mods.config.delete_hint') }}" aria-label="{{ trans('mod-manager::mods.config.delete') }}">
                                     <x-filament::icon icon="tabler-trash" />
