@@ -92,6 +92,8 @@ return [
         'open' => 'Bearbeiten',
         'edit' => ':file bearbeiten',
         'save' => 'Speichern',
+        'confirm_delete' => ':file löschen? Der Mod schreibt beim nächsten Start eine neue mit seinen Standardwerten.',
+        'delete_hint' => 'Löschen - der Mod schreibt beim nächsten Start eine neue',
         'restart_note' => 'Die meisten Mods lesen ihre Config nur beim Start.',
     ],
 
@@ -114,6 +116,7 @@ return [
     ],
 
     'messages' => [
+        'config_deleted' => ':file gelöscht',
         'config_saved' => ':file gespeichert',
         'restarting' => 'Server startet neu',
         'not_a_config' => 'Das ist keine Config dieses Servers.',

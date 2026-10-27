@@ -92,6 +92,8 @@ return [
         'open' => 'Editar',
         'edit' => 'Editar :file',
         'save' => 'Guardar',
+        'confirm_delete' => '¿Borrar :file? El mod escribe uno nuevo con sus valores por defecto en el próximo arranque.',
+        'delete_hint' => 'Borrar - el mod escribe uno nuevo en el próximo arranque',
         'restart_note' => 'La mayoría de los mods solo leen su configuración al arrancar.',
     ],
 
@@ -114,6 +116,7 @@ return [
     ],
 
     'messages' => [
+        'config_deleted' => ':file borrado',
         'config_saved' => ':file guardado',
         'restarting' => 'El servidor se está reiniciando',
         'not_a_config' => 'No es una configuración de este servidor.',

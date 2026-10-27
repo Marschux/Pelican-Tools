@@ -344,6 +344,13 @@ class ModsPage extends Page
         $this->dispatch('close-modal', id: 'mod-config');
     }
 
+    public function deleteConfig(string $path): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->attempt(fn () => $this->installer()->deleteConfig($path), trans('mod-manager::mods.messages.config_deleted', ['file' => basename($path)]));
+    }
+
     public function restart(): void
     {
         $this->requirePermission(SubuserPermission::ControlRestart);

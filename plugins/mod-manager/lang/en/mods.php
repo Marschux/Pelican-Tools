@@ -92,6 +92,8 @@ return [
         'open' => 'Edit',
         'edit' => 'Edit :file',
         'save' => 'Save',
+        'confirm_delete' => 'Delete :file? The mod writes a fresh one with its defaults on the next start.',
+        'delete_hint' => 'Delete - the mod writes a fresh one on its next start',
         'restart_note' => 'Most mods read their config only on start.',
     ],
 
@@ -114,6 +116,7 @@ return [
     ],
 
     'messages' => [
+        'config_deleted' => ':file deleted',
         'config_saved' => ':file saved',
         'restarting' => 'Server is restarting',
         'not_a_config' => 'That is not a config of this server.',

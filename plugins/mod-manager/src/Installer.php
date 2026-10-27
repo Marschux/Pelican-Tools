@@ -492,6 +492,14 @@ class Installer
         $this->files->write($path, $content);
     }
 
+    /** Back to defaults: the mod writes a fresh one on its next start. */
+    public function deleteConfig(string $path): void
+    {
+        $this->assertConfig($path);
+
+        $this->files->delete([$path]);
+    }
+
     /** What players need on their side: every mod that is switched on, the loader first. */
     public function playerList(): string
     {
