@@ -6,6 +6,8 @@ use App\Models\Server;
 use Illuminate\Database\Eloquent\Collection;
 use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
+use Marschux\ModManager\Sources\Hangar;
+use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
 use RuntimeException;
 
@@ -13,7 +15,8 @@ use RuntimeException;
  * Puts mods on a server and takes them off again, the way the server's mod profile says.
  *
  * Every Thunderstore package is unpacked whole into a folder of its own below the mods folder,
- * like r2modman does it - BepInEx loads plugins from any depth there.
+ * like r2modman does it - BepInEx loads plugins from any depth there. A Modrinth or Hangar
+ * plugin is a single jar, pulled straight into the mods folder.
  */
 class Installer
 {
@@ -27,6 +30,9 @@ class Installer
 
     private Thunderstore $source;
 
+    /** @var array{0: ?string}|null the server's game version once read, see gameVersion() */
+    private ?array $gameVersion = null;
+
     public function __construct(private Server $server, private ModProfile $profile)
     {
         $this->files = new ServerFiles($server);
@@ -35,16 +41,19 @@ class Installer
 
     /**
      * What installing $id means: its dependencies that are not there yet, then $id itself.
-     * Packages the profile hides (the loader) are left out.
+     * Packages the profile hides (the loader) are left out. Of $id's optional dependencies,
+     * those in $optional come along. Without $version every package comes in the newest version
+     * for the server's game version.
      *
-     * @return array<int, array<string, mixed>> from Thunderstore::latest(), plus "dependency"
+     * @param  string[]  $optional
+     * @return array<int, array<string, mixed>> from the source's release(), plus "dependency"
      */
-    public function plan(string $id, ?string $version = null): array
+    public function plan(string $id, ?string $version = null, array $optional = []): array
     {
         $installed = $this->installs()->pluck('package')->all();
         $plan = [];
 
-        $collect = function (string $package, bool $root) use (&$collect, &$plan, $installed, $version) {
+        $collect = function (string $package, bool $root) use (&$collect, &$plan, $installed, $version, $optional) {
             if (array_key_exists($package, $plan) || in_array($package, $this->hidden(), true) || (!$root && in_array($package, $installed, true))) {
                 return;
             }
@@ -52,9 +61,10 @@ class Installer
             // taken before the dependencies, so a dependency cycle stops here
             $plan[$package] = null;
             // a version picked by hand only for the package itself, dependencies come newest
-            $latest = $this->source->release($package, $root ? $version : null);
+            $latest = $this->sourceFor($package)->release($package, $root ? $version : null, $this->gameVersion());
+            $picked = $root ? array_values(array_intersect(array_keys($latest['optional'] ?? []), $optional)) : [];
 
-            foreach ($latest['requires'] as $required) {
+            foreach ([...$latest['requires'], ...$picked] as $required) {
                 $collect($required, false);
             }
 
@@ -99,6 +109,10 @@ class Installer
      */
     public function runtimeConfigs(Collection $installs): array
     {
+        if ($this->jarMods()) {
+            return $this->dataFolders($installs);
+        }
+
         $directory = $this->configDir();
         $others = $this->installs()->reject(fn (ModInstall $other) => $installs->contains('id', $other->id))->pluck('files')->flatten()->all();
         $configs = $this->configs();
@@ -137,6 +151,57 @@ class Installer
             return (count($parts) > 1 && self::needle($parts[0]) === $needle)
                 || str_contains(self::needle(pathinfo($path, PATHINFO_FILENAME)), $needle);
         }));
+    }
+
+    /**
+     * The folders these plugins keep their data in: plugins/<plugin name> next to the jars.
+     *
+     * @param  Collection<int, ModInstall>  $installs
+     * @return string[]
+     */
+    private function dataFolders(Collection $installs): array
+    {
+        $folders = array_keys(array_filter($this->files->list($this->modsDir())));
+        $others = $this->installs()->reject(fn (ModInstall $other) => $installs->contains('id', $other->id))->pluck('name')->all();
+        $found = [];
+
+        foreach ($installs as $install) {
+            foreach (self::dataFoldersOf($install->name, $folders, $others) as $folder) {
+                $found[] = $this->modsDir() . "/$folder";
+            }
+        }
+
+        return array_values(array_unique($found));
+    }
+
+    /**
+     * A plugin's data folder is named after the plugin as its jar names it, which is close to
+     * but not always the project's name: "EssentialsX" writes to "Essentials". So a folder
+     * named exactly like it, else one whose name the plugin's name starts with - unless that
+     * folder fits one of the $others too, then it is not certain whose it is.
+     *
+     * @param  string[]  $folders
+     * @param  string[]  $others  names of the other installed plugins
+     * @return string[]
+     */
+    public static function dataFoldersOf(string $name, array $folders, array $others = []): array
+    {
+        $needle = self::needle($name);
+
+        if (strlen($needle) < 3) {
+            return [];
+        }
+
+        $exact = array_values(array_filter($folders, fn (string $folder) => self::needle($folder) === $needle));
+
+        if ($exact !== []) {
+            return $exact;
+        }
+
+        $fits = fn (string $folder, string $plugin) => strlen(self::needle($folder)) >= 4 && str_starts_with(self::needle($plugin), self::needle($folder));
+
+        return array_values(array_filter($folders, fn (string $folder) => $fits($folder, $name)
+            && !array_filter($others, fn (string $other) => $fits($folder, $other))));
     }
 
     /** A name as it shows up in file names: lower case, letters and digits only. */
@@ -320,12 +385,14 @@ class Installer
 
         foreach ($this->installs() as $install) {
             try {
-                $latest = $this->source->latestVersion($install->package);
+                $latest = $this->sourceFor($install->package)->latestVersion($install->package, $this->gameVersion());
             } catch (\Throwable) {
                 continue;
             }
 
-            if (version_compare($latest, $install->version, '>')) {
+            // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
+            // there the newest for the game version simply differs from what is installed
+            if (self::jarPackage($install->package) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -376,7 +443,8 @@ class Installer
         foreach ($this->files->list($this->modsDir()) as $name => $isDirectory) {
             $path = $this->modsDir() . "/$name";
 
-            if (in_array($path, $known, true)) {
+            // ponytail: next to plugin jars sit their data folders, only jars count - recognising them comes later
+            if (in_array($path, $known, true) || ($this->jarMods() && ($isDirectory || !str_ends_with(strtolower($name), '.jar')))) {
                 continue;
             }
 
@@ -510,6 +578,15 @@ class Installer
             ->filter(fn (ModInstall $install) => $install->enabled)
             ->sortBy(fn (ModInstall $install) => [$install->package !== $loader, strtolower($install->name)])
             ->map(function (ModInstall $install) use ($community) {
+                if (str_starts_with($install->package, Modrinth::PREFIX)) {
+                    return "$install->name $install->version - https://modrinth.com/project/" . Modrinth::split($install->package);
+                }
+
+                // ponytail: a hangar link needs the owner, which is not kept
+                if (str_starts_with($install->package, Hangar::PREFIX)) {
+                    return "$install->name $install->version";
+                }
+
                 [$namespace, $name] = Thunderstore::split($install->package);
 
                 return "$install->name $install->version - https://thunderstore.io/c/$community/p/$namespace/$name/";
@@ -582,6 +659,10 @@ class Installer
     /** @param  array<string, mixed>  $package */
     private function installPackage(array $package): ModInstall
     {
+        if (isset($package['file'])) {
+            return $this->installJar($package);
+        }
+
         $existing = $this->installs()->firstWhere('package', $package['id']);
         // a mod that is switched off stays off through an update
         $enabled = $existing?->enabled ?? true;
@@ -639,6 +720,72 @@ class Installer
                 'size' => array_sum(array_map(fn (string $path) => $this->files->size($path), $files)),
             ],
         );
+    }
+
+    /** A plugin: one jar, pulled straight into the mods folder - or next to it while switched off. */
+    private function installJar(array $package): ModInstall
+    {
+        $existing = $this->installs()->firstWhere('package', $package['id']);
+        $enabled = $existing?->enabled ?? true;
+        $path = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . self::jarName((string) $package['file']);
+
+        // an update replaces the old jar, which may be named differently; Wings will not pull onto a file
+        $this->files->delete(array_values(array_filter(array_unique([...($existing?->files ?? []), $path]), fn (string $old) => $this->files->exists($old))));
+        $this->files->pull($package['download'], dirname($path), basename($path));
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => $package['id']],
+            [
+                'name' => $package['name'],
+                'version' => $package['version'],
+                'icon' => $package['icon'],
+                'dependency' => $existing ? $existing->dependency && $package['dependency'] : $package['dependency'],
+                'requires' => $package['requires'],
+                'files' => [$path],
+                'pinned' => $package['pinned'] ?? false,
+                'enabled' => $enabled,
+                'size' => $package['size'] ?: $this->files->size($path),
+            ],
+        );
+    }
+
+    /** The jar's file name as the source gives it - it ends up in a path, so nothing but a plain name. */
+    public static function jarName(string $file): string
+    {
+        if (!preg_match('/^\w[\w .+()\[\]-]*\.jar\z/i', $file)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $file]));
+        }
+
+        return $file;
+    }
+
+    /** A package of a source that ships single jars: Modrinth or Hangar. */
+    public static function jarPackage(string $package): bool
+    {
+        return str_starts_with($package, Modrinth::PREFIX) || str_starts_with($package, Hangar::PREFIX);
+    }
+
+    /** Mods of this game are single jars: the profile gets them from Modrinth or Hangar. */
+    public function jarMods(): bool
+    {
+        return array_intersect($this->profile->sources(), ['modrinth', 'hangar']) !== [];
+    }
+
+    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar
+    {
+        return match (true) {
+            str_starts_with($package, Modrinth::PREFIX) => new Modrinth((array) $this->profile->setting('modrinth_loaders', [])),
+            str_starts_with($package, Hangar::PREFIX) => new Hangar(),
+            default => $this->source,
+        };
+    }
+
+    /** The version the server's game runs, read once - null where the profile does not say. */
+    private function gameVersion(): ?string
+    {
+        $this->gameVersion ??= [GameVersion::of($this->server, $this->profile)['version'] ?? null];
+
+        return $this->gameVersion[0];
     }
 
     /** A package's manifest.json - written by Windows tools, so often with a byte order mark. */

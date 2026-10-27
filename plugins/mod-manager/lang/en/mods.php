@@ -111,6 +111,8 @@ return [
     ],
 
     'confirm' => [
+        'optional' => ':name also works with these (optional):',
+        'remove_data' => 'Also delete the data folder',
         'loader_body' => '{0} No mods are installed. The start command of this server goes back to normal.|{1} Without :name, the installed mod no longer loads. It stays installed, as do all configs, and works again once :name is back. The start command of this server goes back to normal.|[2,*] Without :name, the :count installed mods no longer load. They stay installed, as do all configs, and work again once :name is back. The start command of this server goes back to normal.',
         'install_heading' => ':name needs more mods',
         'install_body' => 'These are installed along with :name:',
@@ -121,6 +123,9 @@ return [
     ],
 
     'messages' => [
+        'no_version' => ':name has no version for :version. Pick one in the details.',
+        'external_only' => ':name is only available from :url - install it by hand.',
+        'bad_file' => 'Not a plugin file: :file',
         'config_deleted' => ':file deleted',
         'config_saved' => ':file saved',
         'restarting' => 'Server is restarting',

@@ -111,6 +111,8 @@ return [
     ],
 
     'confirm' => [
+        'optional' => ':name arbeitet auch mit diesen zusammen (optional):',
+        'remove_data' => 'Datenordner mit löschen',
         'loader_body' => '{0} Es sind keine Mods installiert. Der Startbefehl dieses Servers wird zurückgesetzt.|{1} Ohne :name lädt der installierte Mod nicht mehr. Er bleibt installiert, ebenso alle Configs, und läuft wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.|[2,*] Ohne :name laden die :count installierten Mods nicht mehr. Sie bleiben installiert, ebenso alle Configs, und laufen wieder, sobald :name zurück ist. Der Startbefehl dieses Servers wird zurückgesetzt.',
         'install_heading' => ':name braucht weitere Mods',
         'install_body' => 'Diese werden mit :name zusammen installiert:',
@@ -121,6 +123,9 @@ return [
     ],
 
     'messages' => [
+        'no_version' => ':name hat keine Version für :version. Wähle eine in den Details.',
+        'external_only' => ':name gibt es nur unter :url - bitte von Hand installieren.',
+        'bad_file' => 'Keine Plugin-Datei: :file',
         'config_deleted' => ':file gelöscht',
         'config_saved' => ':file gespeichert',
         'restarting' => 'Server startet neu',

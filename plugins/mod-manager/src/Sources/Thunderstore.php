@@ -195,11 +195,12 @@ class Thunderstore
     }
 
     /**
-     * One version of a package - the newest without $version.
+     * One version of a package - the newest without $version. Thunderstore has no game
+     * versions, $gameVersion is only there to match the other sources.
      *
      * @return array{id: string, name: string, version: string, icon: ?string, download: string, requires: string[]}
      */
-    public function release(string $id, ?string $version = null): array
+    public function release(string $id, ?string $version = null, ?string $gameVersion = null): array
     {
         [$namespace, $name] = self::split($id);
 
@@ -219,11 +220,13 @@ class Thunderstore
             'download' => $latest['download_url'],
             // "Namespace-Name-1.2.3" - the version is dropped, the newest is installed anyway
             'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $latest['dependencies'] ?? [])),
+            // thunderstore knows no optional dependencies
+            'optional' => [],
         ];
     }
 
     /** The newest version number, for the update hints - asked at most every ten minutes. */
-    public function latestVersion(string $id): string
+    public function latestVersion(string $id, ?string $gameVersion = null): string
     {
         return Cache::remember("mod-manager:thunderstore:$this->community:$id:latest", now()->addMinutes(10), fn () => $this->latest($id)['version']);
     }

@@ -111,6 +111,37 @@ assert(Installer::configsOf('Loot', $configs, 'BepInEx/config') === ['BepInEx/co
 assert(Installer::configsOf('X', $configs, 'BepInEx/config') === [], 'too short a name matches nothing');
 assert(Installer::configsOf('PlantEverything', $configs, '') === []);
 
+// --- plugin jars ---------------------------------------------------------------------------------
+
+assert(Installer::jarName('EssentialsX-2.22.0.jar') === 'EssentialsX-2.22.0.jar');
+assert(Installer::jarName('ViaBackwards-5.12.2-SNAPSHOT+665.jar') === 'ViaBackwards-5.12.2-SNAPSHOT+665.jar');
+assert(Installer::jarName('Chunky-Bukkit [1.4].jar') === 'Chunky-Bukkit [1.4].jar');
+
+// the name ends up in a path on the server
+foreach (['', '.jar', '../x.jar', 'a/b.jar', '.hidden.jar', 'x.zip', "x.jar\n", 'x.jar/'] as $bad) {
+    try {
+        Installer::jarName($bad);
+        assert(false, "$bad should not pass");
+    } catch (Throwable $exception) {
+        assert(!$exception instanceof AssertionError, $exception->getMessage());
+    }
+}
+
+assert(Installer::jarPackage('modrinth:hXiIvTyT') && Installer::jarPackage('hangar:ViaVersion'));
+assert(!Installer::jarPackage('ValheimModding-Jotunn'));
+
+// --- data folders of plugins ---------------------------------------------------------------------
+
+$folders = ['Essentials', 'LuckPerms', 'ViaVersion', 'bStats', 'WorldEdit', 'WorldGuard', 'spark'];
+
+assert(Installer::dataFoldersOf('LuckPerms', $folders) === ['LuckPerms']);
+assert(Installer::dataFoldersOf('EssentialsX', $folders) === ['Essentials'], 'EssentialsX writes to Essentials');
+assert(Installer::dataFoldersOf('EssentialsX', $folders, ['EssentialsX Chat']) === [], 'shared with another plugin: not certain whose');
+assert(Installer::dataFoldersOf('ViaBackwards', $folders) === [], 'not the folder of ViaVersion');
+assert(Installer::dataFoldersOf('WorldEdit', $folders, ['WorldGuard']) === ['WorldEdit']);
+assert(Installer::dataFoldersOf('Simple Voice Chat', $folders) === []);
+assert(Installer::dataFoldersOf('sp', $folders) === [], 'too short to tell');
+
 // --- pages of 12 out of thunderstore's list -------------------------------------------------------
 
 assert(Thunderstore::sourceStart(1, [0, 3]) === 1, 'a hidden one right at the start is skipped');

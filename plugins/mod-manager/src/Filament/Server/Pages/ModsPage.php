@@ -81,6 +81,9 @@ class ModsPage extends Page
     /** the box in the remove modal: also delete the configs the mod wrote */
     public bool $removeConfigs = false;
 
+    /** @var string[] the optional dependencies ticked in the install modal */
+    public array $optionalPicked = [];
+
     /** the config open in the editor */
     public ?string $configPath = null;
 
@@ -191,13 +194,17 @@ class ModsPage extends Page
             return;
         }
 
-        if (count($plan) <= 1) {
+        // what the mod can also work with, unless it is there already - offered, never ticked
+        $optional = array_diff_key(end($plan)['optional'] ?? [], array_flip($this->installer()->installs()->pluck('package')->all()));
+
+        if (count($plan) <= 1 && $optional === []) {
             $this->runInstall($plan);
 
             return;
         }
 
-        $this->confirm = ['type' => 'install', 'id' => $id, 'version' => $version, 'name' => end($plan)['name'], 'packages' => array_slice($plan, 0, -1)];
+        $this->optionalPicked = [];
+        $this->confirm = ['type' => 'install', 'id' => $id, 'version' => $version, 'name' => end($plan)['name'], 'packages' => array_slice($plan, 0, -1), 'optional' => $optional];
         $this->dispatch('close-modal', id: 'mod-details');
         $this->dispatch('open-modal', id: 'mod-confirm');
     }
@@ -208,7 +215,14 @@ class ModsPage extends Page
 
         if (($this->confirm['type'] ?? null) === 'install') {
             // planned again: the list in the modal may be minutes old
-            $this->runInstall($this->installer()->plan($this->confirm['id'], $this->confirm['version'] ?? null));
+            try {
+                $plan = $this->installer()->plan($this->confirm['id'], $this->confirm['version'] ?? null, $this->optionalPicked);
+            } catch (Throwable $exception) {
+                $plan = [];
+                $this->fail($exception);
+            }
+
+            $this->runInstall($plan);
         }
 
         $this->closeConfirm();
@@ -231,6 +245,8 @@ class ModsPage extends Page
             'needed_by' => $this->installed()->filter(fn (ModInstall $other) => $other->enabled && in_array($install->package, $other->requires, true))->pluck('name')->all(),
             // only shown - what gets deleted is worked out again on confirm
             'configs' => $this->installer()->runtimeConfigs(new Collection([$install])),
+            // plugins keep data folders rather than configs
+            'data' => $this->installer()->jarMods(),
         ];
         $this->dispatch('open-modal', id: 'mod-confirm');
     }

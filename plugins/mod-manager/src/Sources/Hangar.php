@@ -136,6 +136,69 @@ class Hangar
         });
     }
 
+    /**
+     * One version of a project, as much as installing it needs: $version, else the newest for
+     * $gameVersion (or for any game version without one).
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, download: string, file: string, size: int, requires: string[], optional: array<string, string>}
+     */
+    public function release(string $id, ?string $version = null, ?string $gameVersion = null): array
+    {
+        $project = $this->project(self::split($id));
+        $name = (string) $project['name'];
+        $versions = $this->versions($project['namespace']['slug'], $version === null ? $gameVersion : null);
+        $release = $version === null ? ($versions[0] ?? null) : collect($versions)->firstWhere('name', $version);
+
+        if ($release === null) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.no_version', ['name' => $name, 'version' => $version ?? $gameVersion]));
+        }
+
+        $download = $release['downloads'][self::PLATFORM] ?? [];
+
+        // only a link to somewhere else: often a web page rather than the jar, so not pulled blindly
+        if (blank($download['downloadUrl'] ?? null)) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.external_only', ['name' => $name, 'url' => $download['externalUrl'] ?? self::SITE]));
+        }
+
+        // ponytail: a dependency outside hangar (no project id) is left out, the details list it
+        $dependencies = collect($release['pluginDependencies'][self::PLATFORM] ?? [])->filter(fn (array $dependency) => isset($dependency['projectId']));
+        $slug = fn (array $dependency) => self::PREFIX . $this->project((string) $dependency['projectId'])['namespace']['slug'];
+
+        return [
+            'id' => self::PREFIX . $project['namespace']['slug'],
+            'name' => $name,
+            'version' => (string) $release['name'],
+            'icon' => ($project['avatarUrl'] ?? null) ?: null,
+            'download' => (string) $download['downloadUrl'],
+            'file' => (string) ($download['fileInfo']['name'] ?? ''),
+            'size' => (int) ($download['fileInfo']['sizeBytes'] ?? 0),
+            'requires' => $dependencies->filter(fn (array $dependency) => $dependency['required'] ?? false)->map($slug)->values()->all(),
+            'optional' => $dependencies->reject(fn (array $dependency) => $dependency['required'] ?? false)->mapWithKeys(fn (array $dependency) => [$slug($dependency) => (string) $dependency['name']])->all(),
+        ];
+    }
+
+    /** The newest version number for $gameVersion, for the update hints. */
+    public function latestVersion(string $id, ?string $gameVersion = null): string
+    {
+        return $this->release($id, null, $gameVersion)['version'];
+    }
+
+    /** @return array<string, mixed> by slug or by hangar's numeric id */
+    private function project(string $project): array
+    {
+        return Cache::remember("mod-manager:hangar:project:$project", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/projects/$project")->json());
+    }
+
+    /** @return array<int, array<string, mixed>> newest first */
+    private function versions(string $slug, ?string $gameVersion): array
+    {
+        return Cache::remember("mod-manager:hangar:versions:$slug:$gameVersion", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/projects/$slug/versions", array_filter([
+            'platform' => self::PLATFORM,
+            'platformVersion' => $gameVersion,
+            'limit' => 25,
+        ]))->json('result', []));
+    }
+
     /** @return string the slug in "hangar:<slug>" */
     public static function split(string $id): string
     {

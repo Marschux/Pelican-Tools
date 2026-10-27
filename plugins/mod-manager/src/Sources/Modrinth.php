@@ -151,6 +151,67 @@ class Modrinth
         });
     }
 
+    /**
+     * One version of a project, as much as installing it needs: $version, else the newest for
+     * $gameVersion (or for any game version without one).
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, download: string, file: string, size: int, requires: string[], optional: array<string, string>}
+     */
+    public function release(string $id, ?string $version = null, ?string $gameVersion = null): array
+    {
+        $project = $this->project(self::split($id));
+        $versions = $this->versions($project['id'], $version === null ? $gameVersion : null);
+        $release = $version === null ? ($versions[0] ?? null) : collect($versions)->firstWhere('version_number', $version);
+
+        if ($release === null) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.no_version', ['name' => $project['title'], 'version' => $version ?? $gameVersion]));
+        }
+
+        $file = collect($release['files'] ?? [])->firstWhere('primary', true) ?? ($release['files'][0] ?? null)
+            ?? throw new RuntimeException(trans('mod-manager::mods.messages.no_version', ['name' => $project['title'], 'version' => $release['version_number']]));
+
+        $dependencies = collect($release['dependencies'] ?? [])->filter(fn (array $dependency) => filled($dependency['project_id']));
+        $optional = $dependencies->where('dependency_type', 'optional')->pluck('project_id')->all();
+        $names = $optional === [] ? [] : collect($this->http()->get(self::API . '/projects', ['ids' => json_encode($optional)])->json())->pluck('title', 'id')->all();
+
+        return [
+            'id' => self::PREFIX . $project['id'],
+            'name' => (string) $project['title'],
+            'version' => (string) $release['version_number'],
+            'icon' => ($project['icon_url'] ?? null) ?: null,
+            'download' => (string) $file['url'],
+            'file' => (string) $file['filename'],
+            'size' => (int) ($file['size'] ?? 0),
+            'requires' => $dependencies->where('dependency_type', 'required')->map(fn (array $dependency) => self::PREFIX . $dependency['project_id'])->values()->all(),
+            'optional' => collect($optional)->mapWithKeys(fn (string $projectId) => [self::PREFIX . $projectId => (string) ($names[$projectId] ?? $projectId)])->all(),
+        ];
+    }
+
+    /** The newest version number for $gameVersion, for the update hints. */
+    public function latestVersion(string $id, ?string $gameVersion = null): string
+    {
+        return $this->release($id, null, $gameVersion)['version'];
+    }
+
+    /** @return array<string, mixed> */
+    private function project(string $project): array
+    {
+        return Cache::remember("mod-manager:modrinth:project:$project", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/project/$project")->json());
+    }
+
+    /** @return array<int, array<string, mixed>> newest first, for the profile's loaders */
+    private function versions(string $project, ?string $gameVersion): array
+    {
+        return Cache::remember(
+            "mod-manager:modrinth:versions:$project:" . implode(',', $this->loaders) . ":$gameVersion",
+            now()->addMinutes(10),
+            fn () => $this->http()->get(self::API . "/project/$project/version", array_filter([
+                'loaders' => json_encode($this->loaders),
+                'game_versions' => $gameVersion ? json_encode([$gameVersion]) : null,
+            ]))->json(),
+        );
+    }
+
     /** @return string the project id or slug in "modrinth:<id>" */
     public static function split(string $id): string
     {

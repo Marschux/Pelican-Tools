@@ -152,7 +152,8 @@
                                             @endif
                                             <div style="min-width:0">
                                                 <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
-                                                <div style="{{ $muted }}">{{ trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
+                                                {{-- a thunderstore id starts with the author, a plugin's only says where it came from --}}
+                                                <div style="{{ $muted }}">{{ \Marschux\ModManager\Installer::jarPackage($install->package) ? (\Marschux\ModManager\Profiles\Presets::SOURCES[strtok($install->package, ':')] ?? '') : trans('mod-manager::mods.by', ['author' => strtok($install->package, '-')]) }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -610,6 +611,18 @@
                 </div>
             @endif
 
+            @if ($confirm['optional'] ?? [])
+                <div>
+                    <div style="{{ $muted }};font-size:.875rem;margin-bottom:.25rem">{{ trans('mod-manager::mods.confirm.optional', ['name' => $confirm['name']]) }}</div>
+                    @foreach ($confirm['optional'] as $optionalId => $optionalName)
+                        <label wire:key="optional-{{ md5($optionalId) }}" style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer;padding:.15rem 0">
+                            <x-filament::input.checkbox wire:model="optionalPicked" value="{{ $optionalId }}" />
+                            {{ $optionalName }}
+                        </label>
+                    @endforeach
+                </div>
+            @endif
+
             @if (($confirm['type'] === 'remove') && ($confirm['needed_by'] ?? []))
                 <div style="font-size:.875rem;color:rgb(234,179,8)">
                     {{ trans_choice('mod-manager::mods.confirm.needed_by', count($confirm['needed_by']), ['names' => implode(', ', $confirm['needed_by'])]) }}
@@ -620,7 +633,7 @@
                 <div>
                     <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
                         <x-filament::input.checkbox wire:model="removeConfigs" />
-                        {{ trans('mod-manager::mods.confirm.remove_configs') }}
+                        {{ trans(($confirm['data'] ?? false) ? 'mod-manager::mods.confirm.remove_data' : 'mod-manager::mods.confirm.remove_configs') }}
                     </label>
                     <div style="{{ $muted }};font-family:monospace;margin:.35rem 0 0 1.5rem;max-height:8rem;overflow-y:auto">
                         @foreach ($confirm['configs'] as $path)

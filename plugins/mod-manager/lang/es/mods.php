@@ -111,6 +111,8 @@ return [
     ],
 
     'confirm' => [
+        'optional' => ':name también funciona con estos (opcional):',
+        'remove_data' => 'Borrar también la carpeta de datos',
         'loader_body' => '{0} No hay mods instalados. El comando de inicio de este servidor vuelve a ser el normal.|{1} Sin :name, el mod instalado ya no se carga. Sigue instalado, igual que las configuraciones, y vuelve a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.|[2,*] Sin :name, los :count mods instalados ya no se cargan. Siguen instalados, igual que las configuraciones, y vuelven a funcionar en cuanto :name regrese. El comando de inicio de este servidor vuelve a ser el normal.',
         'install_heading' => ':name necesita más mods',
         'install_body' => 'Estos se instalan junto con :name:',
@@ -121,6 +123,9 @@ return [
     ],
 
     'messages' => [
+        'no_version' => ':name no tiene versión para :version. Elige una en los detalles.',
+        'external_only' => ':name solo está disponible en :url - instálalo a mano.',
+        'bad_file' => 'No es un archivo de plugin: :file',
         'config_deleted' => ':file borrado',
         'config_saved' => ':file guardado',
         'restarting' => 'El servidor se está reiniciando',
