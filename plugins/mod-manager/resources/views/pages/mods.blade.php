@@ -316,8 +316,8 @@
         {{-- while the next page loads the tiles stay and only fade, so nothing jumps --}}
         <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
 
-        {{-- three tiles side by side, fewer when the page gets narrow --}}
-        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr))">
+        {{-- three tiles side by side, fewer when the page gets narrow; every row as tall as the tallest, so all tiles are the same size --}}
+        <div wire:loading.class="mod-loading" wire:target="search,goToPage,query,category,ordering,hideClientSide,showDeprecated" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(max(16rem,calc((100% - 2rem) / 3)),1fr));grid-auto-rows:1fr">
             @forelse ($items as $item)
                 <div wire:key="item-{{ md5($item['id']) }}" style="{{ $card }}">
                     <div style="display:flex;gap:.75rem;align-items:center;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">
