@@ -20,6 +20,9 @@ class Installer
     /** what the config editor opens: text, never a binary a mod keeps in the config folder */
     private const CONFIG_TYPES = ['cfg', 'json', 'yml', 'yaml', 'txt', 'ini', 'xml', 'toml'];
 
+    /** folders of a package that go next to the mods folder instead of into it */
+    private const SORTED = ['patchers', 'monomod'];
+
     private ServerFiles $files;
 
     private Thunderstore $source;
@@ -220,10 +223,35 @@ class Installer
         return array_keys($paths);
     }
 
-    /** @return string[] */
+    /** @return string[] where mods live, switched on and off - removing the loader leaves these */
     private function keptDirs(): array
     {
-        return array_values(array_filter([$this->modsDir(), $this->disabledDir(), trim((string) $this->profile->setting('config_dir'), '/')]));
+        return array_merge(...array_map(fn (string $base) => [$base, "{$base}_disabled"], $this->bases()));
+    }
+
+    /** @return string[] the folders a package puts files into: mods, patchers, monomod, configs */
+    private function bases(): array
+    {
+        $root = $this->rootDir();
+
+        return array_values(array_filter([
+            $this->modsDir(),
+            ...array_map(fn (string $folder) => $root === '' ? '' : "$root/$folder", self::SORTED),
+            $this->configDir(),
+        ]));
+    }
+
+    /** The loader's folder, e.g. BepInEx for BepInEx/plugins - empty when the mods folder is top level. */
+    private function rootDir(): string
+    {
+        $root = dirname($this->modsDir());
+
+        return $root === '.' ? '' : $root;
+    }
+
+    private function configDir(): string
+    {
+        return trim((string) $this->profile->setting('config_dir'), '/');
     }
 
     /** Only this server's start command changes, the egg stays as it is. */
@@ -267,17 +295,27 @@ class Installer
         $this->install($this->plan($install->package));
     }
 
-    /** Switched off, a mod moves next to the mods folder, where the loader does not look. */
+    /**
+     * Switched off, a mod's files move next to their folders (plugins_disabled, patchers_disabled,
+     * ...), where the loader does not look.
+     */
     public function setEnabled(ModInstall $install, bool $enabled): void
     {
         if ($install->enabled === $enabled) {
             return;
         }
 
-        $to = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $install->package;
+        $files = array_map(fn (string $path) => self::switched($path, $enabled, $this->bases()), $install->files);
+        $moves = [];
 
-        $this->files->move(array_map(fn (string $from) => ['from' => $from, 'to' => $to], $install->files));
-        $install->update(['enabled' => $enabled, 'files' => [$to]]);
+        foreach ($install->files as $index => $from) {
+            if ($from !== $files[$index]) {
+                $moves[] = ['from' => $from, 'to' => $files[$index]];
+            }
+        }
+
+        $this->files->move($moves);
+        $install->update(['enabled' => $enabled, 'files' => $files]);
     }
 
     /**
@@ -440,6 +478,55 @@ class Installer
         return ModInstall::query()->where('server_id', $this->server->id)->orderBy('name')->get();
     }
 
+    /**
+     * Where a file of an unpacked package belongs, like r2modman sorts it: patchers/ and monomod/
+     * into the loader's folder of that name, one folder per package; config/ into the config
+     * folder as it is. A "BepInEx/" in front counts the same. Anything else stays in the
+     * package's folder below the mods folder, where the loader finds plugins at any depth.
+     *
+     * @return ?array{to: string, track: string} track: what uninstalling removes
+     */
+    public static function placement(string $file, string $package, string $root, string $configDir): ?array
+    {
+        $parts = explode('/', $file);
+
+        if (count($parts) > 2 && strtolower($parts[0]) === 'bepinex') {
+            array_shift($parts);
+        }
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        $top = strtolower(array_shift($parts));
+        $rest = implode('/', $parts);
+
+        return match (true) {
+            in_array($top, self::SORTED, true) && $root !== '' => ['to' => "$root/$top/$package/$rest", 'track' => "$root/$top/$package"],
+            $top === 'config' && $configDir !== '' => ['to' => "$configDir/$rest", 'track' => "$configDir/$rest"],
+            default => null,
+        };
+    }
+
+    /**
+     * The same path with its folder switched on or off: BepInEx/plugins/X <-> BepInEx/plugins_disabled/X,
+     * likewise for patchers, monomod and config.
+     *
+     * @param  string[]  $bases  the folders a package puts files into
+     */
+    public static function switched(string $path, bool $enabled, array $bases): string
+    {
+        foreach ($bases as $base) {
+            [$from, $to] = $enabled ? ["{$base}_disabled/", "$base/"] : ["$base/", "{$base}_disabled/"];
+
+            if (str_starts_with($path, $from)) {
+                return $to . substr($path, strlen($from));
+            }
+        }
+
+        return $path;
+    }
+
     /** @param  array<string, mixed>  $package */
     private function installPackage(array $package): ModInstall
     {
@@ -447,12 +534,43 @@ class Installer
         // a mod that is switched off stays off through an update
         $enabled = $existing?->enabled ?? true;
         $directory = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $package['id'];
+        $configDir = $this->configDir();
+        $isConfig = fn (string $path) => $configDir !== '' && (str_starts_with($path, "$configDir/") || str_starts_with($path, "{$configDir}_disabled/"));
 
-        // a reinstall or update starts from an empty folder
-        $this->files->delete($this->files->exists($directory) ? [$directory] : []);
+        // a reinstall or update starts from empty folders - configs stay, they may have been changed
+        $this->files->delete(array_values(array_filter(
+            [...($existing?->files ?? []), $directory],
+            fn (string $path) => !$isConfig($path) && $this->files->exists($path),
+        )));
         $this->files->pull($package['download'], $directory, 'package.zip');
         $this->files->decompress($directory, 'package.zip');
         $this->files->delete(["$directory/package.zip"]);
+
+        $files = [$directory];
+        $moves = [];
+
+        foreach ($this->files->walk($directory) as $file) {
+            $place = self::placement($file, $package['id'], $this->rootDir(), $configDir);
+
+            if ($place === null) {
+                continue;
+            }
+
+            $to = self::switched($place['to'], $enabled, $this->bases());
+
+            // a config already on the server is kept, it may have been changed by hand
+            if ($isConfig($to) && $this->files->exists($to)) {
+                continue;
+            }
+
+            $moves[] = ['from' => "$directory/$file", 'to' => $to];
+            $files[] = self::switched($place['track'], $enabled, $this->bases());
+        }
+
+        $files = array_values(array_unique($files));
+        // e.g. a patchers folder left by a hand install - Wings will not move onto it
+        $this->files->delete(array_values(array_filter(array_slice($files, 1), fn (string $path) => !$isConfig($path) && $this->files->exists($path))));
+        $this->files->move($moves);
 
         return ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => $package['id']],
@@ -463,10 +581,10 @@ class Installer
                 // picked by hand once, it stays picked by hand
                 'dependency' => $existing ? $existing->dependency && $package['dependency'] : $package['dependency'],
                 'requires' => $package['requires'],
-                'files' => [$directory],
+                'files' => $files,
                 'pinned' => $package['pinned'] ?? false,
                 'enabled' => $enabled,
-                'size' => $this->files->usage($directory),
+                'size' => array_sum(array_map(fn (string $path) => $this->files->size($path), $files)),
             ],
         );
     }
