@@ -947,6 +947,11 @@ class Installer
                     }
                 }
 
+                // e.g. the GoldSrc loader: nothing to link to
+                if (!preg_match('/^\w+-\w+$/', $install->package)) {
+                    return "$install->name $install->version";
+                }
+
                 [$namespace, $name] = Thunderstore::split($install->package);
 
                 return "$install->name $install->version - https://thunderstore.io/c/$community/p/$namespace/$name/";
