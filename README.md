@@ -6,14 +6,18 @@ Custom and modified eggs plus custom plugins for the Pelican panel.
   <img src="assets/pelican-panel.png" alt="Pelican Panel" width="160">
 </p>
 
+## Requirements
+
+Pelican panel `1.0.0-rc.2` or any newer `1.x`. The plugins declare this as `panel_version` and Pelican marks them incompatible on anything else.
+
 ## Eggs
 
-All eggs sit flat in `eggs/`.
+All eggs sit flat in `eggs/`. Import one under **Admin → Eggs → Import**; to update an egg that is already in the panel, import it onto that egg instead of creating a new one. An updated install script only runs for servers installed or reinstalled afterwards.
 
 | Game | Egg file | Server type |
 |---|---|---|
-| Counter-Strike 1.6 | `eggs/egg-counter-strike-16.json` | Source |
-| Counter-Strike: Condition Zero | `eggs/egg-counter-strike-condition-zero.json` | Source |
+| Counter-Strike 1.6 | `eggs/egg-counter-strike-16.json` | GoldSrc |
+| Counter-Strike: Condition Zero | `eggs/egg-counter-strike-condition-zero.json` | GoldSrc |
 | Counter-Strike: Source | `eggs/egg-counter-strike-source.json` | Source |
 | Counter-Strike: Global Offensive | `eggs/egg-counter-strike-global-offensive.json` | Source |
 | Counter-Strike 2 | `eggs/egg-counter-strike-2.json` | Source |
@@ -27,11 +31,31 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 
 | Plugin | Purpose | Panel |
 |---|---|---|
-| Access Lists | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
-| Game Query | Query players, map and server info | Admin + Server |
-| Mod Manager | Browse and install mods per server, set up per egg (Valheim so far) | Admin + Server |
-| Server Navigation | Hide sidebar entries per server | Admin + Server |
-| Server Resources | Resources of host, nodes and servers on the admin dashboard | Admin |
+| [Access Lists](plugins/access-lists/README.md) | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
+| [Game Query](plugins/game-query/README.md) | Query players, map and server info | Admin + Server |
+| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim so far) | Admin + Server |
+| [Server Navigation](plugins/server-navigation/README.md) | Hide sidebar entries per server | Admin + Server |
+| [Server Resources](plugins/server-resources/README.md) | Resources of host, nodes and servers on the admin dashboard | Admin |
+
+### Installing a plugin
+
+Upload `plugins/<name>.zip` under **Admin → Plugins → Import from File** and install it there, or copy the folder to `/var/www/pelican/plugins/<name>/` and run:
+
+```bash
+cd /var/www/pelican
+sudo -u www-data php artisan p:plugin:install <name>
+```
+
+After installing or updating, clear the caches and restart PHP-FPM so the new code is loaded (adjust the PHP version):
+
+```bash
+sudo -u www-data php artisan optimize:clear
+systemctl restart php8.4-fpm
+```
+
+Each plugin's README covers what it needs set up in the admin panel.
+
+### Building
 
 After every plugin change, bump the version in `plugin.json` and rebuild the ZIP:
 
