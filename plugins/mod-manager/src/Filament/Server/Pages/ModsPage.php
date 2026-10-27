@@ -68,6 +68,9 @@ class ModsPage extends Page
      */
     public ?array $confirm = null;
 
+    /** the box in the remove modal: also delete the configs the mod wrote */
+    public bool $removeConfigs = false;
+
     /** the config open in the editor */
     public ?string $configPath = null;
 
@@ -202,12 +205,16 @@ class ModsPage extends Page
         $this->requirePermission(SubuserPermission::FileDelete);
 
         $install = $this->findInstall($installId);
+        $orphans = $this->installer()->orphans($install);
 
+        $this->removeConfigs = false;
         $this->confirm = [
             'type' => 'remove',
             'id' => $install->id,
             'name' => $install->name,
-            'packages' => $this->installer()->orphans($install)->map(fn (ModInstall $orphan) => ['name' => $orphan->name, 'version' => $orphan->version, 'icon' => $orphan->icon])->all(),
+            'packages' => $orphans->map(fn (ModInstall $orphan) => ['name' => $orphan->name, 'version' => $orphan->version, 'icon' => $orphan->icon])->all(),
+            // only shown - what gets deleted is worked out again on confirm
+            'configs' => $this->installer()->runtimeConfigs($orphans->prepend($install)),
         ];
         $this->dispatch('open-modal', id: 'mod-confirm');
     }
@@ -218,7 +225,7 @@ class ModsPage extends Page
 
         if (($this->confirm['type'] ?? null) === 'remove') {
             try {
-                $names = $this->installer()->uninstall($this->findInstall($this->confirm['id']), $withDependencies);
+                $names = $this->installer()->uninstall($this->findInstall($this->confirm['id']), $withDependencies, $this->removeConfigs);
 
                 $this->markRestart();
 

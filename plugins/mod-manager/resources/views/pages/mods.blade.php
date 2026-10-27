@@ -538,6 +538,20 @@
                 </div>
             @endif
 
+            @if (($confirm['type'] === 'remove') && ($confirm['configs'] ?? []))
+                <div>
+                    <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+                        <x-filament::input.checkbox wire:model="removeConfigs" />
+                        {{ trans('mod-manager::mods.confirm.remove_configs') }}
+                    </label>
+                    <div style="{{ $muted }};font-family:monospace;margin:.35rem 0 0 1.5rem;max-height:8rem;overflow-y:auto">
+                        @foreach ($confirm['configs'] as $path)
+                            <div>{{ $path }}</div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <x-slot name="footerActions">
                 @if ($confirm['type'] === 'install')
                     <x-filament::button icon="tabler-download" wire:click="confirmInstall">{{ trans('mod-manager::mods.confirm.install_all') }}</x-filament::button>

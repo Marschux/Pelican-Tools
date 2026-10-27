@@ -109,6 +109,7 @@ return [
         'install_all' => 'Install all',
         'remove_heading' => 'Remove :name?',
         'orphans' => 'No other mod needs these dependencies afterwards:',
+        'remove_configs' => 'Also delete the settings the mod wrote:',
         'remove_with' => 'Remove with dependencies',
         'remove_only' => 'Remove only :name',
     ],

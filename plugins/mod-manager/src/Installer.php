@@ -99,14 +99,71 @@ class Installer
     }
 
     /** @return string[] the names removed */
-    public function uninstall(ModInstall $install, bool $withOrphans): array
+    public function uninstall(ModInstall $install, bool $withOrphans, bool $withConfigs = false): array
     {
         $removing = $withOrphans ? $this->orphans($install)->prepend($install) : new Collection([$install]);
+        // worked out before anything is deleted, while the configs are still listed
+        $configs = $withConfigs ? $this->runtimeConfigs($removing) : [];
 
-        $this->files->delete($removing->pluck('files')->flatten()->all());
+        $this->files->delete([...$removing->pluck('files')->flatten()->all(), ...$configs]);
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
 
         return $removing->pluck('name')->all();
+    }
+
+    /**
+     * The configs these mods wrote on their own when they ran - what uninstalling leaves behind
+     * unless asked. Never a file another installed mod brought along.
+     *
+     * @param  Collection<int, ModInstall>  $installs
+     * @return string[]
+     */
+    public function runtimeConfigs(Collection $installs): array
+    {
+        $directory = $this->configDir();
+        $others = $this->installs()->reject(fn (ModInstall $other) => $installs->contains('id', $other->id))->pluck('files')->flatten()->all();
+        $configs = $this->configs();
+        $found = [];
+
+        foreach ($installs as $install) {
+            $found = [...$found, ...self::configsOf($install->name, $configs, $directory, [...$others, ...$install->files])];
+        }
+
+        return array_values(array_unique($found));
+    }
+
+    /**
+     * Configs that belong to a mod by name: the file is named after it (advize.PlantEverything.cfg)
+     * or sits in a folder named after it (EpicLoot/...). Paths in $skip stay.
+     *
+     * @param  string[]  $configs  from configs()
+     * @param  string[]  $skip
+     * @return string[]
+     */
+    public static function configsOf(string $modName, array $configs, string $directory, array $skip = []): array
+    {
+        $needle = self::needle($modName);
+
+        if (strlen($needle) < 3 || $directory === '') {
+            return [];
+        }
+
+        return array_values(array_filter($configs, function (string $path) use ($needle, $directory, $skip) {
+            if (in_array($path, $skip, true) || !str_starts_with($path, "$directory/")) {
+                return false;
+            }
+
+            $parts = explode('/', substr($path, strlen($directory) + 1));
+
+            return (count($parts) > 1 && self::needle($parts[0]) === $needle)
+                || str_contains(self::needle(pathinfo($path, PATHINFO_FILENAME)), $needle);
+        }));
+    }
+
+    /** A name as it shows up in file names: lower case, letters and digits only. */
+    private static function needle(string $name): string
+    {
+        return (string) preg_replace('/[^a-z0-9]/', '', strtolower($name));
     }
 
     /**
@@ -426,14 +483,14 @@ class Installer
     /** The config a mod most likely wrote: named after its id, e.g. advize.PlantEverything.cfg */
     public static function configFor(string $modName, array $configs): ?string
     {
-        $needle = preg_replace('/[^a-z0-9]/', '', strtolower($modName));
+        $needle = self::needle($modName);
 
         if (strlen($needle) < 3) {
             return null;
         }
 
         foreach ($configs as $path) {
-            if (str_contains(preg_replace('/[^a-z0-9]/', '', strtolower(pathinfo($path, PATHINFO_FILENAME))), $needle)) {
+            if (str_contains(self::needle(pathinfo($path, PATHINFO_FILENAME)), $needle)) {
                 return $path;
             }
         }

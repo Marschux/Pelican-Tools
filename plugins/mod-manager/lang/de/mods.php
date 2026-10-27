@@ -109,6 +109,7 @@ return [
         'install_all' => 'Alle installieren',
         'remove_heading' => ':name entfernen?',
         'orphans' => 'Diese Abhängigkeiten braucht danach kein anderer Mod mehr:',
+        'remove_configs' => 'Auch die Einstellungen löschen, die der Mod geschrieben hat:',
         'remove_with' => 'Mit Abhängigkeiten entfernen',
         'remove_only' => 'Nur :name entfernen',
     ],

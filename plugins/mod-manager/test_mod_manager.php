@@ -44,6 +44,28 @@ foreach (['Jotunn', '../x-y', 'a-b/c', 'a-', '-b', ''] as $bad) {
     }
 }
 
+// --- configs a mod wrote on its own ---------------------------------------------------------------
+
+$configs = [
+    'BepInEx/config/BepInEx.cfg',
+    'BepInEx/config/advize.PlantEverything.cfg',
+    'BepInEx/config/randyknapp.mods.epicloot.cfg',
+    'BepInEx/config/EpicLoot/baseconfig/abilities.json',
+    'BepInEx/config/EpicLoot/patches/AllTheHeims/mp.loottables.json',
+    'BepInEx/config/Jotunn/x.cfg',
+];
+
+assert(Installer::configsOf('PlantEverything', $configs, 'BepInEx/config') === ['BepInEx/config/advize.PlantEverything.cfg']);
+assert(Installer::configsOf('EpicLoot', $configs, 'BepInEx/config', ['BepInEx/config/EpicLoot/patches/AllTheHeims/mp.loottables.json']) === [
+    'BepInEx/config/randyknapp.mods.epicloot.cfg',
+    'BepInEx/config/EpicLoot/baseconfig/abilities.json',
+], 'a file another mod brought along stays');
+// a folder only counts with the whole name; file names match on part of it, so a short name can
+// catch more - the remove modal lists every file and the box is off by default
+assert(Installer::configsOf('Loot', $configs, 'BepInEx/config') === ['BepInEx/config/randyknapp.mods.epicloot.cfg', 'BepInEx/config/EpicLoot/patches/AllTheHeims/mp.loottables.json']);
+assert(Installer::configsOf('X', $configs, 'BepInEx/config') === [], 'too short a name matches nothing');
+assert(Installer::configsOf('PlantEverything', $configs, '') === []);
+
 // --- pages of 12 out of thunderstore's list -------------------------------------------------------
 
 assert(Thunderstore::sourceStart(1, [0, 3]) === 1, 'a hidden one right at the start is skipped');
