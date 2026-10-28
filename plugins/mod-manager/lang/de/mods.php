@@ -112,6 +112,7 @@ return [
 
     'upload' => [
         'button' => 'Plugin oder Zip hochladen',
+        'button_maps' => 'Plugin, Map oder Zip hochladen',
         'busy' => 'Wird hochgeladen …',
         'origin' => 'Hochgeladen',
     ],

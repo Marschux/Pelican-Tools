@@ -51,6 +51,9 @@ class Installer
     /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
     public const UPLOAD = 'upload:';
 
+    /** A map uploaded through the page, by its name */
+    public const MAP_UPLOAD = 'upload-map:';
+
     /** Counter-Strike 2: the CounterStrikeSharp plugin that changes to workshop maps, and its block in maplist.txt. */
     public const MAP_VOTE = 'RockTheVote';
 
@@ -178,7 +181,7 @@ class Installer
             $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withoutAmxxPlugin($ini, $file), $ini));
         }
 
-        if (str_starts_with($install->package, GameBanana::PREFIX)) {
+        if (self::mapPackage($install->package)) {
             $this->writeMapcycle(fn (string $cycle) => self::withMaps($cycle, self::mapNames($install->files), false));
         }
 
@@ -1004,7 +1007,33 @@ class Installer
                 return $this->installCssArchive($name, $directory, self::UPLOAD . self::cssName([], $name), now()->format('Y-m-d H:i'));
             }
 
-            return str_ends_with(strtolower($name), '.zip') || $this->source1() ? $this->installPluginArchive($name, $directory) : $this->installAmxx($name, $directory);
+            $lower = strtolower($name);
+
+            // a .bsp, or an archive with one: a map, not a plugin
+            if (preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
+                if (!preg_match('/^[\w .()\[\]+-]+\.\w+\z/', $name)) {
+                    throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $name]));
+                }
+
+                $size = $this->files->size("$directory/$name");
+
+                if (!str_ends_with($lower, '.bsp')) {
+                    $this->files->decompress($directory, $name);
+                    $this->files->delete(["$directory/$name"]);
+                }
+
+                if (array_filter($this->files->walk($directory), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
+                    $title = pathinfo($name, PATHINFO_FILENAME);
+
+                    return $this->placeMap(['id' => self::MAP_UPLOAD . $title, 'name' => $title, 'version' => now()->format('Y-m-d'), 'icon' => null, 'size' => $size], $directory, $name);
+                }
+
+                if (!str_ends_with($lower, '.zip')) {
+                    throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
+                }
+            }
+
+            return str_ends_with($lower, '.zip') || $this->source1() ? $this->installPluginArchive($name, $directory) : $this->installAmxx($name, $directory);
         } finally {
             $this->files->delete([$directory]);
         }
@@ -1038,7 +1067,8 @@ class Installer
         }
 
         try {
-            if (str_ends_with(strtolower($name), '.zip')) {
+            // an upload is unpacked already, to look for a map
+            if (str_ends_with(strtolower($name), '.zip') && $this->files->exists("$scratch/$name")) {
                 $this->files->decompress($scratch, $name);
                 $this->files->delete(["$scratch/$name"]);
             }
@@ -1512,10 +1542,6 @@ class Installer
      */
     private function installMap(array $package): ModInstall
     {
-        $existing = $this->installs()->firstWhere('package', $package['id']);
-        $ours = $existing?->files ?? [];
-        $others = $this->filesOfOthers($package['id']);
-        $game = $this->gameDir();
         $scratch = '.mod-manager/map';
         $file = basename((string) $package['file']);
 
@@ -1530,54 +1556,70 @@ class Installer
             $this->files->decompress($scratch, $file);
             $this->files->delete(["$scratch/$file"]);
 
-            $placed = [];
-
-            foreach ($this->files->walk($scratch) as $path) {
-                $to = self::mapPlacement($path);
-
-                if ($to !== null) {
-                    $placed["$game/$to"] = "$scratch/$path";
-                }
-            }
-
-            if (!array_filter(array_keys($placed), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
-                throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $file]));
-            }
-
-            $moves = [];
-            $replace = [];
-            $shared = [];
-            $listings = [];
-
-            foreach ($placed as $to => $from) {
-                $listings[dirname($to)] ??= $this->files->list(dirname($to));
-
-                if (isset($listings[dirname($to)][basename($to)])) {
-                    if (!in_array($to, $ours, true)) {
-                        if (str_ends_with(strtolower($to), '.bsp')) {
-                            throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
-                        }
-
-                        // a wad or sound another installed map brought: this one needs it too, so it is
-                        // both maps' - removing either leaves it while the other is there
-                        if (in_array($to, $others, true)) {
-                            $shared[] = $to;
-                        }
-
-                        continue;
-                    }
-
-                    $replace[] = $to;
-                }
-
-                $moves[] = ['from' => $from, 'to' => $to];
-            }
-
-            $this->files->delete($replace);
-            $this->files->move($moves);
+            return $this->placeMap($package, $scratch, $file);
         } finally {
             $this->files->delete([$scratch]);
         }
+    }
+
+    /**
+     * The unpacked map in $scratch sorted into the game folder and into the rotation - from
+     * GameBanana or uploaded. $file only names it in messages.
+     *
+     * @param  array<string, mixed>  $package  id, name, version, icon, size
+     */
+    private function placeMap(array $package, string $scratch, string $file): ModInstall
+    {
+        $existing = $this->installs()->firstWhere('package', $package['id']);
+        $ours = $existing?->files ?? [];
+        $others = $this->filesOfOthers($package['id']);
+        $game = $this->gameDir();
+
+        $placed = [];
+
+        foreach ($this->files->walk($scratch) as $path) {
+            $to = self::mapPlacement($path);
+
+            if ($to !== null) {
+                $placed["$game/$to"] = "$scratch/$path";
+            }
+        }
+
+        if (!array_filter(array_keys($placed), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
+            throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $file]));
+        }
+
+        $moves = [];
+        $replace = [];
+        $shared = [];
+        $listings = [];
+
+        foreach ($placed as $to => $from) {
+            $listings[dirname($to)] ??= $this->files->list(dirname($to));
+
+            if (isset($listings[dirname($to)][basename($to)])) {
+                if (!in_array($to, $ours, true)) {
+                    if (str_ends_with(strtolower($to), '.bsp')) {
+                        throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
+                    }
+
+                    // a wad or sound another installed map brought: this one needs it too, so it is
+                    // both maps' - removing either leaves it while the other is there
+                    if (in_array($to, $others, true)) {
+                        $shared[] = $to;
+                    }
+
+                    continue;
+                }
+
+                $replace[] = $to;
+            }
+
+            $moves[] = ['from' => $from, 'to' => $to];
+        }
+
+        $this->files->delete($replace);
+        $this->files->move($moves);
 
         // what the version before brought and this one does not goes - unless another map needs it
         $files = array_values(array_unique([...array_column($moves, 'to'), ...$shared]));
@@ -1837,6 +1879,12 @@ class Installer
         return str_starts_with($package, self::UPLOAD);
     }
 
+    /** A map with files in the game folder and a place in the rotation: from GameBanana or uploaded. */
+    public static function mapPackage(string $package): bool
+    {
+        return str_starts_with($package, GameBanana::PREFIX) || str_starts_with($package, self::MAP_UPLOAD);
+    }
+
     /** An upload, or an AMX Mod X / SourceMod plugin from GitHub: on GoldSrc its lines in plugins-modmanager.ini, its configs kept. */
     private function ownPlugin(string $package): bool
     {
@@ -1944,7 +1992,7 @@ class Installer
         }
 
         // a map stays where it is: on means it is in mapcycle.txt
-        if (str_starts_with($install->package, GameBanana::PREFIX)) {
+        if (self::mapPackage($install->package)) {
             $this->writeMapcycle(fn (string $cycle) => self::withMaps($cycle, self::mapNames($install->files), $enabled));
             $install->update(['enabled' => $enabled]);
 

@@ -651,7 +651,7 @@ class ModsPage extends Page
             $package === GoldSrc::ENGINE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team']),
             $package === Source1::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders']),
             $package === Source2::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
-            Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
+            Installer::uploaded($package), str_starts_with($package, Installer::MAP_UPLOAD) => trans('mod-manager::mods.upload.origin'),
             str_starts_with($package, GitHub::PREFIX) => trans('mod-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
             str_starts_with($package, Workshop::PREFIX) => 'Steam Workshop',
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
@@ -669,7 +669,7 @@ class ModsPage extends Page
         return match (true) {
             $package === GoldSrc::ENGINE => ['engine', 'tabler-engine'],
             $isLoader => ['loader', 'tabler-plug'],
-            str_starts_with($package, GameBanana::PREFIX), str_starts_with($package, Workshop::PREFIX) => ['map', 'tabler-map'],
+            Installer::mapPackage($package), str_starts_with($package, Workshop::PREFIX) => ['map', 'tabler-map'],
             Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
             Modrinth::kindOf($package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
             // jars of Paper and AMX Mod X's .amxx are plugins, Thunderstore packages mods

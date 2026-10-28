@@ -102,6 +102,7 @@ Without a version picked, the newest one for the server's game version is instal
 | Datapack | `<world>/datapacks/<file>.zip`, the world named by `level-name` in `server.properties` |
 | Resource pack | nothing on the server: `resource-pack` and `resource-pack-sha1` in `server.properties` point to Modrinth, players are offered it on join. One at a time - a new one switches the one before off |
 | Map (GameBanana) | unpacked on the server (zip, rar, 7z) and sorted into `cstrike/`: `maps/`, `sound/`, `gfx/` ... from wherever they sit in the archive, loose `.bsp`/`.wad`/`.wav`/... by type. Files already there stay; one another installed map brought (a shared `.wad`) is both maps', and removing either leaves it while the other is there. A `.bsp` that is there already and not from this page stops it. A new map goes into `mapcycle.txt` |
+| Map (uploaded) | Counter-Strike 1.6, Condition Zero, Source and Global Offensive: the upload button takes a `.bsp`, or a zip/rar/7z with one, and sorts it in like a map from GameBanana (rotation, switch, remove). An archive without a `.bsp` is a plugin upload as before. Name from the file, version the day of the upload; the size limit is Wings' `upload_limit` |
 
 **AMX Mod X plugins** (Counter-Strike 1.6). AMX Mod X has no site to browse:
 - Its own plugins, as listed in `plugins.ini`, have a section with a switch each (the line

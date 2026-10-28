@@ -112,6 +112,7 @@ return [
 
     'upload' => [
         'button' => 'Subir plugin o zip',
+        'button_maps' => 'Subir plugin, mapa o zip',
         'busy' => 'Subiendo …',
         'origin' => 'Subido',
     ],

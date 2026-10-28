@@ -113,6 +113,7 @@ return [
 
     'upload' => [
         'button' => 'Upload plugin or zip',
+        'button_maps' => 'Upload plugin, map or zip',
         'busy' => 'Uploading …',
         'origin' => 'Uploaded',
     ],

@@ -130,9 +130,9 @@
                                 },
                             }">
                                 <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" x-bind:class="busy && 'opacity-50 pointer-events-none'">
-                                    <span x-show="!busy">{{ trans('mod-manager::mods.upload.button') }}</span>
+                                    <span x-show="!busy">{{ trans($this->source2() ? 'mod-manager::mods.upload.button' : 'mod-manager::mods.upload.button_maps') }}</span>
                                     <span x-show="busy" x-cloak>{{ trans('mod-manager::mods.upload.busy') }}</span>
-                                    <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.amxx,.zip' : '.smx,.zip') }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
+                                    <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.amxx,.zip' : '.smx,.zip') . ',.bsp,.rar,.7z' }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
                                 </x-filament::button>
                             </div>
                         @endif
@@ -269,7 +269,7 @@
                                     // Counter-Strike 2's workshop maps: nothing on disk, on means in RockTheVote's maplist.txt
                                     $isWorkshop = str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX);
                                     $workshopId = $isWorkshop ? substr($install->package, strlen(\Marschux\ModManager\Sources\Workshop::PREFIX)) : null;
-                                    $isMap = $isWorkshop || str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
+                                    $isMap = $isWorkshop || \Marschux\ModManager\Installer::mapPackage($install->package);
                                     $cycle = $isWorkshop ? 'workshop' : ($this->mapgroups() ? 'mapgroup' : 'mapcycle');
                                     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
