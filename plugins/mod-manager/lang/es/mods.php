@@ -136,7 +136,7 @@ return [
         'remove_body' => 'Vuelven el motor y la biblioteca del juego de Valve, el servidor funciona de nuevo como lo instaló steamcmd. Los plugins que necesitan ReAPI dejan de cargarse.',
     ],
 
-    'amxx' => [
+    'loader_plugins' => [
         'heading' => 'Plugins de AMX Mod X',
         'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',
         'confirm_delete' => '¿Borrar :file y su línea en plugins.ini? Un plugin que trae AMX Mod X vuelve como archivo tras la próxima actualización del cargador, pero queda desactivado.',

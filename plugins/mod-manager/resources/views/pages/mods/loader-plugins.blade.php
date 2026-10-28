@@ -1,9 +1,9 @@
 @if ($loaderPlugins)
     {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
     <x-filament::section collapsible collapsed>
-        <x-slot name="heading">{{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.heading' : 'mod-manager::mods.amxx.sourcemod_heading') }} ({{ collect($loaderPlugins)->where('enabled', true)->count() }}/{{ count($loaderPlugins) }})</x-slot>
+        <x-slot name="heading">{{ trans($this->goldsrc() ? 'mod-manager::mods.loader_plugins.heading' : 'mod-manager::mods.loader_plugins.sourcemod_heading') }} ({{ collect($loaderPlugins)->where('enabled', true)->count() }}/{{ count($loaderPlugins) }})</x-slot>
         <x-slot name="description">
-            {{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.hint' : 'mod-manager::mods.amxx.sourcemod_hint') }}
+            {{ trans($this->goldsrc() ? 'mod-manager::mods.loader_plugins.hint' : 'mod-manager::mods.loader_plugins.sourcemod_hint') }}
             {{-- the loader removed leaves plugins.ini behind, switched on or not none of it runs --}}
             @if (!$loaderRuns)
                 <span style="display:block;margin-top:.25rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
@@ -19,7 +19,7 @@
                     <span style="font-family:monospace;font-size:.875rem;min-width:11rem;{{ $plugin['enabled'] ? '' : 'opacity:.5' }}">{{ $plugin['file'] }}</span>
                     <span style="{{ $muted }};flex:1">{{ $plugin['note'] }}</span>
                     @if (!$plugin['exists'])
-                        <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.amxx.missing') }}</x-filament::badge>
+                        <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader_plugins.missing') }}</x-filament::badge>
                     @endif
                     @php
                         $pluginConfig = \Marschux\ModManager\Installer::configFor(pathinfo($plugin['file'], PATHINFO_FILENAME), $configs);
@@ -42,7 +42,7 @@
                     </span>
                     <span class="mod-slot">
                         @if ($canDelete)
-                            <button type="button" class="mod-action mod-danger" wire:click="deleteLoaderPlugin({{ $js($plugin['file']) }})" wire:confirm="{{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.confirm_delete' : 'mod-manager::mods.amxx.sourcemod_confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
+                            <button type="button" class="mod-action mod-danger" wire:click="deleteLoaderPlugin({{ $js($plugin['file']) }})" wire:confirm="{{ trans($this->goldsrc() ? 'mod-manager::mods.loader_plugins.confirm_delete' : 'mod-manager::mods.loader_plugins.sourcemod_confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
                                 <x-filament::icon icon="tabler-trash" />
                             </button>
                         @endif
