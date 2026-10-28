@@ -10,6 +10,10 @@ AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Cou
 Global Offensive (Metamod:Source + SourceMod, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
 CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Steam Workshop).
 
+![Mod Manager, installed mods](../../assets/screenshots/mod-manager-installed.png)
+
+![Mod Manager, browsing Thunderstore](../../assets/screenshots/mod-manager-browse.png)
+
 ## Install
 
 Upload `mod-manager.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/mod-manager/`, then:

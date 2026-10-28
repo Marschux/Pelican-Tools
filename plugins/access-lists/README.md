@@ -3,6 +3,8 @@
 Edits a game server's admin, ban and whitelist files from the Pelican panel. Files only - there
 is no player list and no console command here; that belongs to a query plugin.
 
+![Access Lists on a Valheim server](../../assets/screenshots/access-lists.png)
+
 ## Install
 
 Upload `access-lists.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/access-lists/`, then:

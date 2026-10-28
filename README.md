@@ -37,22 +37,6 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 | [Server Navigation](plugins/server-navigation/README.md) | Order the server sidebar and fold entries into "More", right in the sidebar | Server |
 | [Server Resources](plugins/server-resources/README.md) | Resources of host, nodes and servers on the admin dashboard | Admin |
 
-### Screenshots
-
-**Mod Manager** on a Valheim server - installed mods with their loader, dependencies and configs, and the Thunderstore browser:
-
-![Mod Manager, installed mods](assets/screenshots/mod-manager-installed.png)
-
-![Mod Manager, browsing Thunderstore](assets/screenshots/mod-manager-browse.png)
-
-**Server Resources** - panel host, nodes and their servers on the admin dashboard:
-
-![Server Resources on the admin dashboard](assets/screenshots/server-resources.png)
-
-**Access Lists** - a Valheim admin list edited from the server page:
-
-![Access Lists on a Valheim server](assets/screenshots/access-lists.png)
-
 ### Installing a plugin
 
 Download `<name>.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) and upload it under **Admin → Plugins → Import from File**, then install it there. Or copy the folder to `/var/www/pelican/plugins/<name>/` and run:

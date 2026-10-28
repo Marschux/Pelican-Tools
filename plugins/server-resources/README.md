@@ -15,6 +15,8 @@ maintenance or out of reach show no values instead of waiting for a timeout each
 In an LXC container, cpu is the container's own only when lxcfs virtualises `/proc/stat`;
 otherwise it shows the host's.
 
+![Server Resources on the admin dashboard](../../assets/screenshots/server-resources.png)
+
 ## Install
 
 Upload `server-resources.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/server-resources/`, then:
