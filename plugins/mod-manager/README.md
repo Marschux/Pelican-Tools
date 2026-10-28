@@ -95,7 +95,7 @@ Without a version picked, the newest one for the server's game version is instal
   and can be taken over (registered) or deleted.
 
 **Installed.**
-- Update hints, per mod and "update all". A version picked by hand is pinned and left out of
+- Updates: a blue arrow button left of the switch, per mod, and "update all"; the status stays "Active". A version picked by hand is pinned and left out of
   "update all" until it is updated by hand.
 - Switch off: the files move next to their folder (`BepInEx/plugins_disabled/`,
   `plugins_disabled/`, `world/datapacks_disabled/`), where the game does not look. A resource

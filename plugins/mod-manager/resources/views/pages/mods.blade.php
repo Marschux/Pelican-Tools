@@ -56,11 +56,9 @@
         .mod-action.mod-danger { color: rgb(220,38,38); border-color: rgba(239,68,68,.45); }
         .dark .mod-action.mod-on { color: rgb(74,222,128); }
         .dark .mod-action.mod-danger { color: rgb(248,113,113); }
-        {{-- the update below a version: small, blue like the link it replaces; grey while the version is pinned --}}
-        .mod-update { margin-top: .2rem; padding: .05rem .45rem; border-radius: .375rem; border: 1px solid rgba(59,130,246,.45); background: rgba(59,130,246,.1); color: rgb(37,99,235); font-size: .75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .mod-update:hover { background: rgba(59,130,246,.2); }
-        .dark .mod-update { color: rgb(96,165,250); }
-        .mod-update.mod-update-pinned { color: inherit; border-color: rgba(127,127,127,.35); background: transparent; }
+        .mod-action.mod-update { color: rgb(37,99,235); border-color: rgba(59,130,246,.45); background: rgba(59,130,246,.1); }
+        .mod-action.mod-update:hover { background: rgba(59,130,246,.2); }
+        .dark .mod-action.mod-update { color: rgb(96,165,250); }
     </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
@@ -300,16 +298,6 @@
                                     <td style="padding:.6rem .5rem;white-space:nowrap">
                                         {{-- a loader's or engine's version is several: one per line --}}
                                         {!! implode('<br>', array_map('e', explode(' / ', $install->version))) !!}
-                                        @if (isset($updates[$install->package]))
-                                            {{-- the jump from what is there to what is out, and a click on it updates --}}
-                                            @if (($isLoader ? $canLoader : $canUpdate) && !($isLoader && !$loaderRuns))
-                                                <div>
-                                                    <button type="button" @class(['mod-update', 'mod-update-pinned' => $install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" title="{{ trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]) }}">↑ {{ $updates[$install->package] }}</button>
-                                                </div>
-                                            @else
-                                                <div style="color:rgb(59,130,246);font-size:.75rem">→ {{ $updates[$install->package] }}</div>
-                                            @endif
-                                        @endif
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
@@ -329,9 +317,6 @@
                                     @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
-                                            @if (isset($updates[$install->package]) && !$install->pinned)
-                                                <x-filament::badge color="info" size="sm" icon="tabler-arrow-up">{{ trans('mod-manager::mods.update') }}</x-filament::badge>
-                                            @endif
                                             @if ($install->pinned)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
                                             @endif
@@ -348,7 +333,8 @@
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle" :tooltip="trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']])">{{ trans('mod-manager::mods.not_loaded') }}</x-filament::badge>
                                             @elseif ($relation['missing'])
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.missing', ['names' => implode(', ', $relation['missing'])]) }}</x-filament::badge>
-                                            @elseif (!isset($updates[$install->package]))
+                                            @else
+                                                {{-- an update waiting changes nothing about it running - the button on the right offers it --}}
                                                 <x-filament::badge color="success" size="sm" icon="tabler-check">{{ trans('mod-manager::mods.active') }}</x-filament::badge>
                                             @endif
                                         </div>
@@ -362,7 +348,18 @@
                                                     </x-filament::button>
                                                 @endif
                                             @endif
-                                            {{-- one fixed slot per action, so switches, gears and bins line up from row to row --}}
+                                            {{-- one fixed slot per action, so updates, switches, gears and bins line up from row to row --}}
+                                            <span class="mod-slot">
+                                                @if (isset($updates[$install->package]) && !($isLoader && !$loaderRuns))
+                                                    @php
+                                                        $updateLabel = trans('mod-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]);
+                                                    @endphp
+                                                    {{-- grey while the version is pinned, still there to update on purpose --}}
+                                                    <button type="button" @class(['mod-action', 'mod-update' => !$install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" @disabled(!($isLoader ? $canLoader : $canUpdate)) title="{{ $updateLabel }}" aria-label="{{ $updateLabel }}">
+                                                        <x-filament::icon icon="tabler-arrow-up" />
+                                                    </button>
+                                                @endif
+                                            </span>
                                             <span class="mod-slot">
                                                 @php
                                                     // a map's switch puts it in and out of mapcycle.txt
