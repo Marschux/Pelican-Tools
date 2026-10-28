@@ -6,6 +6,10 @@ return [
     'tabs' => [
         'installed' => 'Instalados',
         'browse' => 'Explorar',
+        'browse_from' => ':what de :source',
+        'maps' => 'Mapas',
+        'mods' => 'Mods',
+        'plugins' => 'Plugins',
     ],
 
     'nothing_installed' => 'Todavía no hay mods instalados.',

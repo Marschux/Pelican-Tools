@@ -901,6 +901,24 @@ class ModsPage extends Page
     }
 
     /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
+    /** The browse tab's label: where the tiles come from and what they are, e.g. "GameBanana Maps". */
+    public function browseLabel(): string
+    {
+        $sources = $this->sources();
+
+        if ($sources === []) {
+            return trans('mod-manager::mods.tabs.browse');
+        }
+
+        $what = match (true) {
+            array_keys($sources) === ['gamebanana'] => 'maps',
+            $this->jarMods() => 'plugins',
+            default => 'mods',
+        };
+
+        return trans('mod-manager::mods.tabs.browse_from', ['source' => implode(' / ', $sources), 'what' => trans("mod-manager::mods.tabs.$what")]);
+    }
+
     public function sources(): array
     {
         return collect($this->profile()->sources())

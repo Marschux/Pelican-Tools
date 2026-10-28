@@ -57,7 +57,8 @@ stays as it is. Valve's files are moved to `.mod-manager/valve/` and come back w
 removed. A `validate` of steamcmd (reinstalling the server) puts Valve's files back as well - install
 the engine again afterwards.
 
-**Browse.** Search while typing, category, sorting, pages of 12. Filters are remembered per
+**Browse.** The second tab is named after the source and what it offers ("GameBanana Maps",
+"Thunderstore Mods"); a switch only shows with more than one source. Search while typing, category, sorting, pages of 12. Filters are remembered per
 server. A tile opens the details: dependencies, all versions (each installable on its own),
 description and changelog.
 - Thunderstore: client-only and deprecated mods are hidden by default.

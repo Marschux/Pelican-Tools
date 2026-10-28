@@ -6,6 +6,11 @@ return [
     'tabs' => [
         'installed' => 'Installed',
         'browse' => 'Browse',
+        // the browse tab names where its tiles come from and what they are
+        'browse_from' => ':source :what',
+        'maps' => 'Maps',
+        'mods' => 'Mods',
+        'plugins' => 'Plugins',
     ],
 
     'nothing_installed' => 'No mods installed yet.',
