@@ -36,7 +36,7 @@ class PanelHostWidget extends Widget
         $uptime = HostStats::uptime(self::read('/proc/uptime'));
 
         $diskTotal = (int) (@disk_total_space(base_path()) ?: 0);
-        $diskUsed = $diskTotal - (int) (@disk_free_space(base_path()) ?: 0);
+        $diskUsed = HostStats::diskUsed(self::df()) ?? $diskTotal - (int) (@disk_free_space(base_path()) ?: 0);
 
         $cpu = $this->cpu($stat);
 
@@ -76,6 +76,19 @@ class PanelHostWidget extends Widget
         cache()->put(self::CPU_CACHE_KEY, $current, now()->addMinutes(5));
 
         return is_array($previous) ? HostStats::cpuPercent($previous, $current) : null;
+    }
+
+    /** `df` for the panel's disk, empty where exec is disabled. */
+    private static function df(): string
+    {
+        if (! function_exists('exec')) {
+            return '';
+        }
+
+        $output = [];
+        @exec('df -P -k ' . escapeshellarg(base_path()) . ' 2>/dev/null', $output);
+
+        return implode("\n", $output);
     }
 
     private static function read(string $path): string

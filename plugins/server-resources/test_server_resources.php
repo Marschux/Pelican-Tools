@@ -25,6 +25,8 @@ assert(HostStats::cpuCount("cpu  1 2 3 4\ncpu0 1 2 3 4\ncpu1 1 2 3 4\nintr 5\n")
 assert(HostStats::uptime("12345.67 23456.78\n") === 12345);
 assert(HostStats::load("0.52 0.40 0.31 1/234 5678\n") === [0.52, 0.40, 0.31]);
 assert(HostStats::load('') === null);
+assert(HostStats::diskUsed("Filesystem 1024-blocks Used Available Capacity Mounted on\noverlay 103019988 3964036 94509792 4% /\n") === 3964036 * 1024);
+assert(HostStats::diskUsed('') === null);
 
 $order = ['b' => ['9', 'B'], 'a' => ['11', 'A'], 'c' => [null, 'C'], 'd' => ['x1', 'D']];
 uasort($order, fn ($a, $b) => Resources::sortKey(...$a) <=> Resources::sortKey(...$b));

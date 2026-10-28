@@ -2,7 +2,7 @@
     "id": "server-resources",
     "name": "Server Resources",
     "author": "Marschux",
-    "version": "1.10.3",
+    "version": "1.10.4",
     "description": "Resources of the panel host, every node and its servers on the admin dashboard",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/server-resources",

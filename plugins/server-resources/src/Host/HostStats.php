@@ -79,6 +79,17 @@ class HostStats
         return count($parts) >= 3 && is_numeric($parts[0]) ? array_map(floatval(...), array_slice($parts, 0, 3)) : null;
     }
 
+    /**
+     * Used bytes from `df -P -k` output. Unlike total minus disk_free_space(), this leaves out the
+     * blocks ext4 reserves for root, so it matches df and what Wings reports for a node.
+     */
+    public static function diskUsed(string $df): ?int
+    {
+        $lines = array_filter(explode("\n", trim($df)));
+
+        return preg_match('/\s\d+\s+(\d+)\s+\d+\s+\d+%/', (string) end($lines), $match) ? (int) $match[1] * 1024 : null;
+    }
+
     /** Number of cpus, counted from the per-cpu lines of /proc/stat. */
     public static function cpuCount(string $stat): int
     {
