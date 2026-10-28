@@ -124,6 +124,26 @@ class Presets
                     'hidden_packages' => ['source1:loader'],
                 ],
             ],
+            'counter-strike-global-offensive' => [
+                'name' => 'Counter-Strike: Global Offensive',
+                'settings' => [
+                    // maps; SourceMod plugins are uploaded or come from a GitHub release
+                    'sources' => ['gamebanana'],
+                    // Counter-Strike: Global Offensive, its category Maps
+                    'gamebanana_game' => 4660,
+                    'gamebanana_category' => 5413,
+                    'game_dir' => 'csgo',
+                    'mods_dir' => 'csgo/addons/sourcemod/plugins',
+                    'config_dir' => 'csgo/addons/sourcemod/configs',
+                    'loader_type' => 'source1',
+                    'loader_name' => 'Metamod:Source + SourceMod',
+                    // Sources\Source1::PACKAGE
+                    'loader_package' => 'source1:loader',
+                    // the legacy server (app 740) runs 32-bit
+                    'loader_check' => 'csgo/addons/metamod/bin/server.so',
+                    'hidden_packages' => ['source1:loader'],
+                ],
+            ],
             'counter-strike-2' => [
                 'name' => 'Counter-Strike 2',
                 'settings' => [

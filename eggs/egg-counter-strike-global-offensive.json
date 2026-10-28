@@ -22,7 +22,7 @@
     },
     "file_denylist": [],
     "startup_commands": {
-        "Default": "./srcds_run -game csgo -console -usercon -port {{SERVER_PORT}} +ip 0.0.0.0 -strictportbind -norestart -maxplayers_override {{MAX_PLAYERS}} -tickrate {{TICKRATE}} +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} +mapgroup {{MAPGROUP}} +hostname \"{{SERVER_NAME}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_password \"{{SRV_PASSWORD}}\" +sv_lan {{SV_LAN}} +sv_region {{SV_REGION}} +servercfgfile \"{{EXEC_CFG}}\" +tv_enable {{TV_ENABLE}} +tv_port {{TV_PORT}} +tv_delay {{TV_DELAY}} +tv_maxclients {{TV_MAXCLIENTS}} +tv_password \"{{TV_PASSWORD}}\" +map {{SRCDS_MAP}} +sv_setsteamaccount \"{{STEAM_TOKEN}}\" {{EXTRA_ARGS}}"
+        "Default": "rm -f bin/libgcc_s.so.1 && ./srcds_run -game csgo -console -usercon -port {{SERVER_PORT}} +ip 0.0.0.0 -strictportbind -norestart -maxplayers_override {{MAX_PLAYERS}} -tickrate {{TICKRATE}} +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} +mapgroup {{MAPGROUP}} +hostname \"{{SERVER_NAME}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_password \"{{SRV_PASSWORD}}\" +sv_lan {{SV_LAN}} +sv_region {{SV_REGION}} +servercfgfile \"{{EXEC_CFG}}\" +tv_enable {{TV_ENABLE}} +tv_port {{TV_PORT}} +tv_delay {{TV_DELAY}} +tv_maxclients {{TV_MAXCLIENTS}} +tv_password \"{{TV_PASSWORD}}\" +map {{SRCDS_MAP}} +sv_setsteamaccount \"{{STEAM_TOKEN}}\" {{EXTRA_ARGS}}"
     },
     "config": {
         "files": "{}",

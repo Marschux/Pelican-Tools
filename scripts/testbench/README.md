@@ -6,3 +6,4 @@
 - `shot.py <password> <uuid_short> [tab index]` - full-page screenshot to upd.png (only when the look matters)
 - Restart a server: `php artisan tinker --execute="app(\App\Repositories\Daemon\DaemonServerRepository::class)->setServer(\App\Models\Server::where('uuid_short','<id>')->first())->power('restart');"`
 - Server log, filtered: `sudo docker logs --since 5m <uuid> 2>&1 | sed "s/\x1b\[[0-9;]*m//g" | grep -aiE "<pattern>" | tail`
+- Console command (output lands in `docker logs`): `php artisan tinker --execute="\$s=App\Models\Server::where('uuid_short','<id>')->first(); \$n=\$s->node; Http::withToken(\$n->daemon_token)->post(\$n->getConnectionAddress().'/api/servers/'.\$s->uuid.'/commands', ['commands'=>['sm plugins list']]);"`
