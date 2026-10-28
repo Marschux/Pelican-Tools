@@ -115,8 +115,9 @@ Without a version picked, the newest one for the server's game version is instal
 stable builds), one button for both; Metamod's `addons/metamod.vdf` makes the engine load it.
 Updating keeps configs already on the server; removing it keeps `data/` and `cfg/sourcemod/`.
 - SourceMod's own plugins (and `.smx` put there by hand) have a section with a switch each: off
-  moves the file to `plugins/disabled/`, where SourceMod does not look. They cannot be deleted from
-  the page. A loader update puts each new version where the old one is, so on stays on, off stays off.
+  moves the file to `plugins/disabled/`, where SourceMod does not look. A loader update puts each new
+  version where the old one is, so on stays on, off stays off. Deleting one SourceMod comes with
+  brings it back on the next loader update, switched on - the page says so before deleting.
 - Plugins: "Upload plugin or zip" takes a `.smx` or a zip, or paste a GitHub link in the tab "Add by
   link". `addons/sourcemod/{plugins,configs,data,gamedata,translations,extensions}`, `cfg/` and game
   folders (`sound/`, `models/`, `materials/`, ...) count from wherever they sit in the zip; source code (`.sp`) is left out. Switching off moves the `.smx`

@@ -133,6 +133,7 @@ return [
         'confirm_delete' => ':file und seine Zeile in plugins.ini löschen? Ein mitgeliefertes Plugin ist nach dem nächsten Loader-Update als Datei wieder da, bleibt aber aus.',
         'missing' => 'Datei fehlt',
         'sourcemod_heading' => 'Plugins von SourceMod',
+        'sourcemod_confirm_delete' => ':file löschen? Ein mitgeliefertes Plugin ist nach dem nächsten Loader-Update wieder da - eingeschaltet.',
         'sourcemod_hint' => 'Die Plugins in addons/sourcemod/plugins - die mitgelieferten und von Hand abgelegte. Aus heißt: die Datei liegt in plugins/disabled.',
     ],
 

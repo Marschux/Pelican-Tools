@@ -876,6 +876,16 @@ class Installer
      */
     public function deleteAmxxPlugin(string $file): void
     {
+        if ($this->source1()) {
+            $plugin = collect($this->sourcemodPlugins())->firstWhere('file', $file)
+                ?? throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+
+            // one SourceMod comes with is back after the next loader update, switched on
+            $this->files->delete([$this->modsDir() . ($plugin['enabled'] ? '' : '/disabled') . "/$file"]);
+
+            return;
+        }
+
         $path = $this->configDir() . '/plugins.ini';
         $ini = (string) $this->files->read($path);
 

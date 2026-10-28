@@ -133,6 +133,7 @@ return [
         'confirm_delete' => '¿Borrar :file y su línea en plugins.ini? Un plugin que trae AMX Mod X vuelve como archivo tras la próxima actualización del cargador, pero queda desactivado.',
         'missing' => 'Falta el archivo',
         'sourcemod_heading' => 'Plugins de SourceMod',
+        'sourcemod_confirm_delete' => '¿Borrar :file? Un plugin que trae SourceMod vuelve tras la próxima actualización del cargador, activado.',
         'sourcemod_hint' => 'Los plugins de addons/sourcemod/plugins: los que trae SourceMod y los añadidos a mano. Desactivado, el archivo pasa a plugins/disabled.',
     ],
 

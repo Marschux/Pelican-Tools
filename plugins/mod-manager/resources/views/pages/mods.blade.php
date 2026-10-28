@@ -489,9 +489,8 @@
                                 @endif
                             </span>
                             <span class="mod-slot">
-                                {{-- SourceMod's own plugins are only switched, never deleted --}}
-                                @if ($canDelete && $this->goldsrc())
-                                    <button type="button" class="mod-action mod-danger" wire:click="deleteAmxx({{ $js($plugin['file']) }})" wire:confirm="{{ trans('mod-manager::mods.amxx.confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
+                                @if ($canDelete)
+                                    <button type="button" class="mod-action mod-danger" wire:click="deleteAmxx({{ $js($plugin['file']) }})" wire:confirm="{{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.confirm_delete' : 'mod-manager::mods.amxx.sourcemod_confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
                                         <x-filament::icon icon="tabler-trash" />
                                     </button>
                                 @endif

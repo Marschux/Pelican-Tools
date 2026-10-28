@@ -134,6 +134,7 @@ return [
         'confirm_delete' => 'Delete :file and its line in plugins.ini? A plugin that comes with AMX Mod X is back as a file after the next loader update, but stays off.',
         'missing' => 'File missing',
         'sourcemod_heading' => 'Plugins of SourceMod',
+        'sourcemod_confirm_delete' => 'Delete :file? A plugin that comes with SourceMod is back after the next loader update - switched on.',
         'sourcemod_hint' => 'The plugins in addons/sourcemod/plugins - those SourceMod comes with, and any put there by hand. Switched off, the file moves to plugins/disabled.',
     ],
 
