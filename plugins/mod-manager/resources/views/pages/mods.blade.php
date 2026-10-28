@@ -473,6 +473,7 @@
                                 $pluginConfig = \Marschux\ModManager\Installer::configFor(pathinfo($plugin['file'], PATHINFO_FILENAME), $configs);
                             @endphp
                             {{-- the same slots on the right as in the installed table: switch, gear, bin --}}
+                            <span style="display:flex;gap:.25rem">
                             <span class="mod-slot">
                                 @if ($canUpdate)
                                     <button type="button" @class(['mod-action', 'mod-on' => $plugin['enabled']]) wire:click="toggleAmxx({{ $js($plugin['file']) }}, {{ $plugin['enabled'] ? 'false' : 'true' }})" title="{{ trans($plugin['enabled'] ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-label="{{ trans($plugin['enabled'] ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable') }}" aria-pressed="{{ $plugin['enabled'] ? 'true' : 'false' }}">
@@ -494,6 +495,7 @@
                                         <x-filament::icon icon="tabler-trash" />
                                     </button>
                                 @endif
+                            </span>
                             </span>
                         </div>
                     @endforeach
