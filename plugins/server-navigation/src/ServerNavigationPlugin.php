@@ -17,8 +17,8 @@ class ServerNavigationPlugin implements Plugin
     public function register(Panel $panel): void
     {
         if ($panel->getId() === 'server') {
-            // the pencil below the last entry; who may use it decides the component
-            $panel->renderHook(PanelsRenderHook::SIDEBAR_NAV_END, fn () => Blade::render("@livewire('server-navigation-editor')"));
+            // the pencil above the first entry; who may use it decides the component
+            $panel->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => Blade::render("@livewire('server-navigation-editor')"));
         }
     }
 

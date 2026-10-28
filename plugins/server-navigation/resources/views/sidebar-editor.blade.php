@@ -27,10 +27,10 @@
                 </div>
             </div>
         @else
-            <button type="button" wire:click="edit" style="display:flex;align-items:center;gap:.75rem;width:100%;padding:.5rem .75rem;border-radius:.5rem;font-size:.875rem;opacity:.6;cursor:pointer" title="{{ trans('server-navigation::navigation.edit') }}">
-                <x-filament::icon icon="tabler-pencil" style="width:1.25rem;height:1.25rem" />
-                <span>{{ trans('server-navigation::navigation.edit') }}</span>
-            </button>
+            {{-- only the icon, at the right edge above the first entry --}}
+            <div style="display:flex;justify-content:flex-end;margin:-.75rem 0 -.5rem">
+                <x-filament::icon-button icon="tabler-pencil" color="gray" size="sm" wire:click="edit" :label="trans('server-navigation::navigation.edit')" :tooltip="trans('server-navigation::navigation.edit')" />
+            </div>
         @endif
     @endif
 </div>

@@ -2,7 +2,7 @@
     "id": "server-navigation",
     "name": "Server Navigation",
     "author": "Marschux",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Order the server sidebar and fold entries into \"More\", right in the sidebar",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/server-navigation",

@@ -1,6 +1,6 @@
 # Server Navigation
 
-Orders the sidebar of the server panel per server, right in the sidebar: below the last entry,
+Orders the sidebar of the server panel per server, right in the sidebar: the pencil above the first entry,
 **Customize sidebar** (admins and the server's owner, not subusers) turns it into a list to drag.
 Everything above the line shows directly, everything below it goes into the collapsed "More" menu.
 **Done** saves it for everyone on that server.
