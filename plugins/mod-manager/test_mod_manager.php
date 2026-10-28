@@ -175,6 +175,8 @@ foreach ([
     'readme.txt' => null,
     'de_x.rmf' => null,
     'Maps/De_X.BSP' => 'maps/De_X.BSP',
+    'de_x/cstrike/materials/de_x/wall.vtf' => 'materials/de_x/wall.vtf',
+    'de_x.nav' => 'maps/de_x.nav',
 ] as $from => $to) {
     assert(Installer::mapPlacement($from) === $to, $from);
 }

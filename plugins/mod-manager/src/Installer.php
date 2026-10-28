@@ -1595,9 +1595,14 @@ class Installer
     /** @param  callable(string): string  $change */
     private function writeMapcycle(callable $change): void
     {
-        $path = $this->gameDir() . '/mapcycle.txt';
+        $path = $this->gameDir() . ($this->source1() ? '/cfg/mapcycle.txt' : '/mapcycle.txt');
+        // CS:S comes with only cfg/mapcycle_default.txt and reads it while there is no mapcycle.txt - that is the start
+        $cycle = $this->files->read($path) ?? ($this->source1()
+            // without its "do not modify this file" header
+            ? preg_replace('~^\s*//.*(\R|\z)~m', '', (string) $this->files->read($this->gameDir() . '/cfg/mapcycle_default.txt'))
+            : null);
 
-        $this->files->write($path, $change((string) $this->files->read($path)));
+        $this->files->write($path, $change((string) $cycle));
     }
 
     /**
@@ -1646,7 +1651,7 @@ class Installer
         $file = end($parts);
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-        foreach (['maps', 'sound', 'models', 'sprites', 'gfx', 'overviews', 'resource'] as $folder) {
+        foreach (['maps', 'materials', 'sound', 'models', 'sprites', 'gfx', 'overviews', 'resource'] as $folder) {
             // the folder in lower case - Linux tells Maps/ from maps/, the game only looks in the latter
             if (($index = array_search($folder, $lower, true)) !== false && $index < count($parts) - 1) {
                 return implode('/', [$folder, ...array_slice($parts, $index + 1)]);

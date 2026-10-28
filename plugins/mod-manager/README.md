@@ -6,7 +6,8 @@ passes through the panel. Eggs are not changed.
 
 Built in: Valheim (Thunderstore + BepInEx), Minecraft Paper (plugins from Modrinth and Hangar,
 datapacks and resource packs from Modrinth), Counter-Strike 1.6 and Condition Zero (Metamod-R +
-AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
+AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike: Source
+(Metamod:Source + SourceMod, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
 CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Steam Workshop).
 
 ## Install
@@ -35,6 +36,11 @@ Servers with those eggs get the Mods page. An egg can have one profile.
 
 Condition Zero is the Counter-Strike 1.6 preset in the game folder `czero` (mods, configs and
 check path below it), GameBanana game `7`, category `5181`.
+
+Counter-Strike: Source: source GameBanana, game `2`, category `5535` (maps), game folder `cstrike`,
+mods folder `cstrike/addons/sourcemod/plugins`, config folder `cstrike/addons/sourcemod/configs`,
+loader type Metamod:Source + SourceMod. The server runs 32-bit, as the egg of this repository
+starts it.
 
 Counter-Strike 2: source Steam Workshop (maps; browsing needs a Steam Web API key from
 steamcommunity.com/dev/apikey in the server's startup variable `WORKSHOP_AUTHKEY`, without one
@@ -104,6 +110,20 @@ Without a version picked, the newest one for the server's game version is instal
   like an upload and gets update hints from new releases.
 - `.amxx` files in the plugins folder that no `plugins*.ini` names are not loaded; they are listed
   and can be taken over (registered) or deleted.
+
+**Counter-Strike: Source.** The loader is Metamod:Source 1.12 and SourceMod 1.12 (AlliedModders
+stable builds), one button for both; Metamod's `addons/metamod.vdf` makes the engine load it.
+Updating keeps configs already on the server; removing it keeps `data/` and `cfg/sourcemod/`.
+- SourceMod's own plugins (and `.smx` put there by hand) have a section with a switch each: off
+  moves the file to `plugins/disabled/`, where SourceMod does not look. They cannot be deleted from
+  the page. A loader update puts each new version where the old one is, so on stays on, off stays off.
+- Plugins: "Upload plugin or zip" takes a `.smx` or a zip, or paste a GitHub link in the tab "Add by
+  link". `addons/sourcemod/{plugins,configs,data,gamedata,translations,extensions}`, `cfg/` and game
+  folders (`sound/`, `models/`, `materials/`, ...) count from wherever they sit in the zip; source code (`.sp`) is left out. Switching off moves the `.smx`
+  to `plugins/disabled/`.
+- Maps from GameBanana: `maps/`, `materials/`, `models/`, `sound/` and `resource/` from wherever they
+  sit in the archive, loose `.bsp`/`.nav` into `maps/`. The switch of a map puts it in or out of
+  `cfg/mapcycle.txt`; the first time, that file starts as a copy of the game's `mapcycle_default.txt`.
 
 **Counter-Strike 2.** The loader is Metamod:Source 2.0 (AlliedModders build drop) and
 CounterStrikeSharp with its .NET runtime (GitHub), one button for both; the server picks it up on
