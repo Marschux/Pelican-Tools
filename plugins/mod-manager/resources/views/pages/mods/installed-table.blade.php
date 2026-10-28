@@ -7,12 +7,15 @@
             ->filter()->unique()->values();
     @endphp
     {{-- the section brings an x-data of its own, so the filter state lives around it --}}
-    <div x-data="{ type: '' }" style="display:contents">
+    <div x-data="{ type: '' }" style="display:contents" @unless ($this->updatesChecked) wire:init="checkUpdates" @endunless>
     <x-filament::section>
         <x-slot name="afterHeader">
             <div class="mod-head" style="display:flex;gap:.5rem">
                 @include('mod-manager::pages.mods.upload-button')
                 <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
+                @unless ($this->updatesChecked)
+                    <span style="{{ $muted }};display:inline-flex;align-items:center;gap:.4rem"><x-filament::loading-indicator style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.checking_updates') }}</span>
+                @endunless
                 @if ($updatable && $canUpdate)
                     <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('mod-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
                 @endif

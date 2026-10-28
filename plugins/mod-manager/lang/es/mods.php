@@ -72,6 +72,7 @@ return [
     'remove' => 'Quitar',
     'cancel' => 'Cancelar',
     'update_all' => 'Actualizar todo (:count)',
+    'checking_updates' => 'Buscando actualizaciones …',
     'update_to' => ':version disponible',
     'pinned' => 'Fijado',
     'off' => 'Apagado',

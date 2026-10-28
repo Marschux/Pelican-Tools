@@ -156,6 +156,8 @@ its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
 **Installed.**
 - Updates: a blue arrow button left of the switch, per mod, and "update all"; the status stays "Active". A version picked by hand is pinned and left out of
   "update all" until it is updated by hand.
+  The page shows first and checks for updates right after ("Checking for updates …"); every source is asked at
+  the same time, each in a PHP process of its own (Laravel's `Concurrency`), and the answer is kept for 10 minutes.
 - Switch off: the files move next to their folder (`BepInEx/plugins_disabled/`,
   `plugins_disabled/`, `world/datapacks_disabled/`), where the game does not look. A resource
   pack switched off empties the two lines in `server.properties`. An uploaded AMX Mod X plugin

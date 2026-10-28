@@ -73,6 +73,7 @@ return [
     'remove' => 'Remove',
     'cancel' => 'Cancel',
     'update_all' => 'Update all (:count)',
+    'checking_updates' => 'Checking for updates …',
     'update_to' => ':version available',
     'pinned' => 'Pinned',
     'off' => 'Off',

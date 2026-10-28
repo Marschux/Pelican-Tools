@@ -90,7 +90,17 @@ trait ShowsInstalled
     /** @return array<string, string> package => newer version, worked out once per request */
     public function updates(): array
     {
+        if (!$this->updatesChecked) {
+            return [];
+        }
+
         return once(fn () => $this->installer()->updates());
+    }
+
+    /** Called by the page once it is shown: the update arrows come with the next render. */
+    public function checkUpdates(): void
+    {
+        $this->updatesChecked = true;
     }
 
     /** @return Collection<int, ModInstall> the mods, without the loader */

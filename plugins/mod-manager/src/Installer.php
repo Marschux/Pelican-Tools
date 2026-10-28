@@ -4,6 +4,8 @@ namespace Marschux\ModManager;
 
 use App\Models\Server;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Concurrency;
 use Marschux\ModManager\Concerns\HandlesConfigs;
 use Marschux\ModManager\Concerns\HandlesCounterStrikeSharp;
 use Marschux\ModManager\Concerns\HandlesGoldSrc;
@@ -295,21 +297,84 @@ class Installer
      */
     public function updates(): array
     {
+        // the game keeps workshop maps up to date itself
+        $installs = $this->installs()->reject(fn (ModInstall $install) => str_starts_with($install->package, Workshop::PREFIX));
+        $key = 'mod-manager:updates:' . $this->server->uuid . ':' . md5(json_encode([$installs->map(fn (ModInstall $install) => [$install->package, $install->version])->values(), $this->gameVersion()]));
+
+        // the sources cache for an hour; this answer for less, so a release shows up soon
+        return Cache::remember($key, now()->addMinutes(10), function () use ($installs) {
+            $this->prefetchLatest($installs->pluck('package')->all());
+
+            return $this->compareVersions($installs);
+        });
+    }
+
+    /**
+     * Asks every source at once, each in a process of its own, so the check takes as long as the
+     * slowest answer instead of all of them in a row. What they answer lands in the sources'
+     * caches, which compareVersions() then reads. A failing ask is left to compareVersions().
+     *
+     * @param  string[]  $packages
+     */
+    private function prefetchLatest(array $packages): void
+    {
+        $tasks = [];
+
+        foreach ($packages as $package) {
+            $source = get_class($this->sourceFor($package));
+            // one listing holds every Thunderstore package of the community
+            $tasks[$source === Thunderstore::class ? $source : $package] ??= $package;
+        }
+
+        if (count($tasks) < 2) {
+            return;
+        }
+
+        $server = $this->server->id;
+        $profile = $this->profile->id;
+        $closures = [];
+
+        // a plain loop: the closure serializer takes the outer one of nested closures
+        foreach ($tasks as $package) {
+            $closures[] = static function () use ($server, $profile, $package) {
+                try {
+                    (new Installer(Server::findOrFail($server), ModProfile::findOrFail($profile)))->latestVersion($package);
+                } catch (\Throwable) {
+                    // compareVersions() asks again and skips it
+                }
+            };
+        }
+
+        try {
+            Concurrency::run($closures);
+        } catch (\Throwable $exception) {
+            // no processes to be had: compareVersions() asks one after the other
+            report($exception);
+        }
+    }
+
+    /** The newest version of a package for the server's game version, from its source. */
+    public function latestVersion(string $package): string
+    {
+        return $this->sourceFor($package)->latestVersion($package, $this->gameVersion());
+    }
+
+    /**
+     * @param  Collection<int, ModInstall>  $installs
+     * @return array<string, string> package => newest version
+     */
+    private function compareVersions(Collection $installs): array
+    {
         $updates = [];
 
-        foreach ($this->installs() as $install) {
-            // the game keeps workshop maps up to date itself
-            if (str_starts_with($install->package, Workshop::PREFIX)) {
-                continue;
-            }
-
+        foreach ($installs as $install) {
             try {
                 // before 0.31 a GameBanana file's name stood for its version, now the day it was added
                 if (str_starts_with($install->package, GameBanana::PREFIX) && !preg_match('/^\d{4}-\d\d-\d\d\z/', $install->version)) {
                     $install->update(['version' => $this->sourceFor($install->package)->release($install->package, $install->version)['version']]);
                 }
 
-                $latest = $this->sourceFor($install->package)->latestVersion($install->package, $this->gameVersion());
+                $latest = $this->latestVersion($install->package);
             } catch (\Throwable) {
                 continue;
             }
