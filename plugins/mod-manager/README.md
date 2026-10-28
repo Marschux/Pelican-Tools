@@ -37,7 +37,7 @@ Condition Zero is the Counter-Strike 1.6 preset in the game folder `czero` (mods
 check path below it), GameBanana game `7`, category `5181`.
 
 Counter-Strike 2: source Steam Workshop (maps; browsing needs a Steam Web API key from
-steamcommunity.com/dev/apikey in the server's startup variable `WORKSHOP_AUTHKEY`, admins only, without one
+steamcommunity.com/dev/apikey in the server's startup variable `WORKSHOP_AUTHKEY`, without one
 maps are added by id), game folder `game/csgo`, mods folder
 `game/csgo/addons/counterstrikesharp/plugins`, config folder `…/counterstrikesharp/configs`,
 loader type Metamod:Source + CounterStrikeSharp. It needs the Counter-Strike 2 egg of this
