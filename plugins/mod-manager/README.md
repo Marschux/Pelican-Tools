@@ -36,7 +36,8 @@ Servers with those eggs get the Mods page. An egg can have one profile.
 Condition Zero is the Counter-Strike 1.6 preset in the game folder `czero` (mods, configs and
 check path below it), GameBanana game `7`, category `5181`.
 
-Counter-Strike 2: no source to browse, game folder `game/csgo`, mods folder
+Counter-Strike 2: source Steam Workshop (maps; browsing needs a Steam Web API key from
+steamcommunity.com/dev/apikey in the profile, without one maps are added by id), game folder `game/csgo`, mods folder
 `game/csgo/addons/counterstrikesharp/plugins`, config folder `…/counterstrikesharp/configs`,
 loader type Metamod:Source + CounterStrikeSharp. It needs the Counter-Strike 2 egg of this
 repository: its `start.sh` lists Metamod in `gameinfo.gi` on every start (game updates overwrite
@@ -109,7 +110,8 @@ its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
   name; `addons/`, `counterstrikesharp/`, `plugins/`, `configs/`, `shared/`, `gamedata/` and `cfg/`
   count from wherever they sit in the zip. A plugin from GitHub gets update hints from new releases.
   Switching off moves the plugin folder to `plugins_disabled`, its configs stay editable.
-- Workshop maps: paste an id or a workshop link; title and picture come from Steam, nothing is
+- Workshop maps: paste an id or a workshop link, or - with the key - pick one in the tab "Steam
+  Workshop Maps" (search, game mode, sort). Title and picture come from Steam, nothing is
   downloaded by the panel. The first map becomes the start map (`WORKSHOP_MAP`), the flag in a row
   makes another one the start map. Downloading needs a Game Server Login Token (`STEAM_ACC`, App
   730) - the page says so when it is missing.

@@ -628,7 +628,10 @@
                         @endif
                         <div style="flex:1;min-width:0">
                             <div style="font-weight:600;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $item['name'] }}</div>
-                            <div style="{{ $muted }}">{{ trans('mod-manager::mods.by', ['author' => $item['author']]) }}</div>
+                            {{-- the workshop only gives a Steam id for who made it --}}
+                            @if ($item['author'] !== '')
+                                <div style="{{ $muted }}">{{ trans('mod-manager::mods.by', ['author' => $item['author']]) }}</div>
+                            @endif
                             <div style="{{ $muted }};display:flex;gap:.75rem">
                                 @if (isset($item['views']))
                                     {{-- a source that lists no downloads --}}
@@ -709,7 +712,9 @@
                     <div>
                         <div>{{ $details['name'] }} <span style="{{ $muted }}">{{ $details['version'] }}</span></div>
                         <div style="{{ $muted }};font-weight:400">
-                            {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
+                            @if ($details['author'] !== '')
+                                {{ trans('mod-manager::mods.by', ['author' => $details['author']]) }} ·
+                            @endif
                             ⬇ {{ number_format($details['downloads']) }} · ★ {{ $details['rating'] }}
                             @if ($details['size'])
                                 · {{ \Illuminate\Support\Number::fileSize($details['size']) }}

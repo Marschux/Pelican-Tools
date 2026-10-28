@@ -200,6 +200,13 @@ class ModsPage extends Page
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
+        if (str_starts_with($id, Workshop::PREFIX)) {
+            $this->dispatch('close-modal', id: 'mod-details');
+            $this->attempt(fn () => $this->installer()->addWorkshopMap(substr($id, strlen(Workshop::PREFIX))), trans('mod-manager::mods.workshop.added'));
+
+            return;
+        }
+
         // the loader is hidden from the plan, a version of it picked in the details goes its own way
         if ($id === (string) $this->profile()->setting('loader_package')) {
             $this->installLoader($version);
@@ -1015,6 +1022,11 @@ class ModsPage extends Page
     }
 
     /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
+    private function steamKey(): string
+    {
+        return trim((string) $this->profile()->setting('steam_api_key'));
+    }
+
     /**
      * The browse tabs: one per source, one per kind where Modrinth offers several. Key "source" or
      * "source:kind", label what the tiles are and where they come from, e.g. "GameBanana Maps".
@@ -1028,7 +1040,7 @@ class ModsPage extends Page
         foreach ($this->sources() as $source => $name) {
             $whats = match (true) {
                 $source === 'modrinth' && $this->jarMods() => collect(array_keys(Modrinth::KINDS))->mapWithKeys(fn (string $kind) => ["$source:$kind" => trans("mod-manager::mods.kinds.$kind")])->all(),
-                $source === 'gamebanana' => [$source => trans('mod-manager::mods.tabs.maps')],
+                $source === 'gamebanana', $source === 'workshop' => [$source => trans('mod-manager::mods.tabs.maps')],
                 $this->jarMods() => [$source => trans('mod-manager::mods.tabs.plugins')],
                 default => [$source => trans('mod-manager::mods.tabs.mods')],
             };
@@ -1073,6 +1085,8 @@ class ModsPage extends Page
     {
         return collect($this->profile()->sources())
             ->filter(fn (string $source) => isset(Presets::SOURCES[$source]))
+            // the workshop is only browsed with a Steam Web API key; without one maps go in by id
+            ->reject(fn (string $source) => $source === 'workshop' && $this->steamKey() === '')
             ->mapWithKeys(fn (string $source) => [$source => Presets::SOURCES[$source]])
             ->all();
     }
@@ -1083,7 +1097,7 @@ class ModsPage extends Page
         return $this->showAll ? null : ($this->gameVersion()['version'] ?? null);
     }
 
-    private function source(): Thunderstore|Modrinth|Hangar|GameBanana|null
+    private function source(): Thunderstore|Modrinth|Hangar|GameBanana|Workshop|null
     {
         $profile = $this->profile();
 
@@ -1092,6 +1106,7 @@ class ModsPage extends Page
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             'gamebanana' => $this->gameBanana(),
+            'workshop' => new Workshop($this->steamKey()),
             default => null,
         };
     }
@@ -1102,13 +1117,14 @@ class ModsPage extends Page
     }
 
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GameBanana
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GameBanana|Workshop
     {
         $profile = $this->profile();
 
         return match (true) {
             $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
             $id === Source2::PACKAGE => new Source2(),
+            str_starts_with($id, Workshop::PREFIX) => new Workshop($this->steamKey()),
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),

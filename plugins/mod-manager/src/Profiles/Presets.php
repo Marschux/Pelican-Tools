@@ -23,7 +23,7 @@ namespace Marschux\ModManager\Profiles;
  */
 class Presets
 {
-    public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana'];
+    public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana', 'workshop' => 'Steam Workshop'];
 
     public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X', 'source2' => 'Metamod:Source + CounterStrikeSharp'];
 
@@ -103,8 +103,10 @@ class Presets
             'counter-strike-2' => [
                 'name' => 'Counter-Strike 2',
                 'settings' => [
-                    // plugins are uploaded or come from a GitHub release; workshop maps follow
-                    'sources' => [],
+                    // maps; plugins are uploaded or come from a GitHub release. Browsing the
+                    // workshop needs a Steam Web API key (steam_api_key), without one maps go in by id
+                    'sources' => ['workshop'],
+                    'steam_api_key' => '',
                     'game_dir' => 'game/csgo',
                     'mods_dir' => 'game/csgo/addons/counterstrikesharp/plugins',
                     'config_dir' => 'game/csgo/addons/counterstrikesharp/configs',

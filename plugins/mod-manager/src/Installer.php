@@ -1134,7 +1134,7 @@ class Installer
     public function addWorkshopMap(string $input): ModInstall
     {
         $id = Workshop::id($input) ?? throw new RuntimeException(trans('mod-manager::mods.workshop.bad_link'));
-        $map = (new Workshop())->details($id);
+        $map = (new Workshop())->summary($id);
 
         $install = ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => Workshop::PREFIX . $id],

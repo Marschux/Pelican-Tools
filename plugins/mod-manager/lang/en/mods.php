@@ -251,6 +251,8 @@ return [
             'gamebanana_game_hint' => 'The number in gamebanana.com/games/<number>, e.g. 4254 for Counter-Strike 1.6.',
             'gamebanana_category' => 'GameBanana category',
             'gamebanana_category_hint' => 'The number in gamebanana.com/mods/cats/<number>, e.g. 5474 for its maps.',
+            'steam_api_key' => 'Steam Web API key',
+            'steam_api_key_hint' => 'From steamcommunity.com/dev/apikey. Shows the tab to browse the workshop; without it maps are added by id or link.',
             'mods_dir' => 'Mods folder',
             'config_dir' => 'Config folder',
             'version_file' => 'Version file',
