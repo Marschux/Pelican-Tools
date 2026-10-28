@@ -134,6 +134,19 @@
                 </x-slot>
                 <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
 
+                @php
+                    // filter by type, in the browser - only worth it with more than one kind of thing installed
+                    $types = $installed->map(fn ($install) => $this->type($install->package)[0])->unique()->sort()->values();
+                @endphp
+                <div x-data="{ type: '' }">
+                @if ($types->count() > 1)
+                    <div style="display:flex;gap:.25rem;flex-wrap:wrap;margin-bottom:.75rem">
+                        <x-filament::button size="sm" color="primary" x-bind:style="type === '' ? '' : 'opacity:.45'" x-on:click="type = ''">{{ trans('mod-manager::mods.all_types') }}</x-filament::button>
+                        @foreach ($types as $key)
+                            <x-filament::button size="sm" color="primary" x-bind:style="type === {{ $js($key) }} ? '' : 'opacity:.45'" x-on:click="type = {{ $js($key) }}">{{ trans("mod-manager::mods.types.$key") }}</x-filament::button>
+                        @endforeach
+                    </div>
+                @endif
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
                 <div style="overflow-x:auto;overflow-y:hidden">
@@ -154,7 +167,7 @@
                         <tbody>
                             @if ($loader && !$loaderInstall)
                                 {{-- the loader before it was installed through this page: what is wrong and the button to fix it --}}
-                                <tr wire:key="loader-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                <tr wire:key="loader-row" x-show="!type || type === 'loader'" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
                                     <td style="padding:.6rem .5rem .6rem 0">
                                         <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
                                             <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
@@ -198,7 +211,7 @@
                             @foreach (collect([$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null)])->filter()->concat($installed) as $install)
                                 @if ($install === 'engine')
                                     {{-- GoldSrc: ReHLDS, ReGameDLL and ReAPI are offered, never needed --}}
-                                    <tr wire:key="engine-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                    <tr wire:key="engine-row" x-show="!type || type === 'engine'" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
                                         <td style="padding:.6rem .5rem .6rem 0">
                                             <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
                                                 <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
@@ -246,8 +259,9 @@
                                     if ($isLoader && $this->canUpload()) {
                                         $config = collect($configs)->first(fn ($path) => str_ends_with($path, '/amxx.cfg'));
                                     }
+                                    [$type, $typeIcon] = $this->type($install->package, $isLoader);
                                 @endphp
-                                <tr wire:key="install-{{ $install->id }}" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                <tr wire:key="install-{{ $install->id }}" x-show="!type || type === {{ $js($type) }}" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
                                     <td style="padding:.6rem .5rem .6rem 0">
                                         <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem;{{ $install->enabled ? '' : 'opacity:.5' }}">
                                             @if ($install->icon)
@@ -268,9 +282,6 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">
                                         {{-- one badge per row, the same colour for all: what kind of thing it is --}}
-                                        @php
-                                            [$type, $typeIcon] = $this->type($install->package, $isLoader);
-                                        @endphp
                                         <x-filament::badge color="info" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap">
@@ -377,6 +388,7 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
                 </div>
             </x-filament::section>
         @endif
