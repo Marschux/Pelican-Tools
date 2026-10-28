@@ -12,8 +12,9 @@ namespace Marschux\ModManager\Profiles;
  * - modrinth_loaders: a Modrinth project needs one of these, e.g. paper
  * - gamebanana_game / gamebanana_category: the game and the category on GameBanana, by number
  * - mods_dir / config_dir: where mods and their configs live on the server
- * - loader_type: thunderstore (a package of the site, the default) or goldsrc (Metamod-R and
- *   AMX Mod X, hooked in through liblist.gam)
+ * - loader_type: thunderstore (a package of the site, the default), goldsrc (Metamod-R and
+ *   AMX Mod X, hooked in through liblist.gam), source1 (Metamod:Source + SourceMod) or source2
+ *   (Metamod:Source + CounterStrikeSharp)
  * - loader_name / loader_package / loader_check: the mod loader, its package on the site and a
  *   path that exists once it is installed
  * - game_dir: the mod folder of a GoldSrc game, e.g. cstrike
@@ -25,7 +26,10 @@ class Presets
 {
     public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana', 'workshop' => 'Steam Workshop'];
 
-    public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X', 'source2' => 'Metamod:Source + CounterStrikeSharp'];
+    public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X', 'source1' => 'Metamod:Source + SourceMod', 'source2' => 'Metamod:Source + CounterStrikeSharp'];
+
+    /** Loaders made of archives unpacked into a game folder, not a package of a site. */
+    public const ARCHIVE_LOADERS = ['goldsrc', 'source1', 'source2'];
 
     /** @return array<string, array{name: string, settings: array<string, mixed>}> */
     public static function all(): array
@@ -98,6 +102,26 @@ class Presets
                     'loader_check' => 'czero/addons/metamod/metamod.so',
                     'game_dll' => 'dlls/cs.so',
                     'hidden_packages' => ['goldsrc:loader'],
+                ],
+            ],
+            'counter-strike-source' => [
+                'name' => 'Counter-Strike: Source',
+                'settings' => [
+                    // maps; SourceMod plugins are uploaded or come from a GitHub release
+                    'sources' => ['gamebanana'],
+                    // Counter-Strike: Source, its category Maps
+                    'gamebanana_game' => 2,
+                    'gamebanana_category' => 5535,
+                    'game_dir' => 'cstrike',
+                    'mods_dir' => 'cstrike/addons/sourcemod/plugins',
+                    'config_dir' => 'cstrike/addons/sourcemod/configs',
+                    'loader_type' => 'source1',
+                    'loader_name' => 'Metamod:Source + SourceMod',
+                    // Sources\Source1::PACKAGE
+                    'loader_package' => 'source1:loader',
+                    // the server runs 32-bit, there is no srcds_linux64 for it
+                    'loader_check' => 'cstrike/addons/metamod/bin/server.so',
+                    'hidden_packages' => ['source1:loader'],
                 ],
             ],
             'counter-strike-2' => [

@@ -159,19 +159,19 @@ class ModProfileResource extends Resource
                     TextInput::make('settings.game_dir')
                         ->label(trans($field('game_dir')))
                         ->helperText(trans($field('game_dir_hint')))
-                        ->visible(fn (Get $get) => in_array($get('settings.loader_type'), ['goldsrc', 'source2'], true))
-                        ->required(fn (Get $get) => in_array($get('settings.loader_type'), ['goldsrc', 'source2'], true)),
+                        ->visible(fn (Get $get) => in_array($get('settings.loader_type'), Presets::ARCHIVE_LOADERS, true))
+                        ->required(fn (Get $get) => in_array($get('settings.loader_type'), Presets::ARCHIVE_LOADERS, true)),
                     TextInput::make('settings.loader_name')
                         ->label(trans($field('loader_name'))),
                     TextInput::make('settings.loader_package')
-                        ->visible(fn (Get $get) => !in_array($get('settings.loader_type'), ['goldsrc', 'source2'], true))
+                        ->visible(fn (Get $get) => !in_array($get('settings.loader_type'), Presets::ARCHIVE_LOADERS, true))
                         ->label(trans($field('loader_package')))
                         ->helperText(trans($field('loader_package_hint'))),
                     TextInput::make('settings.loader_check')
                         ->label(trans($field('loader_check')))
                         ->helperText(trans($field('loader_check_hint'))),
                     Textarea::make('settings.start_prefix')
-                        ->visible(fn (Get $get) => !in_array($get('settings.loader_type'), ['goldsrc', 'source2'], true))
+                        ->visible(fn (Get $get) => !in_array($get('settings.loader_type'), Presets::ARCHIVE_LOADERS, true))
                         ->label(trans($field('start_prefix')))
                         ->helperText(trans($field('start_prefix_hint')))
                         ->rows(3)

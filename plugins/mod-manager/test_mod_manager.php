@@ -90,7 +90,8 @@ assert(Installer::withMetamodPlugin("; linux $amxx\n", $amxx) === "; linux $amxx
 assert(Installer::goldsrcFile('addons/metamod/metamod_i386.so') && !Installer::goldsrcFile('addons/metamod/metamod.dll'));
 assert(Installer::goldsrcFile('addons/amxmodx/plugins/admin.amxx') && !Installer::goldsrcFile('addons/amxmodx/scripting/admin.sma'));
 assert(!Installer::goldsrcFile('example_plugin/Makefile'));
-assert(Installer::source2Config('addons/counterstrikesharp/configs/core.json') && !Installer::source2Config('addons/counterstrikesharp/api/CounterStrikeSharp.API.dll'));
+assert(Installer::loaderConfig('addons/counterstrikesharp/configs/core.json') && !Installer::loaderConfig('addons/counterstrikesharp/api/CounterStrikeSharp.API.dll'));
+assert(Installer::loaderConfig('addons/sourcemod/configs/admins_simple.ini') && Installer::loaderConfig('cfg/sourcemod/sourcemod.cfg') && !Installer::loaderConfig('addons/sourcemod/plugins/basechat.smx'));
 assert(Installer::goldsrcTarget('addons/metamod/metamod_i386.so') === 'addons/metamod/metamod.so', 'HLDS will not load a game library named _i386');
 assert(Installer::goldsrcTarget('addons/amxmodx/dlls/amxmodx_mm_i386.so') === 'addons/amxmodx/dlls/amxmodx_mm_i386.so', 'metamod loads its plugins by any name');
 foreach ([

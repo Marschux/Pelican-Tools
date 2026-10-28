@@ -24,6 +24,7 @@ use Marschux\ModManager\Profiles\Presets;
 use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GitHub;
 use Marschux\ModManager\Sources\GoldSrc;
+use Marschux\ModManager\Sources\Source1;
 use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
@@ -632,6 +633,7 @@ class ModsPage extends Page
     {
         return match (true) {
             $id === GoldSrc::PACKAGE => 'AMX Mod X',
+            $id === Source1::PACKAGE => 'SourceMod',
             $id === Source2::PACKAGE => 'CounterStrikeSharp',
             str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
@@ -646,6 +648,7 @@ class ModsPage extends Page
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             $package === GoldSrc::ENGINE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team']),
+            $package === Source1::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders']),
             $package === Source2::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
             str_starts_with($package, GitHub::PREFIX) => trans('mod-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
@@ -949,7 +952,7 @@ class ModsPage extends Page
             'name' => (string) $profile->setting('loader_name', $check),
             'installed' => $installed,
             // started through the loader: liblist.gam loads Metamod, or this server's start command carries the prefix
-            'started' => in_array($profile->setting('loader_type'), ['goldsrc', 'source2'], true)
+            'started' => in_array($profile->setting('loader_type'), Presets::ARCHIVE_LOADERS, true)
                 ? $installed && $this->installer()->loaderHooked()
                 : $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
             'update' => $this->updates()[(string) $profile->setting('loader_package')] ?? null,
@@ -1097,12 +1100,13 @@ class ModsPage extends Page
     }
 
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GameBanana|Workshop
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source1|Source2|GameBanana|Workshop
     {
         $profile = $this->profile();
 
         return match (true) {
             $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
+            $id === Source1::PACKAGE => new Source1(),
             $id === Source2::PACKAGE => new Source2(),
             str_starts_with($id, Workshop::PREFIX) => new Workshop($this->steamKey()),
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),

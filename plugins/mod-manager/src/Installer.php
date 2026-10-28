@@ -10,6 +10,8 @@ use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GitHub;
 use Marschux\ModManager\Sources\GoldSrc;
+use Marschux\ModManager\Profiles\Presets;
+use Marschux\ModManager\Sources\Source1;
 use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
@@ -312,7 +314,7 @@ class Installer
      */
     public function installLoader(?string $version = null): ModInstall
     {
-        if ($this->goldsrc() || $this->source2()) {
+        if ($this->archiveLoader()) {
             return $this->installArchiveLoader();
         }
 
@@ -380,8 +382,12 @@ class Installer
         $loader = $this->installs()->firstWhere('package', (string) $this->profile->setting('loader_package'));
 
         if ($loader) {
-            // AMX Mod X keeps what plugins saved (vaults, languages) in its data folder
-            $kept = $this->goldsrc() ? [...$this->keptDirs(), $this->gameDir() . '/addons/amxmodx/data'] : $this->keptDirs();
+            // AMX Mod X and SourceMod keep what plugins saved (vaults, languages, sqlite) in their data folder
+            $kept = match (true) {
+                $this->goldsrc() => [...$this->keptDirs(), $this->gameDir() . '/addons/amxmodx/data'],
+                $this->source1() => [...$this->keptDirs(), $this->gameDir() . '/addons/sourcemod/data', $this->gameDir() . '/cfg/sourcemod'],
+                default => $this->keptDirs(),
+            };
 
             $this->files->delete(self::loaderPaths($loader->files, $kept));
             $loader->delete();
@@ -393,8 +399,9 @@ class Installer
             return;
         }
 
-        // Source 2: the egg's start.sh takes Metamod out of gameinfo.gi once its folder is gone
-        if ($this->source2()) {
+        // Source 2: the egg's start.sh takes Metamod out of gameinfo.gi once its folder is gone;
+        // Source 1: Metamod's .vdf went with its files
+        if ($this->source2() || $this->source1()) {
             return;
         }
 
@@ -482,12 +489,17 @@ class Installer
      * every archive unpacked on the server, its addons/ folder sorted into the game folder, a later
      * archive's files winning. Configs already on the server stay, they may have been changed.
      * GoldSrc then hooks Metamod into liblist.gam; Source 2 needs nothing, the egg's start.sh lists
-     * Metamod in gameinfo.gi on every start.
+     * Metamod in gameinfo.gi on every start; Source 1 neither, Metamod's own addons/metamod.vdf
+     * loads it. SourceMod also brings cfg/sourcemod.
      */
     private function installArchiveLoader(): ModInstall
     {
         $goldsrc = $this->goldsrc();
-        $release = $goldsrc ? (new GoldSrc())->release() : (new Source2())->release();
+        $release = match (true) {
+            $goldsrc => (new GoldSrc())->release(),
+            $this->source1() => (new Source1())->release(),
+            default => (new Source2())->release(),
+        };
         $game = $this->gameDir();
         $scratch = '.mod-manager/loader';
         $moves = [];
@@ -504,8 +516,12 @@ class Installer
                 $this->files->pull($part['url'], $directory, $file);
                 $this->files->decompress($directory, $file);
 
-                foreach ($this->files->walk("$directory/addons") as $path) {
-                    $path = "addons/$path";
+                $paths = [
+                    ...array_map(fn (string $path) => "addons/$path", $this->files->walk("$directory/addons")),
+                    ...($this->source1() && $this->files->exists("$directory/cfg") ? array_map(fn (string $path) => "cfg/$path", $this->files->walk("$directory/cfg")) : []),
+                ];
+
+                foreach ($paths as $path) {
 
                     // CounterStrikeSharp is .NET: its .dll files are what runs, on Linux too
                     if ($goldsrc && !self::goldsrcFile($path)) {
@@ -516,7 +532,7 @@ class Installer
                     $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
                     if (isset($listings[dirname($to)][basename($to)])) {
-                        if (self::keptOnUpdate($path) || (!$goldsrc && self::source2Config($path))) {
+                        if (self::keptOnUpdate($path) || (!$goldsrc && self::loaderConfig($path))) {
                             continue;
                         }
 
@@ -707,6 +723,11 @@ class Installer
             return str_contains((string) $this->files->read($this->gameDir() . '/gameinfo.gi'), 'csgo/addons/metamod');
         }
 
+        // Source 1: Metamod's .vdf is what the engine reads to load it
+        if ($this->source1()) {
+            return $this->files->exists($this->gameDir() . '/addons/metamod.vdf');
+        }
+
         return self::gameDll((string) $this->files->read($this->gameDir() . '/liblist.gam')) === self::METAMOD_DLL;
     }
 
@@ -754,10 +775,10 @@ class Installer
         return $path === 'addons/metamod/metamod_i386.so' ? self::METAMOD_DLL : $path;
     }
 
-    /** CounterStrikeSharp's own settings (core.json, admins.json ...): kept through an update. */
-    public static function source2Config(string $path): bool
+    /** CounterStrikeSharp's or SourceMod's own settings (core.json, admins_simple.ini ...): kept through an update. */
+    public static function loaderConfig(string $path): bool
     {
-        return str_starts_with($path, 'addons/counterstrikesharp/configs/');
+        return str_starts_with($path, 'addons/counterstrikesharp/configs/') || str_starts_with($path, 'addons/sourcemod/configs/') || str_starts_with($path, 'cfg/');
     }
 
     /** A config of the loader: one on the server already is kept through an update. */
@@ -1592,6 +1613,18 @@ class Installer
         return $this->profile->setting('loader_type') === 'source2';
     }
 
+    /** Metamod:Source + SourceMod: Counter-Strike: Source, CS:GO. */
+    private function source1(): bool
+    {
+        return $this->profile->setting('loader_type') === 'source1';
+    }
+
+    /** A loader made of archives into the game folder instead of a package of a site. */
+    private function archiveLoader(): bool
+    {
+        return in_array($this->profile->setting('loader_type'), Presets::ARCHIVE_LOADERS, true);
+    }
+
     /** e.g. cstrike */
     private function gameDir(): string
     {
@@ -1632,7 +1665,7 @@ class Installer
 
             // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
             // there the newest for the game version simply differs from what is installed
-            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE, Source2::PACKAGE], true) || str_starts_with($install->package, GitHub::PREFIX) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
+            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE, Source1::PACKAGE, Source2::PACKAGE], true) || str_starts_with($install->package, GitHub::PREFIX) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -1723,6 +1756,11 @@ class Installer
 
         if ($this->goldsrc()) {
             return $this->unmanagedAmxx($known);
+        }
+
+        // ponytail: SourceMod's own plugins get their section in phase C2, until then nothing is listed
+        if ($this->source1()) {
+            return [];
         }
 
         if ($this->jarMods()) {
@@ -2392,10 +2430,11 @@ class Installer
         return array_intersect($this->profile->sources(), ['modrinth', 'hangar']) !== [];
     }
 
-    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GitHub|GameBanana
+    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|Source1|Source2|GitHub|GameBanana
     {
         return match (true) {
             $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE => new GoldSrc(),
+            $package === Source1::PACKAGE => new Source1(),
             $package === Source2::PACKAGE => new Source2(),
             str_starts_with($package, GitHub::PREFIX) => new GitHub(),
             str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
