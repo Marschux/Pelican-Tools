@@ -52,7 +52,7 @@ class ModsPage extends Page
     protected static ?int $navigationSort = 32;
 
     /** installed | browse */
-    public string $tab = 'browse';
+    public string $tab = 'installed';
 
     public string $query = '';
 
@@ -135,14 +135,9 @@ class ModsPage extends Page
             }
         }
 
-        // with mods on the server, what is there comes first - the listing waits for the browse tab,
+        // what is there comes first, with the loader's row - the listing waits for the browse tab,
         // a cold source API costs up to a second
-        // without a site to browse (Counter-Strike 2) there is no browse tab at all
-        if ($this->installed()->isNotEmpty() || $this->browseTabs() === []) {
-            $this->tab = 'installed';
-        } else {
-            $this->fetch();
-        }
+        $this->tab = 'installed';
     }
 
     /** Every filter change searches right away, typing included (debounced in the view). */
