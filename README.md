@@ -75,7 +75,7 @@ On a Counter-Strike 2 server - Metamod:Source + CounterStrikeSharp, a plugin fro
 
 ### Installing a plugin
 
-Upload `plugins/<name>.zip` under **Admin → Plugins → Import from File** and install it there, or copy the folder to `/var/www/pelican/plugins/<name>/` and run:
+Download `<name>.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) and upload it under **Admin → Plugins → Import from File**, then install it there. Or copy the folder to `/var/www/pelican/plugins/<name>/` and run:
 
 ```bash
 cd /var/www/pelican
@@ -91,12 +91,21 @@ systemctl restart php8.4-fpm
 
 Each plugin's README covers what it needs set up in the admin panel.
 
+Updates: every plugin checks the latest release (`update_url` in its `plugin.json`), so the panel offers a new version under **Admin → Plugins** once it is released.
+
 ### Building
 
 After every plugin change, bump the version in `plugin.json` and rebuild the ZIP:
 
 ```
 python scripts/build.py game-query
+```
+
+A release carries every ZIP and an `updates.json` with version, download link and SHA-256 per plugin:
+
+```
+python scripts/release.py v2026.10.28 <out dir>
+gh release create v2026.10.28 plugins/*.zip <out dir>/updates.json
 ```
 
 ## Sources

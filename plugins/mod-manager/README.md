@@ -12,7 +12,7 @@ CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Ste
 
 ## Install
 
-Copy this folder to `/var/www/pelican/plugins/mod-manager/`, then:
+Upload `mod-manager.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/mod-manager/`, then:
 
 ```bash
 cd /var/www/pelican

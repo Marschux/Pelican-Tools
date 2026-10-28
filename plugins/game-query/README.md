@@ -4,7 +4,7 @@ Queries game servers for player counts, map and server info, and shows them in t
 
 ## Install
 
-Copy this folder to `/var/www/pelican/plugins/game-query/`, then:
+Upload `game-query.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/game-query/`, then:
 
 ```bash
 cd /var/www/pelican

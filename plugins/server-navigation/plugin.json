@@ -2,11 +2,11 @@
     "id": "server-navigation",
     "name": "Server Navigation",
     "author": "Marschux",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Order the server sidebar and fold entries into \"More\", right in the sidebar",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/server-navigation",
-    "update_url": null,
+    "update_url": "https://github.com/Marschux/Pelican-Tools/releases/latest/download/updates.json",
     "namespace": "Marschux\\ServerNavigation",
     "class": "ServerNavigationPlugin",
     "panels": [

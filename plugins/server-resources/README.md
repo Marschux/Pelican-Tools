@@ -17,7 +17,7 @@ otherwise it shows the host's.
 
 ## Install
 
-Copy this folder to `/var/www/pelican/plugins/server-resources/`, then:
+Upload `server-resources.zip` from the [latest release](https://github.com/Marschux/Pelican-Tools/releases/latest) under **Admin → Plugins → Import from File**; updates show up there too. Or copy this folder to `/var/www/pelican/plugins/server-resources/`, then:
 
 ```bash
 cd /var/www/pelican
