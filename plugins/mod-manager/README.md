@@ -82,7 +82,7 @@ description and changelog.
   has a second switch: Plugins, Datapacks, Resource packs.
 - GameBanana: its lists have no download counts, so tiles show views and "most viewed" sorts by
   them. A typed search goes through the site search, which cannot be limited to a category: the
-  first ~100 hits are filtered to the profile's category. A submission's files are its versions.
+  first ~100 hits are filtered to the profile's category. A submission's files are its versions, named by the day they were uploaded (GameBanana has no version numbers); workshop maps show "Latest", the game keeps them up to date.
 
 **Installing.** Required dependencies are listed first and installed along on confirm, optional
 ones can be ticked. The loader is never pulled in as a dependency - it has its own button.

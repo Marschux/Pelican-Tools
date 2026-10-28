@@ -308,7 +308,12 @@
                                     </td>
                                     <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
                                         {{-- a loader's or engine's version is several: one per line --}}
-                                        {!! implode('<br>', array_map('e', explode(' / ', $install->version))) !!}
+                                        @if ($isWorkshop)
+                                            {{-- the game fetches the newest itself; the field holds the map's name for the vote plugin --}}
+                                            {{ trans('mod-manager::mods.version_latest') }}
+                                        @else
+                                            {!! implode('<br>', array_map('e', explode(' / ', $install->version))) !!}
+                                        @endif
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}

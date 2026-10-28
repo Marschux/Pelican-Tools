@@ -1806,6 +1806,11 @@ class Installer
             }
 
             try {
+                // before 0.31 a GameBanana file's name stood for its version, now the day it was added
+                if (str_starts_with($install->package, GameBanana::PREFIX) && !preg_match('/^\d{4}-\d\d-\d\d\z/', $install->version)) {
+                    $install->update(['version' => $this->sourceFor($install->package)->release($install->package, $install->version)['version']]);
+                }
+
                 $latest = $this->sourceFor($install->package)->latestVersion($install->package, $this->gameVersion());
             } catch (\Throwable) {
                 continue;

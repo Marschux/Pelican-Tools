@@ -91,6 +91,7 @@ return [
         'dependencies' => 'Dependencies',
         'status' => 'Status',
     ],
+    'version_latest' => 'Latest',
     'update_from_to' => 'Update from :from to :to',
     'versions' => 'Versions',
 

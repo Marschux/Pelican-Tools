@@ -109,7 +109,7 @@ class GameBanana
             'size' => $files[0]['size'] ?? 0,
             'dependants' => null,
             'dependencies' => [],
-            'versions' => array_map(fn (array $file) => ['number' => $file['number'], 'date' => $file['date'], 'downloads' => $file['downloads']], $files),
+            'versions' => collect($files)->unique('number')->map(fn (array $file) => ['number' => $file['number'], 'date' => $file['date'], 'downloads' => $file['downloads']])->values()->all(),
             // the description is html written by whoever uploaded it
             'readme' => self::sanitize((string) ($profile['_sText'] ?? '')) . ($images !== '' ? "<p>$images</p>" : ''),
             'changelog' => null,
@@ -117,8 +117,8 @@ class GameBanana
     }
 
     /**
-     * One file of a submission, as much as installing it needs: $version (a file's name), else
-     * the newest.
+     * One file of a submission, as much as installing it needs: $version (the day it was added,
+     * or its name - the version before 0.31), else the newest.
      *
      * @return array{id: string, name: string, version: string, icon: ?string, download: string, file: string, size: int, requires: string[], optional: array<string, string>}
      */
@@ -126,7 +126,7 @@ class GameBanana
     {
         $profile = $this->profile(self::split($id));
         $files = self::files($profile);
-        $file = $version === null ? ($files[0] ?? null) : collect($files)->firstWhere('number', $version);
+        $file = $version === null ? ($files[0] ?? null) : collect($files)->first(fn (array $file) => $file['number'] === $version || pathinfo($file['file'], PATHINFO_FILENAME) === $version);
 
         if ($file === null) {
             throw new RuntimeException(trans('mod-manager::mods.messages.no_version', ['name' => $profile['_sName'], 'version' => $version ?? '-']));
@@ -162,7 +162,8 @@ class GameBanana
 
     /**
      * A submission's files, newest first - of files added together (a map and its spawns) the
-     * biggest first, that is the map. A file's name without the extension is its "version".
+     * biggest first, that is the map. GameBanana has no version numbers: the day a file was added
+     * is its "version" (files added together share it).
      *
      * @param  array<string, mixed>  $profile
      * @return array<int, array{number: string, file: string, download: string, size: int, date: string, downloads: int}>
@@ -172,7 +173,7 @@ class GameBanana
         return collect($profile['_aFiles'] ?? [])
             ->sortBy([['_tsDateAdded', 'desc'], ['_nFilesize', 'desc']])
             ->map(fn (array $file) => [
-                'number' => pathinfo((string) $file['_sFile'], PATHINFO_FILENAME),
+                'number' => Carbon::createFromTimestamp((int) ($file['_tsDateAdded'] ?? 0))->format('Y-m-d'),
                 'file' => (string) $file['_sFile'],
                 'download' => (string) $file['_sDownloadUrl'],
                 'size' => (int) ($file['_nFilesize'] ?? 0),

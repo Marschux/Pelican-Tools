@@ -90,6 +90,7 @@ return [
         'dependencies' => 'Dependencias',
         'status' => 'Estado',
     ],
+    'version_latest' => 'Última',
     'update_from_to' => 'Actualizar de :from a :to',
     'versions' => 'Versiones',
 
