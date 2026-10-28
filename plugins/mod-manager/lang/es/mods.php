@@ -158,6 +158,7 @@ return [
         'heading' => 'Lista de mods para jugadores',
         'hint' => 'Los jugadores necesitan los mismos mods. Lo más fácil es r2modman: instalar allí estos mods y arrancar el juego con él.',
         'hint_goldsrc' => 'Los jugadores no necesitan nada: los plugins de AMX Mod X solo funcionan en el servidor y el juego descarga un mapa que falte al entrar (más rápido con sv_downloadurl). La lista sirve para compartir lo que ejecuta este servidor.',
+        'hint_source2' => 'Los jugadores no necesitan nada: los plugins de CounterStrikeSharp solo se ejecutan en el servidor y el juego descarga los mapas del Workshop al unirse. La lista sirve para compartir lo que usa este servidor.',
         'hint_plugins' => 'Los plugins solo funcionan en el servidor, los jugadores no necesitan ninguno: la lista sirve para compartir lo que ejecuta este servidor. Un paquete de recursos se ofrece a los jugadores al entrar.',
         'copy' => 'Copiar',
         'copied' => 'Copiado',

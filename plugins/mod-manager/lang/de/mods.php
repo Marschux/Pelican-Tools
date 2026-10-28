@@ -158,6 +158,7 @@ return [
         'heading' => 'Mod-Liste für Spieler',
         'hint' => 'Spieler brauchen dieselben Mods. Am einfachsten mit r2modman: diese Mods dort installieren und das Spiel darüber starten.',
         'hint_goldsrc' => 'Spieler brauchen nichts: AMX-Mod-X-Plugins laufen nur auf dem Server, und eine fehlende Map lädt das Spiel beim Beitreten herunter (schneller mit sv_downloadurl). Die Liste ist zum Teilen, was hier läuft.',
+        'hint_source2' => 'Spieler brauchen nichts: CounterStrikeSharp-Plugins laufen nur auf dem Server, und Workshop-Maps lädt das Spiel beim Beitreten selbst. Die Liste ist zum Teilen, was dieser Server nutzt.',
         'hint_plugins' => 'Plugins laufen nur auf dem Server, Spieler brauchen keins davon - die Liste ist zum Teilen, was hier läuft. Ein Resource-Pack wird Spielern beim Beitreten angeboten.',
         'copy' => 'Kopieren',
         'copied' => 'Kopiert',

@@ -2108,6 +2108,14 @@ class Installer
                     return "$install->name - https://gamebanana.com/mods/" . GameBanana::split($install->package);
                 }
 
+                if (str_starts_with($install->package, Workshop::PREFIX)) {
+                    return "$install->name - https://steamcommunity.com/sharedfiles/filedetails/?id=" . substr($install->package, strlen(Workshop::PREFIX));
+                }
+
+                if (str_starts_with($install->package, GitHub::PREFIX)) {
+                    return "$install->name $install->version - https://github.com/" . GitHub::parse($install->package)[0];
+                }
+
                 // e.g. the GoldSrc loader: nothing to link to
                 if (!preg_match('/^\w+-\w+$/', $install->package)) {
                     return "$install->name $install->version";

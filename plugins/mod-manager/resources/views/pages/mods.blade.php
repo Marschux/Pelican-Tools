@@ -822,6 +822,7 @@
         <x-slot name="description">{{ trans(match (true) {
             $tab !== 'installed' => 'mod-manager::mods.players.hint',
             $this->goldsrc() => 'mod-manager::mods.players.hint_goldsrc',
+            $this->source2() => 'mod-manager::mods.players.hint_source2',
             $this->jarMods() => 'mod-manager::mods.players.hint_plugins',
             default => 'mod-manager::mods.players.hint',
         }) }}</x-slot>
