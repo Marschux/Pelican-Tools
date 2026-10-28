@@ -413,7 +413,13 @@
             {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
             <x-filament::section collapsible collapsed>
                 <x-slot name="heading">{{ trans('mod-manager::mods.amxx.heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
-                <x-slot name="description">{{ trans('mod-manager::mods.amxx.hint') }}</x-slot>
+                <x-slot name="description">
+                    {{ trans('mod-manager::mods.amxx.hint') }}
+                    {{-- the loader removed leaves plugins.ini behind, switched on or not none of it runs --}}
+                    @if (!$loaderRuns)
+                        <span style="display:block;margin-top:.25rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
+                    @endif
+                </x-slot>
 
                 @foreach (collect($amxx)->groupBy('group') as $group => $plugins)
                     @if ($group !== '')
