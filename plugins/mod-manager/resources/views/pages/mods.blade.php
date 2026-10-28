@@ -411,7 +411,7 @@
         @endif
         @if ($amxx)
             {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
-            <x-filament::section collapsible>
+            <x-filament::section collapsible collapsed>
                 <x-slot name="heading">{{ trans('mod-manager::mods.amxx.heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
                 <x-slot name="description">{{ trans('mod-manager::mods.amxx.hint') }}</x-slot>
 
