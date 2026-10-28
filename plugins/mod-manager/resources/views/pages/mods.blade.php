@@ -18,7 +18,7 @@
     $hasRelations = collect($relations)->contains(fn (array $relation) => $relation['requires'] || $relation['needed_by']);
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
-    $canEngine = $tab === 'installed' && $this->canUpload();
+    $canEngine = $tab === 'installed' && $this->goldsrc();
     $engineInstall = $canEngine ? $this->engineInstall() : null;
     // without a running loader no mod loads, switched on or not
     $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
@@ -129,7 +129,7 @@
                                 <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" x-bind:class="busy && 'opacity-50 pointer-events-none'">
                                     <span x-show="!busy">{{ trans('mod-manager::mods.upload.button') }}</span>
                                     <span x-show="busy" x-cloak>{{ trans('mod-manager::mods.upload.busy') }}</span>
-                                    <input type="file" accept=".amxx,.zip" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
+                                    <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : '.amxx,.zip' }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
                                 </x-filament::button>
                             </div>
                         @endif
@@ -154,6 +154,27 @@
                     </div>
                 </x-slot>
 
+                {{-- Counter-Strike 2: a plugin from a GitHub release, pasted as a link; several zips in it - pick one --}}
+                @if ($canInstall && $this->source2())
+                    <form wire:submit="installGitHub" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+                        <x-filament::input.wrapper prefix-icon="tabler-brand-github" style="flex:1 1 20rem">
+                            <x-filament::input type="text" wire:model="githubLink" :placeholder="trans('mod-manager::mods.github.placeholder')" />
+                        </x-filament::input.wrapper>
+                        <x-filament::button type="submit" icon="tabler-download" wire:loading.attr="disabled" wire:target="installGitHub">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                    </form>
+                    @if ($githubAssets)
+                        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
+                            <span style="font-size:.875rem;{{ $muted }}">{{ trans('mod-manager::mods.github.pick') }}</span>
+                            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                                @foreach ($githubAssets as $asset)
+                                    <x-filament::button size="sm" color="gray" icon="tabler-file-zip" wire:click="installGitHub({{ $js($asset['name']) }})" wire:loading.attr="disabled">
+                                        {{ $asset['name'] }} ({{ \Illuminate\Support\Number::fileSize($asset['size'], 1) }})
+                                    </x-filament::button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endif
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
                 <div style="overflow-x:auto;overflow-y:hidden">
@@ -264,7 +285,7 @@
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                     // the GoldSrc loader's settings are AMX Mod X's main config
                                     if ($isLoader && $this->canUpload()) {
-                                        $config = collect($configs)->first(fn ($path) => str_ends_with($path, '/amxx.cfg'));
+                                        $config = collect($configs)->first(fn ($path) => str_ends_with($path, $this->goldsrc() ? '/amxx.cfg' : '/core.json'));
                                     }
                                     [$type, $typeIcon] = $this->type($install->package, $isLoader);
                                 @endphp
@@ -419,7 +440,7 @@
         @if ($unmanaged)
             <x-filament::section>
                 <x-slot name="heading">{{ trans('mod-manager::mods.unmanaged.heading') }}</x-slot>
-                <x-slot name="description">{{ trans($this->canUpload() ? 'mod-manager::mods.unmanaged.hint_amxx' : 'mod-manager::mods.unmanaged.hint') }}</x-slot>
+                <x-slot name="description">{{ trans($this->goldsrc() ? 'mod-manager::mods.unmanaged.hint_amxx' : 'mod-manager::mods.unmanaged.hint') }}</x-slot>
 
                 @foreach ($unmanaged as $entry)
                     <div wire:key="unmanaged-{{ md5($entry['path']) }}" style="display:flex;gap:.75rem;align-items:center;padding:.5rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
@@ -765,7 +786,7 @@
         <x-slot name="heading">{{ trans('mod-manager::mods.players.heading') }}</x-slot>
         <x-slot name="description">{{ trans(match (true) {
             $tab !== 'installed' => 'mod-manager::mods.players.hint',
-            $this->canUpload() => 'mod-manager::mods.players.hint_goldsrc',
+            $this->goldsrc() => 'mod-manager::mods.players.hint_goldsrc',
             $this->jarMods() => 'mod-manager::mods.players.hint_plugins',
             default => 'mod-manager::mods.players.hint',
         }) }}</x-slot>

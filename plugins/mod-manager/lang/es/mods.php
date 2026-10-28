@@ -175,7 +175,15 @@ return [
         'remove_configs' => 'Borrar también los ajustes que escribió el mod:',
     ],
 
+    'github' => [
+        'placeholder' => 'Enlace a un plugin en GitHub, p. ej. https://github.com/Oz-Lin/cs2-rockthevote',
+        'pick' => 'La versión más reciente tiene varios zips: ¿cuál?',
+        'bad_link' => 'Eso no es un enlace a un repositorio de GitHub.',
+    ],
     'messages' => [
+        'bad_css' => '":file" no es un plugin de CounterStrikeSharp: se necesita un .zip o un .dll.',
+        'no_css_plugin' => 'No hay plugin en ":file": se necesita una carpeta con un .dll del mismo nombre (p. ej. MyPlugin/MyPlugin.dll).',
+        'github_none' => 'No hay ninguna versión con zip en :repository.',
         'no_map' => 'No hay ningún mapa (.bsp) en :file.',
         'bad_amxx' => 'Solo se puede subir un plugin compilado (.amxx) o un zip de plugins, con un nombre simple: :file',
         'source_only' => ':file solo tiene código fuente (.sma): compílalo primero, p. ej. con el compilador de amxmodx.org.',

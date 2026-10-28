@@ -21,6 +21,7 @@ use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Profiles\Presets;
 use Marschux\ModManager\Sources\GameBanana;
+use Marschux\ModManager\Sources\GitHub;
 use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
@@ -392,13 +393,67 @@ class ModsPage extends Page
     /** A config the page must not delete: AMX Mod X would not write it again. */
     public function keepsConfig(string $path): bool
     {
-        return $this->canUpload() && Installer::amxxCore($path);
+        return $this->goldsrc() && Installer::amxxCore($path);
     }
 
     /** Plugins are uploaded for GoldSrc games: AMX Mod X has no site to browse. */
     public function canUpload(): bool
     {
+        return in_array($this->profile()->setting('loader_type'), ['goldsrc', 'source2'], true);
+    }
+
+    /** GoldSrc: AMX Mod X's plugin list, its configs and the optional engine. */
+    public function goldsrc(): bool
+    {
         return $this->profile()->setting('loader_type') === 'goldsrc';
+    }
+
+    /** Counter-Strike 2: plugins also come from a GitHub release link. */
+    public function source2(): bool
+    {
+        return $this->profile()->setting('loader_type') === 'source2';
+    }
+
+    /** A GitHub release link pasted in: the asset to install, or the choice when there are several. */
+    public string $githubLink = '';
+
+    /** @var array<int, array{name: string, size: int}> */
+    public array $githubAssets = [];
+
+    public function installGitHub(?string $asset = null): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+
+        $repository = GitHub::repository($this->githubLink);
+
+        if ($repository === null) {
+            Notification::make()->title(trans('mod-manager::mods.github.bad_link'))->danger()->send();
+
+            return;
+        }
+
+        if ($asset === null) {
+            try {
+                $assets = (new GitHub())->release($repository)['assets'];
+            } catch (Throwable $exception) {
+                $this->fail($exception);
+
+                return;
+            }
+
+            // more than one zip in the release: the page lets the user pick
+            if (count($assets) > 1) {
+                $this->githubAssets = array_map(fn (array $asset) => ['name' => $asset['name'], 'size' => $asset['size']], $assets);
+
+                return;
+            }
+
+            $asset = $assets[0]['name'];
+        }
+
+        $this->githubAssets = [];
+        $this->attempt(fn () => $this->installer()->installGitHub($repository, $asset), trans('mod-manager::mods.messages.installed', ['name' => $asset]));
+        $this->githubLink = '';
     }
 
     /** A plugin of AMX Mod X's plugins.ini on or off. */
@@ -568,6 +623,7 @@ class ModsPage extends Page
             $package === GoldSrc::ENGINE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team']),
             $package === Source2::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
+            str_starts_with($package, GitHub::PREFIX) => trans('mod-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
         };
@@ -587,7 +643,7 @@ class ModsPage extends Page
             Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
             Modrinth::kindOf($package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
             // jars of Paper and AMX Mod X's .amxx are plugins, Thunderstore packages mods
-            Installer::uploaded($package), Installer::jarPackage($package) => ['plugin', 'tabler-puzzle'],
+            Installer::uploaded($package), Installer::jarPackage($package), str_starts_with($package, GitHub::PREFIX) => ['plugin', 'tabler-puzzle'],
             default => ['mod', 'tabler-puzzle'],
         };
     }
@@ -607,7 +663,7 @@ class ModsPage extends Page
     /** ReHLDS, ReGameDLL and ReAPI's row, null until they are in. */
     public function engineInstall(): ?ModInstall
     {
-        $engine = $this->canUpload() ? $this->installer()->installs()->firstWhere('package', GoldSrc::ENGINE) : null;
+        $engine = $this->goldsrc() ? $this->installer()->installs()->firstWhere('package', GoldSrc::ENGINE) : null;
 
         if ($engine) {
             $this->installer()->fillSizes(new Collection([$engine]));

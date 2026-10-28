@@ -11,6 +11,7 @@ require __DIR__ . '/src/Sources/Thunderstore.php';
 require __DIR__ . '/src/Sources/Modrinth.php';
 require __DIR__ . '/src/Sources/Hangar.php';
 require __DIR__ . '/src/Sources/GameBanana.php';
+require __DIR__ . '/src/Sources/GitHub.php';
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
@@ -356,5 +357,27 @@ foreach (['BepInEx/plugins/A-B' => 'BepInEx/plugins_disabled/A-B', 'BepInEx/patc
 }
 
 assert(Installer::switched('BepInEx/pluginsX/A', false, $bases) === 'BepInEx/pluginsX/A', 'only whole folder names');
+
+// --- counterstrikesharp plugins ------------------------------------------------------------------
+
+use Marschux\ModManager\Sources\GitHub;
+
+$css = 'addons/counterstrikesharp/';
+assert(Installer::cssPlacement('RockTheVote/RockTheVote.dll', 'RockTheVote') === $css . 'plugins/RockTheVote/RockTheVote.dll', 'a plugin folder on its own');
+assert(Installer::cssPlacement('RockTheVote/lang/en.json', 'RockTheVote') === $css . 'plugins/RockTheVote/lang/en.json');
+assert(Installer::cssPlacement('MatchZy/addons/counterstrikesharp/plugins/MatchZy/MatchZy.dll', 'MatchZy') === $css . 'plugins/MatchZy/MatchZy.dll', 'wrapped addons folder');
+assert(Installer::cssPlacement('cfg/MatchZy/config.cfg', 'MatchZy') === 'cfg/MatchZy/config.cfg', 'game configs');
+assert(Installer::cssPlacement('plugins/X/X.dll', 'X') === $css . 'plugins/X/X.dll');
+assert(Installer::cssPlacement('configs/plugins/X/X.json', 'X') === $css . 'configs/plugins/X/X.json');
+assert(Installer::cssPlacement('X.dll', 'X') === $css . 'plugins/X/X.dll', 'loose files go into the plugin folder');
+assert(Installer::cssPlacement('README.md', 'X') === null && Installer::cssPlacement('src/Plugin.cs', 'X') === null);
+assert(Installer::cssName(['RockTheVote/RockTheVote.deps.json'], 'RockTheVote-v1.9.6.RELEASE.zip') === 'RockTheVote');
+assert(Installer::cssName([], 'RockTheVote_v1.8.5.zip') === 'RockTheVote' && Installer::cssName([], 'MyPlugin.dll') === 'MyPlugin');
+assert(Installer::cssPlugins(['g/plugins/A/A.dll', 'g/plugins/A/Dep.dll', 'g/plugins/A/lang/en.json', 'g/plugins/B/b.dll'], 'g/plugins') === ['g/plugins/A', 'g/plugins/B'], 'a folder with its own .dll is a plugin');
+
+assert(GitHub::repository('https://github.com/Oz-Lin/cs2-rockthevote/releases/tag/v1.9.6') === 'Oz-Lin/cs2-rockthevote');
+assert(GitHub::repository('github.com/a/b.git') === 'a/b' && GitHub::repository('a/b') === 'a/b' && GitHub::repository('https://example.com/a/b') === null);
+assert(GitHub::shape('RockTheVote-v1.9.6.RELEASE.zip') === 'RockTheVote-#.RELEASE.zip' && GitHub::shape('MatchZy-0.9.2-with-cssharp-linux.zip') === 'MatchZy-#-with-cssharp-linux.zip');
+assert(GitHub::parse(GitHub::package('a/b', 'X-1.2.zip')) === ['a/b', 'X-#.zip']);
 
 echo "ok\n";
