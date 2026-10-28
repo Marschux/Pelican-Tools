@@ -161,7 +161,7 @@ class Hangar
             throw new RuntimeException(trans('mod-manager::mods.messages.external_only', ['name' => $name, 'url' => $download['externalUrl'] ?? self::SITE]));
         }
 
-        // ponytail: a dependency outside hangar (no project id) is left out, the details list it
+        // a dependency outside hangar (no project id) is left out, the details list it
         $dependencies = collect($release['pluginDependencies'][self::PLATFORM] ?? [])->filter(fn (array $dependency) => isset($dependency['projectId']));
         $slug = fn (array $dependency) => self::PREFIX . $this->project((string) $dependency['projectId'])['namespace']['slug'];
 

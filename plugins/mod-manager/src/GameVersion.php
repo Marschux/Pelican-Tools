@@ -36,7 +36,7 @@ class GameVersion
         $value = trim((string) (app(EnvironmentService::class)->handle($server)[$variable] ?? ''));
 
         if ($value === '' || $value === 'latest') {
-            // ponytail: "latest" is resolved the way the Paper egg does it; another game brings its own lookup
+            // "latest" is resolved the way the Paper egg does it; another game brings its own lookup
             $value = self::latestPaper();
         }
 

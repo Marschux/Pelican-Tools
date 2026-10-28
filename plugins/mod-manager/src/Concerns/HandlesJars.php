@@ -207,7 +207,7 @@ trait HandlesJars
 
         // not found is kept too ([]), else every visit would read the jar and ask again
         $match = Cache::remember($key, now()->addDay(), function () use ($path) {
-            // ponytail: the jar passes through the panel once to be hashed; Wings has no checksum call
+            // the jar passes through the panel once to be hashed; Wings has no checksum call
             $content = $this->files->read($path, 64 * 1048576);
 
             if ($content === null) {

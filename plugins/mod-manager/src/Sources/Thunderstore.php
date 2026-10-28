@@ -64,7 +64,7 @@ class Thunderstore
 
         // hidden packages (the loader, the desktop client) are popular, so they sit on
         // thunderstore's first page; where they are there shifts every page after it
-        // ponytail: hidden ones further back only make their page one shorter
+        // hidden ones further back only make their page one shorter
         $firstPage = $this->listing($query, 1);
         $hiddenAt = array_keys(array_filter($firstPage['results'] ?? [], $isHidden));
 

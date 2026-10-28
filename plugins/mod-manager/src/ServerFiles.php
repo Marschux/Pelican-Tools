@@ -25,7 +25,7 @@ class ServerFiles
     /** Downloads $url into $directory and only returns once the file is there. */
     public function pull(string $url, string $directory, string $filename): void
     {
-        // ponytail: inside the click, so a download longer than the web server's timeout fails;
+        // inside the click, so a download longer than the web server's timeout fails;
         // a queued job is the upgrade once mods that large turn up
         $this->repository->getHttpClient()
             ->timeout(300)
