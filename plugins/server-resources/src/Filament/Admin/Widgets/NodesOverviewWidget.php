@@ -139,6 +139,7 @@ class NodesOverviewWidget extends Widget
                     ? trans('server-resources::resources.node.cpus', ['count' => format_number($cores, 0, 2), 'limit' => $limit])
                     : trans('server-resources::resources.host.cores', ['count' => $cores])) : null,
                 Resources::fact('tabler-activity', trans('server-resources::resources.host.load') . ' ' . implode(' · ', array_map(fn ($value) => format_number((float) $value, 2), [$stats['load_average1'], $stats['load_average5'], $stats['load_average15']]))),
+                ($uptime = Resources::nodeUptime($node->id)) !== null ? Resources::uptimeFact($uptime) : null,
             ])),
             // sorted here, not in sql: external_id is a text column, so the database would put
             // "11" before "9"

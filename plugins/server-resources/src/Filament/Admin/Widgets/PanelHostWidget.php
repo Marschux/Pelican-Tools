@@ -2,7 +2,6 @@
 
 namespace Marschux\ServerResources\Filament\Admin\Widgets;
 
-use Carbon\CarbonInterface;
 use Filament\Widgets\Widget;
 use Marschux\ServerResources\Host\HostStats;
 use Marschux\ServerResources\Resources;
@@ -47,7 +46,7 @@ class PanelHostWidget extends Widget
         }
 
         if ($uptime !== null) {
-            $facts[] = Resources::fact('tabler-clock', trans('server-resources::resources.host.uptime') . ' ' . now()->subSeconds($uptime)->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, parts: 2));
+            $facts[] = Resources::uptimeFact($uptime);
         }
 
         return [

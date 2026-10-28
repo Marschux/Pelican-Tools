@@ -2,6 +2,8 @@
 
 namespace Marschux\ServerResources;
 
+use Carbon\CarbonInterface;
+
 /**
  * Builds the bar and fact arrays the shared card partial renders - see
  * resources/views/partials/bars.blade.php.
@@ -54,5 +56,34 @@ class Resources
     public static function fact(string $icon, string $text): array
     {
         return ['icon' => $icon, 'text' => $text];
+    }
+
+    /** @return array{icon: string, text: string} */
+    public static function uptimeFact(int $seconds): array
+    {
+        return self::fact('tabler-clock', trans('server-resources::resources.host.uptime') . ' ' . now()->subSeconds($seconds)->diffForHumans(syntax: CarbonInterface::DIFF_ABSOLUTE, parts: 2));
+    }
+
+    /**
+     * Wings has no uptime of its own, but on every start it calls the panel to reset its servers'
+     * states. That moment is kept per node (a file, not the cache: optimize:clear empties that).
+     */
+    public static function recordNodeStart(int $nodeId): void
+    {
+        @mkdir(dirname(self::nodeStartFile($nodeId)), 0775, true);
+        @file_put_contents(self::nodeStartFile($nodeId), (string) time());
+    }
+
+    /** Seconds since the node's Wings last started, null until it has started once with the plugin installed. */
+    public static function nodeUptime(int $nodeId): ?int
+    {
+        $started = (int) @file_get_contents(self::nodeStartFile($nodeId));
+
+        return $started > 0 ? max(0, time() - $started) : null;
+    }
+
+    private static function nodeStartFile(int $nodeId): string
+    {
+        return storage_path("app/server-resources/node-$nodeId-started");
     }
 }
