@@ -901,22 +901,58 @@ class ModsPage extends Page
     }
 
     /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
-    /** The browse tab's label: where the tiles come from and what they are, e.g. "GameBanana Maps". */
-    public function browseLabel(): string
+    /**
+     * The browse tabs: one per source, one per kind where Modrinth offers several. Key "source" or
+     * "source:kind", label what the tiles are and where they come from, e.g. "GameBanana Maps".
+     *
+     * @return array<string, string>
+     */
+    public function browseTabs(): array
     {
-        $sources = $this->sources();
+        $tabs = [];
 
-        if ($sources === []) {
-            return trans('mod-manager::mods.tabs.browse');
+        foreach ($this->sources() as $source => $name) {
+            $whats = match (true) {
+                $source === 'modrinth' && $this->jarMods() => collect(array_keys(Modrinth::KINDS))->mapWithKeys(fn (string $kind) => ["$source:$kind" => trans("mod-manager::mods.kinds.$kind")])->all(),
+                $source === 'gamebanana' => [$source => trans('mod-manager::mods.tabs.maps')],
+                $this->jarMods() => [$source => trans('mod-manager::mods.tabs.plugins')],
+                default => [$source => trans('mod-manager::mods.tabs.mods')],
+            };
+
+            foreach ($whats as $key => $what) {
+                $tabs[$key] = trans('mod-manager::mods.tabs.browse_from', ['source' => $name, 'what' => $what]);
+            }
         }
 
-        $what = match (true) {
-            array_keys($sources) === ['gamebanana'] => 'maps',
-            $this->jarMods() => 'plugins',
-            default => 'mods',
-        };
+        return $tabs;
+    }
 
-        return trans('mod-manager::mods.tabs.browse_from', ['source' => implode(' / ', $sources), 'what' => trans("mod-manager::mods.tabs.$what")]);
+    /** Which browse tab is showing. */
+    public function browseKey(): string
+    {
+        $source = (string) $this->sourceKey();
+
+        return $source === 'modrinth' && $this->jarMods() ? "$source:$this->kind" : $source;
+    }
+
+    /** Opens a browse tab; another source or kind has its own categories, so the search starts over. */
+    public function browse(string $key): void
+    {
+        if (!isset($this->browseTabs()[$key])) {
+            return;
+        }
+
+        $this->tab = 'browse';
+        [$source, $kind] = explode(':', $key) + [1 => $this->kind];
+
+        if ($key !== $this->browseKey()) {
+            $this->source = $source;
+            $this->kind = $kind;
+            $this->category = '';
+            $this->search();
+        } elseif ($this->items === []) {
+            $this->fetch();
+        }
     }
 
     public function sources(): array

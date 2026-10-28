@@ -74,9 +74,12 @@
         <x-filament::tabs.item icon="tabler-package" :active="$tab === 'installed'" wire:click="setTab('installed')">
             {{ trans('mod-manager::mods.tabs.installed') }}
         </x-filament::tabs.item>
-        <x-filament::tabs.item icon="tabler-search" :active="$tab === 'browse'" wire:click="setTab('browse')">
-            {{ $this->browseLabel() }}
-        </x-filament::tabs.item>
+        {{-- one tab per source, and per kind where Modrinth offers several --}}
+        @foreach ($this->browseTabs() as $key => $label)
+            <x-filament::tabs.item icon="tabler-search" :active="$tab === 'browse' && $key === $this->browseKey()" wire:click="browse({{ $js($key) }})">
+                {{ $label }}
+            </x-filament::tabs.item>
+        @endforeach
     </x-filament::tabs>
 
     @if ($tab === 'installed')
@@ -490,32 +493,10 @@
         @endif
     @else
         @php
-            $sources = $this->sources();
-            $kinds = $this->kinds();
             $gameVersion = $this->gameVersion();
         @endphp
-        @if (count($sources) > 1 || $kinds || $gameVersion)
-            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
-                @if (count($sources) > 1)
-                    {{-- the tab names the source, so a single one needs no switch; every source has its own categories, switching starts the search over --}}
-                    <div style="display:flex;gap:.25rem">
-                        @foreach ($sources as $key => $name)
-                            <x-filament::button size="sm" :color="$key === $this->sourceKey() ? 'primary' : 'gray'" :outlined="$key !== $this->sourceKey()" wire:click="$set('source', {{ $js($key) }})">{{ $name }}</x-filament::button>
-                        @endforeach
-                    </div>
-                @endif
-                @if ($kinds)
-                    {{-- modrinth also has datapacks and resource packs, each with categories of its own --}}
-                    <div style="display:flex;gap:.25rem">
-                        @foreach ($kinds as $key => $name)
-                            <x-filament::button size="sm" :color="$key === $kind ? 'primary' : 'gray'" :outlined="$key !== $kind" wire:click="$set('kind', {{ $js($key) }})">{{ $name }}</x-filament::button>
-                        @endforeach
-                    </div>
-                @endif
-                @if ($gameVersion)
-                    <span style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</span>
-                @endif
-            </div>
+        @if ($gameVersion)
+            <span style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</span>
         @endif
         {{-- every change searches right away, typing waits for a short pause --}}
         <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
