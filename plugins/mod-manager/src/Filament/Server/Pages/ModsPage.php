@@ -413,6 +413,12 @@ class ModsPage extends Page
         return $this->profile()->setting('loader_type') === 'goldsrc';
     }
 
+    /** CS:GO: a map's switch puts it in and out of the mapgroup mg_modmanager. */
+    public function mapgroups(): bool
+    {
+        return $this->installer()->mapgroups();
+    }
+
     /** Counter-Strike 2: plugins also come from a GitHub release link. */
     public function source2(): bool
     {

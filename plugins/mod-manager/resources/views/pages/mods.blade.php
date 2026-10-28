@@ -270,7 +270,7 @@
                                     $isWorkshop = str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX);
                                     $workshopId = $isWorkshop ? substr($install->package, strlen(\Marschux\ModManager\Sources\Workshop::PREFIX)) : null;
                                     $isMap = $isWorkshop || str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
-                                    $cycle = $isWorkshop ? 'workshop' : 'mapcycle';
+                                    $cycle = $isWorkshop ? 'workshop' : ($this->mapgroups() ? 'mapgroup' : 'mapcycle');
                                     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                     // the GoldSrc loader's settings are AMX Mod X's main config

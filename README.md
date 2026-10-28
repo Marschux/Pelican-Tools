@@ -33,7 +33,7 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 |---|---|---|
 | [Access Lists](plugins/access-lists/README.md) | Edit a server's admin, ban and whitelist files from the panel | Admin + Server |
 | [Game Query](plugins/game-query/README.md) | Query players, map and server info | Admin + Server |
-| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim, Minecraft Paper, Counter-Strike 1.6, Condition Zero, Source and 2) | Admin + Server |
+| [Mod Manager](plugins/mod-manager/README.md) | Browse and install mods per server, set up per egg (Valheim, Minecraft Paper, Counter-Strike 1.6, Condition Zero, Source, Global Offensive and 2) | Admin + Server |
 | [Server Navigation](plugins/server-navigation/README.md) | Order the server sidebar and fold entries into "More", right in the sidebar | Server |
 | [Server Resources](plugins/server-resources/README.md) | Resources of host, nodes and servers on the admin dashboard | Admin |
 
@@ -56,6 +56,10 @@ On a Counter-Strike 1.6 server - Metamod-R + AMX Mod X as the loader, maps from 
 On a Counter-Strike: Source server - Metamod:Source + SourceMod as the loader, a map from GameBanana, the plugins of SourceMod:
 
 ![Mod Manager on a Counter-Strike: Source server](assets/screenshots/mod-manager-css.png)
+
+On a Counter-Strike: Global Offensive server - the same loader, a map from GameBanana in the mod manager's own mapgroup:
+
+![Mod Manager on a Counter-Strike: Global Offensive server](assets/screenshots/mod-manager-csgo.png)
 
 On a Counter-Strike 2 server - Metamod:Source + CounterStrikeSharp, a plugin from GitHub, workshop maps with the start map:
 

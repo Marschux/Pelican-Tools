@@ -37,6 +37,9 @@ class Installer
      */
     private const METAMOD_DLL = 'addons/metamod/metamod.so';
 
+    /** CS:GO: the mapgroup of the maps switched on here */
+    public const MAPGROUP = 'mg_modmanager';
+
     private const AMXX_DLL = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
 
     /** AMX Mod X's own configs: an uploaded zip that brings one along never gets it, nor deletes it */
@@ -1605,6 +1608,12 @@ class Installer
     /** @param  callable(string): string  $change */
     private function writeMapcycle(callable $change): void
     {
+        if ($this->mapgroups()) {
+            $this->writeMapgroup($change);
+
+            return;
+        }
+
         $path = $this->gameDir() . ($this->source1() ? '/cfg/mapcycle.txt' : '/mapcycle.txt');
         // CS:S comes with only cfg/mapcycle_default.txt and reads it while there is no mapcycle.txt - that is the start
         $cycle = $this->files->read($path) ?? ($this->source1()
@@ -1613,6 +1622,90 @@ class Installer
             : null);
 
         $this->files->write($path, $change((string) $cycle));
+    }
+
+    /** CS:GO: started with +mapgroup, the rotation is a mapgroup and mapcycle.txt is not read. */
+    public function mapgroups(): bool
+    {
+        return $this->source1() && basename($this->gameDir()) === 'csgo';
+    }
+
+    /**
+     * The mapgroup mg_modmanager in gamemodes_server.txt, changed like mapcycle.txt: one map a
+     * line. It starts with the maps of mg_active; the server's MAPGROUP is set to it.
+     *
+     * @param  callable(string): string  $change
+     */
+    private function writeMapgroup(callable $change): void
+    {
+        $path = $this->gameDir() . '/gamemodes_server.txt';
+        $text = (string) $this->files->read($path);
+        $maps = self::mapgroupMaps($text, self::MAPGROUP)
+            ?? self::mapgroupMaps((string) $this->files->read($this->gameDir() . '/gamemodes.txt'), 'mg_active')
+            ?? [];
+        $changed = trim($change($maps === [] ? '' : implode("\n", $maps) . "\n"));
+
+        $this->files->write($path, self::withMapgroup($text, $changed === '' ? [] : array_map('trim', explode("\n", $changed))));
+        $this->setVariable('MAPGROUP', self::MAPGROUP);
+    }
+
+    /**
+     * The maps of a mapgroup in a gamemodes*.txt, null when the group is not there.
+     *
+     * @return string[]|null
+     */
+    public static function mapgroupMaps(string $text, string $group): ?array
+    {
+        if (!preg_match('/"' . preg_quote($group, '/') . '"\s*\{[^{}]*"maps"\s*\{([^{}]*)\}/', $text, $match)) {
+            return null;
+        }
+
+        preg_match_all('/"([^"]+)"\s*"[^"]*"/', $match[1], $maps);
+
+        return $maps[1];
+    }
+
+    /**
+     * gamemodes_server.txt with the mapgroup mg_modmanager holding $maps - replaced if there, else
+     * added to "mapgroups"; the rest of the file stays as it is.
+     *
+     * @param  string[]  $maps
+     */
+    public static function withMapgroup(string $text, array $maps): string
+    {
+        $group = self::MAPGROUP;
+        $block = "\t\t\"$group\"\n\t\t{\n\t\t\t\"name\"\t\"$group\"\n\t\t\t\"maps\"\n\t\t\t{\n"
+            . implode('', array_map(fn (string $map) => "\t\t\t\t\"$map\"\t\"\"\n", $maps))
+            . "\t\t\t}\n\t\t}\n";
+
+        $pattern = '/[ \t]*"' . $group . '"\s*\{[^{}]*"maps"\s*\{[^{}]*\}[^{}]*\}[ \t]*\R?/';
+
+        if (preg_match($pattern, $text)) {
+            return (string) preg_replace_callback($pattern, fn () => $block, $text, 1);
+        }
+
+        if (preg_match('/"mapgroups"\s*\{[ \t]*\R?/', $text, $match, PREG_OFFSET_CAPTURE)) {
+            $at = $match[0][1] + strlen($match[0][0]);
+
+            return substr($text, 0, $at) . $block . substr($text, $at);
+        }
+
+        $mapgroups = "\t\"mapgroups\"\n\t{\n$block\t}\n";
+
+        // a file without mapgroups: into its outer braces; no file: a new one
+        return ($at = strrpos($text, '}')) !== false
+            ? substr($text, 0, $at) . $mapgroups . substr($text, $at)
+            : "\"GameModes_Server.txt\"\n{\n$mapgroups}\n";
+    }
+
+    /** A startup variable of the server set, when the egg has it. */
+    private function setVariable(string $name, string $value): void
+    {
+        $variable = $this->server->egg->variables()->where('env_variable', $name)->first();
+
+        if ($variable) {
+            $this->server->serverVariables()->updateOrCreate(['variable_id' => $variable->id], ['variable_value' => $value]);
+        }
     }
 
     /**

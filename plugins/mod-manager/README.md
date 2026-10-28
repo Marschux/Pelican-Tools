@@ -6,8 +6,8 @@ passes through the panel. Eggs are not changed.
 
 Built in: Valheim (Thunderstore + BepInEx), Minecraft Paper (plugins from Modrinth and Hangar,
 datapacks and resource packs from Modrinth), Counter-Strike 1.6 and Condition Zero (Metamod-R +
-AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike: Source
-(Metamod:Source + SourceMod, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
+AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike: Source and
+Global Offensive (Metamod:Source + SourceMod, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
 CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Steam Workshop).
 
 ## Install
@@ -41,6 +41,13 @@ Counter-Strike: Source: source GameBanana, game `2`, category `5535` (maps), gam
 mods folder `cstrike/addons/sourcemod/plugins`, config folder `cstrike/addons/sourcemod/configs`,
 loader type Metamod:Source + SourceMod. The server runs 32-bit, as the egg of this repository
 starts it.
+
+Counter-Strike: Global Offensive (the legacy server, app 740): like Counter-Strike: Source with the
+game folder `csgo`, GameBanana game `4660`, category `5413`. The rotation is a mapgroup, not
+`mapcycle.txt`: the plugin keeps its own group `mg_modmanager` in `csgo/gamemodes_server.txt` and
+sets the startup variable `MAPGROUP` to it. The group starts with the maps of `mg_active`; other
+groups in the file stay as they are. The egg of this repository removes the bundled
+`bin/libgcc_s.so.1` on start, which is too old for the image's `libstdc++`.
 
 Counter-Strike 2: source Steam Workshop (maps; browsing needs a Steam Web API key from
 steamcommunity.com/dev/apikey in the server's startup variable `WORKSHOP_AUTHKEY`, without one

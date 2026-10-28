@@ -116,6 +116,12 @@ return [
         'origin' => 'Hochgeladen',
     ],
 
+    'mapgroup' => [
+        'add' => 'In die Mapgroup mg_modmanager aufnehmen',
+        'remove' => 'Aus der Mapgroup mg_modmanager nehmen',
+        'out' => 'Nicht in der Mapgroup',
+    ],
+
     'mapcycle' => [
         'add' => 'In mapcycle.txt aufnehmen',
         'remove' => 'Aus mapcycle.txt nehmen',

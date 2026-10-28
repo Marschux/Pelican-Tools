@@ -181,6 +181,17 @@ foreach ([
     assert(Installer::mapPlacement($from) === $to, $from);
 }
 
+// CS:GO mapgroup: a new file, a group replaced, other groups and keys stay
+$new = Installer::withMapgroup('', ['de_dust2', 'de_x']);
+assert(Installer::mapgroupMaps($new, 'mg_modmanager') === ['de_dust2', 'de_x']);
+$changed = Installer::withMapgroup($new, ['de_x']);
+assert(Installer::mapgroupMaps($changed, 'mg_modmanager') === ['de_x'] && substr_count($changed, 'mg_modmanager"') === 2);
+$own = "\"GameModes_Server.txt\"\n{\n\t\"gameTypes\" { }\n\t\"mapgroups\"\n\t{\n\t\t\"mg_mine\"\n\t\t{\n\t\t\t\"maps\"\n\t\t\t{\n\t\t\t\t\"cs_a\"\t\"\"\n\t\t\t}\n\t\t}\n\t}\n}\n";
+$with = Installer::withMapgroup($own, ['de_y']);
+assert(Installer::mapgroupMaps($with, 'mg_mine') === ['cs_a'] && Installer::mapgroupMaps($with, 'mg_modmanager') === ['de_y'] && str_contains($with, '"gameTypes" { }'));
+assert(Installer::mapgroupMaps(Installer::withMapgroup("\"x\"\n{\n}\n", []), 'mg_modmanager') === []);
+assert(Installer::mapgroupMaps($own, 'mg_active') === null);
+
 assert(Installer::mapNames(['cstrike/maps/fy_a.bsp', 'cstrike/maps/fy_a.res', 'cstrike/de_x.wad', 'cstrike/maps/sub/x.bsp', 'cstrike/maps/fy_b.BSP']) === ['fy_a', 'fy_b']);
 $cycle = "de_dust2\r\nde_aztec\r\n";
 assert(Installer::withMaps($cycle, ['fy_a', 'de_aztec'], true) === "de_dust2\r\nde_aztec\r\nfy_a\r\n", 'appended once, line ends kept');

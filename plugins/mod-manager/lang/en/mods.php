@@ -117,6 +117,12 @@ return [
         'origin' => 'Uploaded',
     ],
 
+    'mapgroup' => [
+        'add' => 'Put into the mapgroup mg_modmanager',
+        'remove' => 'Take out of the mapgroup mg_modmanager',
+        'out' => 'Not in the mapgroup',
+    ],
+
     'mapcycle' => [
         'add' => 'Put into mapcycle.txt',
         'remove' => 'Take out of mapcycle.txt',
