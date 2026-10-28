@@ -187,6 +187,7 @@ return [
         'start' => 'Start map',
         'make_start' => 'Start the server on this map',
         'vote_hint' => 'Only the start map is played: RockTheVote changes between the workshop maps and lets players vote.',
+        'token_hint' => 'Workshop maps only download with a Game Server Login Token: create one for App 730 at steamcommunity.com/dev/managegameservers and enter it under Startup as STEAM_ACC.',
         'vote_setup' => 'Set up map vote',
         'add' => 'Put into the map vote',
         'remove' => 'Take out of the map vote',

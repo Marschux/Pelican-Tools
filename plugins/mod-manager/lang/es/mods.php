@@ -186,6 +186,7 @@ return [
         'start' => 'Mapa inicial',
         'make_start' => 'Arrancar el servidor en este mapa',
         'vote_hint' => 'Solo se juega el mapa inicial: RockTheVote cambia entre los mapas del Workshop y permite votar.',
+        'token_hint' => 'Los mapas del Workshop solo se descargan con un Game Server Login Token: crea uno para la App 730 en steamcommunity.com/dev/managegameservers y ponlo en Startup como STEAM_ACC.',
         'vote_setup' => 'Configurar votación de mapas',
         'add' => 'Añadir a la votación de mapas',
         'remove' => 'Quitar de la votación de mapas',

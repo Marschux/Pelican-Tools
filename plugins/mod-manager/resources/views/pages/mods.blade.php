@@ -162,6 +162,9 @@
                         </x-filament::input.wrapper>
                         <x-filament::button type="submit" color="gray" icon="tabler-plus" wire:loading.attr="disabled" wire:target="addWorkshopMap">{{ trans('mod-manager::mods.workshop.add_map') }}</x-filament::button>
                     </form>
+                    @if (!$this->hasLoginToken() && $installed->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX)))
+                        <div style="margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.workshop.token_hint') }}</div>
+                    @endif
                     @if (!$this->hasMapVote() && $installed->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX)))
                         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">
                             <span style="flex:1 1 20rem">{{ trans('mod-manager::mods.workshop.vote_hint') }}</span>

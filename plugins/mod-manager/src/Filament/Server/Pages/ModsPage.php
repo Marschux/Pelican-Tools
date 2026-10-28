@@ -457,6 +457,11 @@ class ModsPage extends Page
         }, trans('mod-manager::mods.messages.installed', ['name' => Installer::MAP_VOTE]));
     }
 
+    public function hasLoginToken(): bool
+    {
+        return once(fn () => $this->installer()->hasLoginToken());
+    }
+
     public function hasMapVote(): bool
     {
         return once(fn () => $this->installer()->hasMapVote());

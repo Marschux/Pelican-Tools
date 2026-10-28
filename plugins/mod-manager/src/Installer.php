@@ -1151,6 +1151,14 @@ class Installer
         return $install;
     }
 
+    /** Workshop maps only download with a Game Server Login Token (STEAM_ACC): the server has to be logged on to Steam. */
+    public function hasLoginToken(): bool
+    {
+        $variable = $this->server->egg->variables()->where('env_variable', 'STEAM_ACC')->first();
+
+        return $variable && trim((string) $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value')) !== '';
+    }
+
     /** The workshop id the server starts on (WORKSHOP_MAP), '' for none. */
     public function startMap(): string
     {

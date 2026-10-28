@@ -186,6 +186,7 @@ return [
         'start' => 'Startmap',
         'make_start' => 'Server auf dieser Map starten',
         'vote_hint' => 'Gespielt wird nur die Startmap: RockTheVote wechselt zwischen den Workshop-Maps und lässt abstimmen.',
+        'token_hint' => 'Workshop-Maps laden nur mit einem Game Server Login Token: einen für App 730 unter steamcommunity.com/dev/managegameservers anlegen und unter Startup als STEAM_ACC eintragen.',
         'vote_setup' => 'Mapwechsel einrichten',
         'add' => 'In die Mapwahl aufnehmen',
         'remove' => 'Aus der Mapwahl nehmen',
