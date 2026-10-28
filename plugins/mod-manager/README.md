@@ -6,7 +6,8 @@ passes through the panel. Eggs are not changed.
 
 Built in: Valheim (Thunderstore + BepInEx), Minecraft Paper (plugins from Modrinth and Hangar,
 datapacks and resource packs from Modrinth), Counter-Strike 1.6 and Condition Zero (Metamod-R +
-AMX Mod X, plugins uploaded, maps from GameBanana).
+AMX Mod X, plugins uploaded, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
+CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Steam Workshop).
 
 ## Install
 
@@ -34,6 +35,12 @@ Servers with those eggs get the Mods page. An egg can have one profile.
 
 Condition Zero is the Counter-Strike 1.6 preset in the game folder `czero` (mods, configs and
 check path below it), GameBanana game `7`, category `5181`.
+
+Counter-Strike 2: no source to browse, game folder `game/csgo`, mods folder
+`game/csgo/addons/counterstrikesharp/plugins`, config folder `…/counterstrikesharp/configs`,
+loader type Metamod:Source + CounterStrikeSharp. It needs the Counter-Strike 2 egg of this
+repository: its `start.sh` lists Metamod in `gameinfo.gi` on every start (game updates overwrite
+the file) and starts a workshop map after a stock map.
 
 ## The page
 
@@ -93,6 +100,22 @@ Without a version picked, the newest one for the server's game version is instal
   `plugins.ini` stays as the admin keeps it. Configs already there are not overwritten.
 - `.amxx` files in the plugins folder that no `plugins*.ini` names are not loaded; they are listed
   and can be taken over (registered) or deleted.
+
+**Counter-Strike 2.** The loader is Metamod:Source 2.0 (AlliedModders build drop) and
+CounterStrikeSharp with its .NET runtime (GitHub), one button for both; the server picks it up on
+its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
+- Plugins: "Upload plugin or zip" takes a `.zip` or a `.dll`, or paste a GitHub link above the
+  table - a release with several zips asks which one. A plugin is a folder with a `.dll` of the same
+  name; `addons/`, `counterstrikesharp/`, `plugins/`, `configs/`, `shared/`, `gamedata/` and `cfg/`
+  count from wherever they sit in the zip. A plugin from GitHub gets update hints from new releases.
+  Switching off moves the plugin folder to `plugins_disabled`, its configs stay editable.
+- Workshop maps: paste an id or a workshop link; title and picture come from Steam, nothing is
+  downloaded by the panel. The first map becomes the start map (`WORKSHOP_MAP`), the flag in a row
+  makes another one the start map. Downloading needs a Game Server Login Token (`STEAM_ACC`, App
+  730) - the page says so when it is missing.
+- Changing between workshop maps needs a plugin: RockTheVote (`Oz-Lin/cs2-rockthevote`), set up
+  with one button. The switch of a map puts it in or out of a block of RockTheVote's `maplist.txt`;
+  lines written there by hand stay.
 
 **Installed.**
 - Updates: a blue arrow button left of the switch, per mod, and "update all"; the status stays "Active". A version picked by hand is pinned and left out of
