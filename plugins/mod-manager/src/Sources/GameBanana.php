@@ -230,7 +230,7 @@ class GameBanana
     /** @return array<string, mixed> */
     private function profile(string $id): array
     {
-        return Cache::remember("mod-manager:gamebanana:profile:$id", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/Mod/$id/ProfilePage")->json());
+        return Cache::remember("mod-manager:gamebanana:profile:$id", now()->addHour(), fn () => $this->http()->get(self::API . "/Mod/$id/ProfilePage")->json());
     }
 
     /** @param  array<string, mixed>  $record */

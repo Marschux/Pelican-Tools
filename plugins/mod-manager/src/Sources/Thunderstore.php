@@ -133,7 +133,7 @@ class Thunderstore
     {
         [$namespace, $name] = self::split($id);
 
-        return Cache::remember("mod-manager:thunderstore:$this->community:$id", now()->addMinutes(10), function () use ($namespace, $name) {
+        return Cache::remember("mod-manager:thunderstore:$this->community:$id", now()->addHour(), function () use ($namespace, $name) {
             $package = $this->http()->get(self::SITE . "/api/cyberstorm/listing/$this->community/$namespace/$name/")->json();
             $base = self::SITE . "/api/experimental/package/$namespace/$name/{$package['latest_version_number']}";
             // the rest at once - one after the other they made opening the details slow
@@ -228,7 +228,7 @@ class Thunderstore
     /** The newest version number, for the update hints - asked at most every ten minutes. */
     public function latestVersion(string $id, ?string $gameVersion = null): string
     {
-        return Cache::remember("mod-manager:thunderstore:$this->community:$id:latest", now()->addMinutes(10), fn () => $this->latest($id)['version']);
+        return Cache::remember("mod-manager:thunderstore:$this->community:$id:latest", now()->addHour(), fn () => $this->latest($id)['version']);
     }
 
     /** Readmes and changelogs are written by anyone: raw html is stripped, unsafe links dropped. */

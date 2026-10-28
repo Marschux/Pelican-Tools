@@ -78,7 +78,7 @@ class Hangar
     {
         $slug = self::split($id);
 
-        return Cache::remember("mod-manager:hangar:details:$slug:$gameVersion", now()->addMinutes(10), function () use ($slug, $gameVersion) {
+        return Cache::remember("mod-manager:hangar:details:$slug:$gameVersion", now()->addHour(), function () use ($slug, $gameVersion) {
             $responses = Http::pool(fn (Pool $pool) => [
                 $pool->as('project')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/projects/$slug"),
                 $pool->as('versions')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/projects/$slug/versions", array_filter([
@@ -233,13 +233,13 @@ class Hangar
     /** @return array<string, mixed> by slug or by hangar's numeric id */
     private function project(string $project): array
     {
-        return Cache::remember("mod-manager:hangar:project:$project", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/projects/$project")->json());
+        return Cache::remember("mod-manager:hangar:project:$project", now()->addHour(), fn () => $this->http()->get(self::API . "/projects/$project")->json());
     }
 
     /** @return array<int, array<string, mixed>> newest first */
     private function versions(string $slug, ?string $gameVersion): array
     {
-        return Cache::remember("mod-manager:hangar:versions:$slug:$gameVersion", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/projects/$slug/versions", array_filter([
+        return Cache::remember("mod-manager:hangar:versions:$slug:$gameVersion", now()->addHour(), fn () => $this->http()->get(self::API . "/projects/$slug/versions", array_filter([
             'platform' => self::PLATFORM,
             'platformVersion' => $gameVersion,
             'limit' => 25,

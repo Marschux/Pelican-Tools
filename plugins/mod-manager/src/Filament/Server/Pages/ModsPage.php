@@ -130,12 +130,13 @@ class ModsPage extends Page
             }
         }
 
-        // with mods on the server, what is there comes first
+        // with mods on the server, what is there comes first - the listing waits for the browse tab,
+        // a cold source API costs up to a second
         if ($this->installed()->isNotEmpty()) {
             $this->tab = 'installed';
+        } else {
+            $this->fetch();
         }
-
-        $this->fetch();
     }
 
     /** Every filter change searches right away, typing included (debounced in the view). */
@@ -154,6 +155,10 @@ class ModsPage extends Page
     public function setTab(string $tab): void
     {
         $this->tab = in_array($tab, ['installed', 'browse'], true) ? $tab : 'browse';
+
+        if ($this->tab === 'browse' && $this->items === []) {
+            $this->fetch();
+        }
     }
 
     /** A new search starts at the first page again. */

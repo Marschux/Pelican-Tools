@@ -116,7 +116,7 @@ class Modrinth
     {
         $project = self::split($id);
 
-        return Cache::remember("mod-manager:modrinth:details:$project:" . implode(',', $this->loaders) . ":$gameVersion", now()->addMinutes(10), function () use ($id, $project, $gameVersion) {
+        return Cache::remember("mod-manager:modrinth:details:$project:" . implode(',', $this->loaders) . ":$gameVersion", now()->addHour(), function () use ($id, $project, $gameVersion) {
             // at once - one after the other they make opening the details slow
             $responses = Http::pool(fn (Pool $pool) => [
                 $pool->as('project')->timeout(15)->withUserAgent(self::AGENT)->get(self::API . "/project/$project"),
@@ -269,7 +269,7 @@ class Modrinth
     /** @return array<string, mixed> */
     private function project(string $project): array
     {
-        return Cache::remember("mod-manager:modrinth:project:$project", now()->addMinutes(10), fn () => $this->http()->get(self::API . "/project/$project")->json());
+        return Cache::remember("mod-manager:modrinth:project:$project", now()->addHour(), fn () => $this->http()->get(self::API . "/project/$project")->json());
     }
 
     /** @return array<int, array<string, mixed>> newest first, for the profile's loaders */
@@ -277,7 +277,7 @@ class Modrinth
     {
         return Cache::remember(
             "mod-manager:modrinth:versions:$project:" . implode(',', $this->loaders) . ":$gameVersion",
-            now()->addMinutes(10),
+            now()->addHour(),
             fn () => $this->http()->get(self::API . "/project/$project/version", array_filter([
                 'loaders' => json_encode($this->loaders),
                 'game_versions' => $gameVersion ? json_encode([$gameVersion]) : null,
