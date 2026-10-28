@@ -22,6 +22,7 @@ use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Profiles\Presets;
 use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GoldSrc;
+use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
@@ -132,7 +133,8 @@ class ModsPage extends Page
 
         // with mods on the server, what is there comes first - the listing waits for the browse tab,
         // a cold source API costs up to a second
-        if ($this->installed()->isNotEmpty()) {
+        // without a site to browse (Counter-Strike 2) there is no browse tab at all
+        if ($this->installed()->isNotEmpty() || $this->browseTabs() === []) {
             $this->tab = 'installed';
         } else {
             $this->fetch();
@@ -550,6 +552,7 @@ class ModsPage extends Page
     {
         return match (true) {
             $id === GoldSrc::PACKAGE => 'AMX Mod X',
+            $id === Source2::PACKAGE => 'CounterStrikeSharp',
             str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
             str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
@@ -563,6 +566,7 @@ class ModsPage extends Page
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             $package === GoldSrc::ENGINE => trans('mod-manager::mods.by', ['author' => 'ReHLDS team']),
+            $package === Source2::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
@@ -849,7 +853,7 @@ class ModsPage extends Page
             'name' => (string) $profile->setting('loader_name', $check),
             'installed' => $installed,
             // started through the loader: liblist.gam loads Metamod, or this server's start command carries the prefix
-            'started' => $profile->setting('loader_type') === 'goldsrc'
+            'started' => in_array($profile->setting('loader_type'), ['goldsrc', 'source2'], true)
                 ? $installed && $this->installer()->loaderHooked()
                 : $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
             'update' => $this->updates()[(string) $profile->setting('loader_package')] ?? null,
@@ -988,12 +992,13 @@ class ModsPage extends Page
     }
 
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|GameBanana
+    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GameBanana
     {
         $profile = $this->profile();
 
         return match (true) {
             $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
+            $id === Source2::PACKAGE => new Source2(),
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),

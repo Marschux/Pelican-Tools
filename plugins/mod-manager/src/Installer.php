@@ -9,6 +9,7 @@ use Marschux\ModManager\Models\ModInstall;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Sources\GameBanana;
 use Marschux\ModManager\Sources\GoldSrc;
+use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
@@ -298,8 +299,8 @@ class Installer
      */
     public function installLoader(?string $version = null): ModInstall
     {
-        if ($this->goldsrc()) {
-            return $this->installGoldSrcLoader();
+        if ($this->goldsrc() || $this->source2()) {
+            return $this->installArchiveLoader();
         }
 
         $package = $this->source->release((string) $this->profile->setting('loader_package'), $version);
@@ -376,6 +377,11 @@ class Installer
         if ($this->goldsrc()) {
             $this->hookGoldSrc(false);
 
+            return;
+        }
+
+        // Source 2: the egg's start.sh takes Metamod out of gameinfo.gi once its folder is gone
+        if ($this->source2()) {
             return;
         }
 
@@ -459,14 +465,16 @@ class Installer
     }
 
     /**
-     * Metamod-R and AMX Mod X: every archive unpacked on the server, its addons/ folder sorted
-     * into the game folder - the game's AMX Mod X addon after the base, so its files win. Configs
-     * already on the server stay, they may have been changed. Then liblist.gam loads Metamod
-     * instead of the game, and Metamod loads AMX Mod X.
+     * A loader made of archives - Metamod-R and AMX Mod X, or Metamod:Source and CounterStrikeSharp:
+     * every archive unpacked on the server, its addons/ folder sorted into the game folder, a later
+     * archive's files winning. Configs already on the server stay, they may have been changed.
+     * GoldSrc then hooks Metamod into liblist.gam; Source 2 needs nothing, the egg's start.sh lists
+     * Metamod in gameinfo.gi on every start.
      */
-    private function installGoldSrcLoader(): ModInstall
+    private function installArchiveLoader(): ModInstall
     {
-        $release = (new GoldSrc())->release();
+        $goldsrc = $this->goldsrc();
+        $release = $goldsrc ? (new GoldSrc())->release() : (new Source2())->release();
         $game = $this->gameDir();
         $scratch = '.mod-manager/loader';
         $moves = [];
@@ -486,15 +494,16 @@ class Installer
                 foreach ($this->files->walk("$directory/addons") as $path) {
                     $path = "addons/$path";
 
-                    if (!self::goldsrcFile($path)) {
+                    // CounterStrikeSharp is .NET: its .dll files are what runs, on Linux too
+                    if ($goldsrc && !self::goldsrcFile($path)) {
                         continue;
                     }
 
-                    $to = "$game/" . self::goldsrcTarget($path);
+                    $to = "$game/" . ($goldsrc ? self::goldsrcTarget($path) : $path);
                     $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
                     if (isset($listings[dirname($to)][basename($to)])) {
-                        if (self::keptOnUpdate($path)) {
+                        if (self::keptOnUpdate($path) || (!$goldsrc && self::source2Config($path))) {
                             continue;
                         }
 
@@ -512,12 +521,14 @@ class Installer
             $this->files->delete([$scratch]);
         }
 
-        $this->hookGoldSrc(true);
+        if ($goldsrc) {
+            $this->hookGoldSrc(true);
+        }
 
-        $previous = $this->installs()->firstWhere('package', GoldSrc::PACKAGE)?->files ?? [];
+        $previous = $this->installs()->firstWhere('package', $release['id'])?->files ?? [];
 
         return ModInstall::query()->updateOrCreate(
-            ['server_id' => $this->server->id, 'package' => GoldSrc::PACKAGE],
+            ['server_id' => $this->server->id, 'package' => $release['id']],
             [
                 'name' => (string) $this->profile->setting('loader_name', $release['name']),
                 'version' => $release['version'],
@@ -673,9 +684,16 @@ class Installer
         }
     }
 
-    /** Metamod is in: liblist.gam loads it. Off when e.g. a "validate" of steamcmd restored the file. */
+    /**
+     * Metamod is in: liblist.gam loads it, or - Source 2 - gameinfo.gi lists it, which the egg's
+     * start.sh does on the next start. Off when e.g. a "validate" of steamcmd restored the file.
+     */
     public function loaderHooked(): bool
     {
+        if ($this->source2()) {
+            return str_contains((string) $this->files->read($this->gameDir() . '/gameinfo.gi'), 'csgo/addons/metamod');
+        }
+
         return self::gameDll((string) $this->files->read($this->gameDir() . '/liblist.gam')) === self::METAMOD_DLL;
     }
 
@@ -721,6 +739,12 @@ class Installer
     public static function goldsrcTarget(string $path): string
     {
         return $path === 'addons/metamod/metamod_i386.so' ? self::METAMOD_DLL : $path;
+    }
+
+    /** CounterStrikeSharp's own settings (core.json, admins.json ...): kept through an update. */
+    public static function source2Config(string $path): bool
+    {
+        return str_starts_with($path, 'addons/counterstrikesharp/configs/');
     }
 
     /** A config of the loader: one on the server already is kept through an update. */
@@ -1258,6 +1282,12 @@ class Installer
         return $this->profile->setting('loader_type') === 'goldsrc';
     }
 
+    /** Counter-Strike 2: Metamod:Source + CounterStrikeSharp. */
+    private function source2(): bool
+    {
+        return $this->profile->setting('loader_type') === 'source2';
+    }
+
     /** e.g. cstrike */
     private function gameDir(): string
     {
@@ -1293,7 +1323,7 @@ class Installer
 
             // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
             // there the newest for the game version simply differs from what is installed
-            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE], true) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
+            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE, Source2::PACKAGE], true) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -2004,10 +2034,11 @@ class Installer
         return array_intersect($this->profile->sources(), ['modrinth', 'hangar']) !== [];
     }
 
-    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|GameBanana
+    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|Source2|GameBanana
     {
         return match (true) {
             $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE => new GoldSrc(),
+            $package === Source2::PACKAGE => new Source2(),
             str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),

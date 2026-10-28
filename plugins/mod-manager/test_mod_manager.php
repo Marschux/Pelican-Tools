@@ -25,7 +25,8 @@ foreach (Presets::all() as $key => $preset) {
     $settings = $preset['settings'];
 
     assert(Presets::options()[$key] === $preset['name']);
-    assert($settings['sources'] !== [] && array_diff($settings['sources'], array_keys(Presets::SOURCES)) === [], "$key: unknown source");
+    // Counter-Strike 2 has no site to browse yet: plugins are uploaded
+    assert(($settings['sources'] !== [] || $settings['loader_type'] === 'source2') && array_diff($settings['sources'], array_keys(Presets::SOURCES)) === [], "$key: unknown source");
     assert(($settings['mods_dir'] ?? '') !== '', "$key: mods_dir is needed");
 
     if (in_array('thunderstore', $settings['sources'], true)) {
@@ -41,7 +42,7 @@ foreach (Presets::all() as $key => $preset) {
         assert(($settings['loader_check'] ?? '') !== '', "$key: a loader needs a path to check");
         assert(in_array($settings['loader_package'], $settings['hidden_packages'], true), "$key: the loader has to be hidden");
     }
-    if (($settings['loader_type'] ?? 'thunderstore') === 'goldsrc') {
+    if (in_array($settings['loader_type'] ?? 'thunderstore', ['goldsrc', 'source2'], true)) {
         assert(($settings['game_dir'] ?? '') !== '' && str_starts_with($settings['mods_dir'], $settings['game_dir'] . '/'), "$key: goldsrc mods live in the game folder");
         assert(str_starts_with($settings['loader_check'] ?? '', $settings['game_dir'] . '/'), "$key: goldsrc needs a check path in the game folder");
     }
@@ -87,6 +88,7 @@ assert(Installer::withMetamodPlugin("; linux $amxx\n", $amxx) === "; linux $amxx
 assert(Installer::goldsrcFile('addons/metamod/metamod_i386.so') && !Installer::goldsrcFile('addons/metamod/metamod.dll'));
 assert(Installer::goldsrcFile('addons/amxmodx/plugins/admin.amxx') && !Installer::goldsrcFile('addons/amxmodx/scripting/admin.sma'));
 assert(!Installer::goldsrcFile('example_plugin/Makefile'));
+assert(Installer::source2Config('addons/counterstrikesharp/configs/core.json') && !Installer::source2Config('addons/counterstrikesharp/api/CounterStrikeSharp.API.dll'));
 assert(Installer::goldsrcTarget('addons/metamod/metamod_i386.so') === 'addons/metamod/metamod.so', 'HLDS will not load a game library named _i386');
 assert(Installer::goldsrcTarget('addons/amxmodx/dlls/amxmodx_mm_i386.so') === 'addons/amxmodx/dlls/amxmodx_mm_i386.so', 'metamod loads its plugins by any name');
 foreach ([

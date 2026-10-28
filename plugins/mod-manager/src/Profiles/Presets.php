@@ -25,7 +25,7 @@ class Presets
 {
     public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana'];
 
-    public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X'];
+    public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X', 'source2' => 'Metamod:Source + CounterStrikeSharp'];
 
     /** @return array<string, array{name: string, settings: array<string, mixed>}> */
     public static function all(): array
@@ -98,6 +98,22 @@ class Presets
                     'loader_check' => 'czero/addons/metamod/metamod.so',
                     'game_dll' => 'dlls/cs.so',
                     'hidden_packages' => ['goldsrc:loader'],
+                ],
+            ],
+            'counter-strike-2' => [
+                'name' => 'Counter-Strike 2',
+                'settings' => [
+                    // plugins are uploaded or come from a GitHub release; workshop maps follow
+                    'sources' => [],
+                    'game_dir' => 'game/csgo',
+                    'mods_dir' => 'game/csgo/addons/counterstrikesharp/plugins',
+                    'config_dir' => 'game/csgo/addons/counterstrikesharp/configs',
+                    'loader_type' => 'source2',
+                    'loader_name' => 'Metamod:Source + CounterStrikeSharp',
+                    // Sources\Source2::PACKAGE
+                    'loader_package' => 'cs2:loader',
+                    'loader_check' => 'game/csgo/addons/metamod/bin/linuxsteamrt64/metamod.2.cs2.so',
+                    'hidden_packages' => ['cs2:loader'],
                 ],
             ],
         ];

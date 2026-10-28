@@ -408,7 +408,10 @@
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
                     <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
-                    <x-filament::button color="gray" icon="tabler-search" wire:click="setTab('browse')">{{ trans('mod-manager::mods.tabs.browse') }}</x-filament::button>
+                    {{-- to the first browse tab; Counter-Strike 2 has none, its plugins are uploaded --}}
+                    @if ($browseTab = array_key_first($this->browseTabs()))
+                        <x-filament::button color="gray" icon="tabler-search" wire:click="browse({{ $js($browseTab) }})">{{ $this->browseTabs()[$browseTab] }}</x-filament::button>
+                    @endif
                 </div>
             </x-filament::section>
         @endif
