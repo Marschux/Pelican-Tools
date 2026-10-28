@@ -1,7 +1,9 @@
 # Server Navigation
 
-Hides sidebar entries of the server panel per server. Admin panel → edit a server → tab
-**Sidebar** after the actions tab, saved with the page: order the entries and drag those that belong in the collapsed "More" menu below its divider row.
+Orders the sidebar of the server panel per server, right in the sidebar: below the last entry,
+**Customize sidebar** (admins and the server's owner, not subusers) turns it into a list to drag.
+Everything above the line shows directly, everything below it goes into the collapsed "More" menu.
+**Done** saves it for everyone on that server.
 
 Only the sidebar changes - permissions are untouched.
 

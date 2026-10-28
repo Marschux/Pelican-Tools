@@ -2,11 +2,10 @@
 
 namespace Marschux\ServerNavigation;
 
-use App\Enums\TabPosition;
-use App\Filament\Admin\Resources\Servers\Pages\EditServer;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
-use Marschux\ServerNavigation\Filament\Admin\NavigationTab;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class ServerNavigationPlugin implements Plugin
 {
@@ -17,8 +16,9 @@ class ServerNavigationPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        if ($panel->getId() === 'admin') {
-            EditServer::registerCustomTabs(TabPosition::After, NavigationTab::make());
+        if ($panel->getId() === 'server') {
+            // the pencil below the last entry; who may use it decides the component
+            $panel->renderHook(PanelsRenderHook::SIDEBAR_NAV_END, fn () => Blade::render("@livewire('server-navigation-editor')"));
         }
     }
 

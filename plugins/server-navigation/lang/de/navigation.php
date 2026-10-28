@@ -1,8 +1,9 @@
 <?php
 
 return [
-    'tab' => 'Seitenleiste',
-    'entry' => 'Eintrag',
-    'hint' => 'Reihenfolge per Ziehen oder Pfeilen. Was über der Linie steht, erscheint direkt in der Seitenleiste, alles darunter im eingeklappten Menü „Weitere“.',
+    'edit' => 'Sidebar anpassen',
+    'done' => 'Fertig',
+    'cancel' => 'Abbrechen',
+    'hint' => 'Zum Sortieren ziehen. Alles über der Linie steht direkt in der Sidebar, alles darunter im eingeklappten Menü "Weitere". Gilt für alle auf diesem Server.',
     'more' => 'Weitere',
 ];

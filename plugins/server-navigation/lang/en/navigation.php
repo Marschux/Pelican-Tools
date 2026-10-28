@@ -1,8 +1,9 @@
 <?php
 
 return [
-    'tab' => 'Sidebar',
-    'entry' => 'Entry',
-    'hint' => 'Drag or use the arrows to order. Everything above the line shows directly in the sidebar, everything below it in the collapsed menu "More".',
+    'edit' => 'Customize sidebar',
+    'done' => 'Done',
+    'cancel' => 'Cancel',
+    'hint' => 'Drag to order. Everything above the line shows directly, everything below it in the collapsed menu "More". Applies to everyone on this server.',
     'more' => 'More',
 ];
