@@ -13,6 +13,9 @@ require __DIR__ . '/src/Sources/Hangar.php';
 require __DIR__ . '/src/Sources/GameBanana.php';
 require __DIR__ . '/src/Sources/GitHub.php';
 require __DIR__ . '/src/Sources/Workshop.php';
+foreach (glob(__DIR__ . '/src/Concerns/*.php') as $concern) {
+    require $concern;
+}
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
