@@ -154,6 +154,21 @@
                     </div>
                 </x-slot>
 
+                {{-- Counter-Strike 2: a workshop map by id or link; without RockTheVote only the start map is played --}}
+                @if ($canInstall && $this->source2())
+                    <form wire:submit="addWorkshopMap" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.5rem">
+                        <x-filament::input.wrapper prefix-icon="tabler-map" style="flex:1 1 20rem">
+                            <x-filament::input type="text" wire:model="workshopLink" :placeholder="trans('mod-manager::mods.workshop.placeholder')" />
+                        </x-filament::input.wrapper>
+                        <x-filament::button type="submit" color="gray" icon="tabler-plus" wire:loading.attr="disabled" wire:target="addWorkshopMap">{{ trans('mod-manager::mods.workshop.add_map') }}</x-filament::button>
+                    </form>
+                    @if (!$this->hasMapVote() && $installed->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX)))
+                        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">
+                            <span style="flex:1 1 20rem">{{ trans('mod-manager::mods.workshop.vote_hint') }}</span>
+                            <x-filament::button size="sm" icon="tabler-download" wire:click="setUpMapVote" wire:loading.attr="disabled">{{ trans('mod-manager::mods.workshop.vote_setup') }}</x-filament::button>
+                        </div>
+                    @endif
+                @endif
                 {{-- Counter-Strike 2: a plugin from a GitHub release, pasted as a link; several zips in it - pick one --}}
                 @if ($canInstall && $this->source2())
                     <form wire:submit="installGitHub" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
@@ -280,7 +295,11 @@
                                     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
                                     // only plugins and mods write configs, packs do not
                                     // maps from GameBanana have none either
-                                    $isMap = str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
+                                    // Counter-Strike 2's workshop maps: nothing on disk, on means in RockTheVote's maplist.txt
+                                    $isWorkshop = str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX);
+                                    $workshopId = $isWorkshop ? substr($install->package, strlen(\Marschux\ModManager\Sources\Workshop::PREFIX)) : null;
+                                    $isMap = $isWorkshop || str_starts_with($install->package, \Marschux\ModManager\Sources\GameBanana::PREFIX);
+                                    $cycle = $isWorkshop ? 'workshop' : 'mapcycle';
                                     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
                                     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
                                     // the GoldSrc loader's settings are AMX Mod X's main config
@@ -338,11 +357,14 @@
                                     @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
+                                            @if ($isWorkshop && $workshopId === $this->startMap())
+                                                <x-filament::badge color="info" size="sm" icon="tabler-flag">{{ trans('mod-manager::mods.workshop.start') }}</x-filament::badge>
+                                            @endif
                                             @if ($install->pinned)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
                                             @endif
                                             @if (!$install->enabled)
-                                                <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans($isMap ? 'mod-manager::mods.mapcycle.out' : 'mod-manager::mods.off') }}</x-filament::badge>
+                                                <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans($isMap ? "mod-manager::mods.$cycle.out" : 'mod-manager::mods.off') }}</x-filament::badge>
                                             @elseif ($isLoader && !$loaderRuns)
                                                 @if ($loader['installed'])
                                                     <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.loader.not_started') }}</x-filament::badge>
@@ -379,13 +401,18 @@
                                                     <button type="button" @class(['mod-action', 'mod-update' => !$install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" @disabled(!($isLoader ? $canLoader : $canUpdate)) title="{{ $updateLabel }}" aria-label="{{ $updateLabel }}">
                                                         <x-filament::icon icon="tabler-arrow-up" />
                                                     </button>
+                                                @elseif ($isWorkshop && $this->may(\App\Enums\SubuserPermission::StartupUpdate))
+                                                    {{-- where the server starts (WORKSHOP_MAP): one map at a time --}}
+                                                    <button type="button" @class(['mod-action', 'mod-update' => $workshopId === $this->startMap()]) wire:click="setStartMap({{ $install->id }})" @disabled($workshopId === $this->startMap()) title="{{ trans('mod-manager::mods.workshop.make_start') }}" aria-label="{{ trans('mod-manager::mods.workshop.make_start') }}">
+                                                        <x-filament::icon icon="tabler-flag" />
+                                                    </button>
                                                 @endif
                                             </span>
                                             <span class="mod-slot">
                                                 @php
-                                                    // a map's switch puts it in and out of mapcycle.txt
+                                                    // a map's switch puts it in and out of mapcycle.txt, or RockTheVote's maplist
                                                     $switchLabel = $isMap
-                                                        ? trans($install->enabled ? 'mod-manager::mods.mapcycle.remove' : 'mod-manager::mods.mapcycle.add')
+                                                        ? trans($install->enabled ? "mod-manager::mods.$cycle.remove" : "mod-manager::mods.$cycle.add")
                                                         : trans($install->enabled ? 'mod-manager::mods.disable' : 'mod-manager::mods.enable');
                                                 @endphp
                                                 @if (!$isLoader && !$isEngine && $canUpdate)

@@ -175,6 +175,22 @@ return [
         'remove_configs' => 'Borrar también los ajustes que escribió el mod:',
     ],
 
+    'workshop' => [
+        'placeholder' => 'Mapa del Workshop: id o enlace, p. ej. https://steamcommunity.com/sharedfiles/filedetails/?id=3070284539',
+        'add_map' => 'Añadir mapa',
+        'bad_link' => 'Eso no es una id ni un enlace del Workshop.',
+        'not_found' => 'El elemento :id del Workshop no es un mapa de Counter-Strike 2 o no es público.',
+        'no_variable' => 'El egg no tiene la variable :variable.',
+        'added' => 'Mapa añadido',
+        'start_set' => ':name es el mapa inicial',
+        'start' => 'Mapa inicial',
+        'make_start' => 'Arrancar el servidor en este mapa',
+        'vote_hint' => 'Solo se juega el mapa inicial: RockTheVote cambia entre los mapas del Workshop y permite votar.',
+        'vote_setup' => 'Configurar votación de mapas',
+        'add' => 'Añadir a la votación de mapas',
+        'remove' => 'Quitar de la votación de mapas',
+        'out' => 'No está en la votación de mapas',
+    ],
     'github' => [
         'placeholder' => 'Enlace a un plugin en GitHub, p. ej. https://github.com/Oz-Lin/cs2-rockthevote',
         'pick' => 'La versión más reciente tiene varios zips: ¿cuál?',

@@ -175,6 +175,22 @@ return [
         'remove_configs' => 'Auch die Einstellungen löschen, die der Mod geschrieben hat:',
     ],
 
+    'workshop' => [
+        'placeholder' => 'Workshop-Map: ID oder Link, z.B. https://steamcommunity.com/sharedfiles/filedetails/?id=3070284539',
+        'add_map' => 'Map hinzufügen',
+        'bad_link' => 'Das ist keine Workshop-ID und kein Workshop-Link.',
+        'not_found' => 'Workshop-Eintrag :id ist keine Counter-Strike-2-Map oder nicht öffentlich.',
+        'no_variable' => 'Das Egg hat keine Variable :variable.',
+        'added' => 'Map hinzugefügt',
+        'start_set' => ':name ist die Startmap',
+        'start' => 'Startmap',
+        'make_start' => 'Server auf dieser Map starten',
+        'vote_hint' => 'Gespielt wird nur die Startmap: RockTheVote wechselt zwischen den Workshop-Maps und lässt abstimmen.',
+        'vote_setup' => 'Mapwechsel einrichten',
+        'add' => 'In die Mapwahl aufnehmen',
+        'remove' => 'Aus der Mapwahl nehmen',
+        'out' => 'Nicht in der Mapwahl',
+    ],
     'github' => [
         'placeholder' => 'Link zu einem Plugin auf GitHub, z.B. https://github.com/Oz-Lin/cs2-rockthevote',
         'pick' => 'Das neueste Release hat mehrere Zips - welches?',

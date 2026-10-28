@@ -27,6 +27,7 @@ use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
+use Marschux\ModManager\Sources\Workshop;
 use RuntimeException;
 use Throwable;
 
@@ -120,6 +121,9 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
+    /** Counter-Strike 2: where RockTheVote comes from - the maintained fork, it reads workshop ids */
+    private const MAP_VOTE_REPOSITORY = 'Oz-Lin/cs2-rockthevote';
+
     private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
 
     public function mount(): void
@@ -414,6 +418,50 @@ class ModsPage extends Page
         return $this->profile()->setting('loader_type') === 'source2';
     }
 
+    /** A workshop map pasted in, by id or link. */
+    public string $workshopLink = '';
+
+    public function addWorkshopMap(): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+
+        $this->attempt(fn () => $this->installer()->addWorkshopMap($this->workshopLink), trans('mod-manager::mods.workshop.added'));
+        $this->workshopLink = '';
+    }
+
+    public function setStartMap(int $installId): void
+    {
+        $this->requirePermission(SubuserPermission::StartupUpdate);
+
+        $install = $this->findInstall($installId);
+
+        $this->attempt(fn () => $this->installer()->setStartMap(substr($install->package, strlen(Workshop::PREFIX))), trans('mod-manager::mods.workshop.start_set', ['name' => $install->name]));
+    }
+
+    /** The workshop id the server starts on, '' for none. */
+    public function startMap(): string
+    {
+        return once(fn () => $this->source2() ? $this->installer()->startMap() : '');
+    }
+
+    /** RockTheVote, the plugin that changes to the workshop maps: installed from its GitHub releases, the RELEASE build. */
+    public function setUpMapVote(): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+
+        $this->attempt(function () {
+            $assets = (new GitHub())->release(self::MAP_VOTE_REPOSITORY)['assets'];
+            $asset = collect($assets)->first(fn (array $asset) => str_contains($asset['name'], 'RELEASE')) ?? $assets[0];
+
+            $this->installer()->installGitHub(self::MAP_VOTE_REPOSITORY, $asset['name']);
+        }, trans('mod-manager::mods.messages.installed', ['name' => Installer::MAP_VOTE]));
+    }
+
+    public function hasMapVote(): bool
+    {
+        return once(fn () => $this->installer()->hasMapVote());
+    }
+
     /** A GitHub release link pasted in: the asset to install, or the choice when there are several. */
     public string $githubLink = '';
 
@@ -624,6 +672,7 @@ class ModsPage extends Page
             $package === Source2::PACKAGE => trans('mod-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
             Installer::uploaded($package) => trans('mod-manager::mods.upload.origin'),
             str_starts_with($package, GitHub::PREFIX) => trans('mod-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
+            str_starts_with($package, Workshop::PREFIX) => 'Steam Workshop',
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('mod-manager::mods.by', ['author' => strtok($package, '-')]),
         };
@@ -639,7 +688,7 @@ class ModsPage extends Page
         return match (true) {
             $package === GoldSrc::ENGINE => ['engine', 'tabler-engine'],
             $isLoader => ['loader', 'tabler-plug'],
-            str_starts_with($package, GameBanana::PREFIX) => ['map', 'tabler-map'],
+            str_starts_with($package, GameBanana::PREFIX), str_starts_with($package, Workshop::PREFIX) => ['map', 'tabler-map'],
             Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
             Modrinth::kindOf($package) === 'resourcepack' => ['resourcepack', 'tabler-photo'],
             // jars of Paper and AMX Mod X's .amxx are plugins, Thunderstore packages mods

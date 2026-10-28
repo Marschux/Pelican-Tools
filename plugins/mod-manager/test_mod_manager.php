@@ -12,6 +12,7 @@ require __DIR__ . '/src/Sources/Modrinth.php';
 require __DIR__ . '/src/Sources/Hangar.php';
 require __DIR__ . '/src/Sources/GameBanana.php';
 require __DIR__ . '/src/Sources/GitHub.php';
+require __DIR__ . '/src/Sources/Workshop.php';
 require __DIR__ . '/src/Installer.php';
 require __DIR__ . '/src/GameVersion.php';
 
@@ -379,5 +380,20 @@ assert(GitHub::repository('https://github.com/Oz-Lin/cs2-rockthevote/releases/ta
 assert(GitHub::repository('github.com/a/b.git') === 'a/b' && GitHub::repository('a/b') === 'a/b' && GitHub::repository('https://example.com/a/b') === null);
 assert(GitHub::shape('RockTheVote-v1.9.6.RELEASE.zip') === 'RockTheVote-#.RELEASE.zip' && GitHub::shape('MatchZy-0.9.2-with-cssharp-linux.zip') === 'MatchZy-#-with-cssharp-linux.zip');
 assert(GitHub::parse(GitHub::package('a/b', 'X-1.2.zip')) === ['a/b', 'X-#.zip']);
+
+// --- counter-strike 2 workshop maps --------------------------------------------------------------
+
+use Marschux\ModManager\Sources\Workshop;
+
+assert(Workshop::id('3070284539') === '3070284539' && Workshop::id('https://steamcommunity.com/sharedfiles/filedetails/?id=3070284539&searchtext=') === '3070284539');
+assert(Workshop::id('https://steamcommunity.com/sharedfiles/filedetails/?l=german&id=123456789') === '123456789' && Workshop::id('de_dust2') === null);
+assert(Workshop::mapName('Mirage Night (CS2)') === 'mirage_night_cs2' && Workshop::mapName('!!!') === 'workshop_map');
+
+$example = "//Put your map list here\nde_thera:3121217565\nde_vertigo\n";
+$once = Installer::withWorkshopBlock($example, ['aim_map:111111']);
+assert(str_starts_with($once, $example) && str_contains($once, "aim_map:111111\n"), 'the block goes at the end, the rest stays');
+$twice = Installer::withWorkshopBlock($once, ['fy_pool:222222']);
+assert(!str_contains($twice, 'aim_map') && str_contains($twice, 'fy_pool:222222') && substr_count($twice, 'mod-manager: end') === 1, 'the block is replaced, not added again');
+assert(str_starts_with(Installer::withWorkshopBlock('', []), '// mod-manager'), 'an empty file gets only the block');
 
 echo "ok\n";

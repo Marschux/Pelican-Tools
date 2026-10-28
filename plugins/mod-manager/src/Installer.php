@@ -14,6 +14,7 @@ use Marschux\ModManager\Sources\Source2;
 use Marschux\ModManager\Sources\Hangar;
 use Marschux\ModManager\Sources\Modrinth;
 use Marschux\ModManager\Sources\Thunderstore;
+use Marschux\ModManager\Sources\Workshop;
 use RuntimeException;
 
 /**
@@ -44,6 +45,16 @@ class Installer
 
     /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
     public const UPLOAD = 'upload:';
+
+    /** Counter-Strike 2: the egg variable holding the workshop map the server starts on. */
+    public const START_MAP = 'WORKSHOP_MAP';
+
+    /** Counter-Strike 2: the CounterStrikeSharp plugin that changes to workshop maps, and its block in maplist.txt. */
+    public const MAP_VOTE = 'RockTheVote';
+
+    private const MAPLIST_START = '// mod-manager: workshop maps, kept by the panel';
+
+    private const MAPLIST_END = '// mod-manager: end';
 
     /** where Minecraft keeps its settings: the world's name and the resource pack */
     private const PROPERTIES = 'server.properties';
@@ -170,6 +181,14 @@ class Installer
         }
 
         ModInstall::query()->whereIn('id', $removing->pluck('id'))->delete();
+
+        if (str_starts_with($install->package, Workshop::PREFIX)) {
+            $this->writeMaplist();
+
+            if ($this->startMap() === substr($install->package, strlen(Workshop::PREFIX))) {
+                $this->setStartMap('');
+            }
+        }
 
         return $removing->pluck('name')->all();
     }
@@ -1090,7 +1109,7 @@ class Installer
 
         $others = array_values(array_filter(array_column($moves, 'to'), fn (string $path) => !array_filter($plugins, fn (string $folder) => str_starts_with($path, "$folder/"))));
 
-        return ModInstall::query()->updateOrCreate(
+        $install = ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => $package],
             [
                 'name' => implode(', ', array_map('basename', $plugins)),
@@ -1103,6 +1122,101 @@ class Installer
                 'size' => array_sum(array_map(fn (string $path) => $this->files->size($path), [...$plugins, ...$others])),
             ],
         );
+
+        if (in_array(self::MAP_VOTE, array_map('basename', $plugins), true)) {
+            $this->writeMaplist();
+        }
+
+        return $install;
+    }
+
+    /** Counter-Strike 2: a workshop map by id or link - nothing to download, the game fetches it. */
+    public function addWorkshopMap(string $input): ModInstall
+    {
+        $id = Workshop::id($input) ?? throw new RuntimeException(trans('mod-manager::mods.workshop.bad_link'));
+        $map = (new Workshop())->details($id);
+
+        $install = ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => Workshop::PREFIX . $id],
+            ['name' => $map['title'], 'version' => $map['name'], 'icon' => $map['icon'], 'dependency' => false, 'requires' => [], 'files' => [], 'enabled' => true, 'size' => $map['size']],
+        );
+
+        // the first map is where the server starts
+        if ($this->startMap() === '') {
+            $this->setStartMap($id);
+        }
+
+        $this->writeMaplist();
+
+        return $install;
+    }
+
+    /** The workshop id the server starts on (WORKSHOP_MAP), '' for none. */
+    public function startMap(): string
+    {
+        $variable = $this->server->egg->variables()->where('env_variable', self::START_MAP)->first();
+        $value = $variable ? $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value') : null;
+
+        return in_array((string) $value, ['', '0'], true) ? '' : (string) $value;
+    }
+
+    public function setStartMap(string $id): void
+    {
+        $variable = $this->server->egg->variables()->where('env_variable', self::START_MAP)->first()
+            ?? throw new RuntimeException(trans('mod-manager::mods.workshop.no_variable', ['variable' => self::START_MAP]));
+
+        $this->server->serverVariables()->updateOrCreate(['variable_id' => $variable->id], ['variable_value' => $id]);
+    }
+
+    /**
+     * RockTheVote's maplist.txt with the workshop maps switched on, in a block of its own - lines
+     * written by hand stay. A new file starts from the example RockTheVote comes with. Without
+     * RockTheVote installed there is nothing to write.
+     */
+    public function writeMaplist(): void
+    {
+        $folder = collect([$this->modsDir(), $this->disabledDir()])->map(fn (string $dir) => "$dir/" . self::MAP_VOTE)->first(fn (string $path) => $this->files->exists("$path/" . self::MAP_VOTE . '.dll'));
+
+        if ($folder === null) {
+            return;
+        }
+
+        $current = (string) $this->files->read("$folder/maplist.txt");
+        // a new file: the example's stock maps, not its sample workshop map - that would show twice
+        $current = $current !== '' ? $current : (string) preg_replace('/^[^\/\n]*:\d+\r?\n/m', '', (string) $this->files->read("$folder/maplist.example.txt"));
+        $maps = $this->installs()
+            ->filter(fn (ModInstall $install) => str_starts_with($install->package, Workshop::PREFIX) && $install->enabled)
+            ->map(fn (ModInstall $install) => $install->version . ':' . substr($install->package, strlen(Workshop::PREFIX)))
+            ->values()
+            ->all();
+
+        $this->files->write("$folder/maplist.txt", self::withWorkshopBlock($current, $maps));
+    }
+
+    /** RockTheVote is there, on or off. */
+    public function hasMapVote(): bool
+    {
+        return $this->installs()->contains(fn (ModInstall $install) => in_array(self::MAP_VOTE, array_map('basename', $install->files), true));
+    }
+
+    /** $text with the block of workshop maps replaced by $lines, or put at its end. */
+    public static function withWorkshopBlock(string $text, array $lines): string
+    {
+        $block = [self::MAPLIST_START, ...$lines, self::MAPLIST_END];
+        $kept = [];
+        $inside = false;
+
+        foreach (preg_split('/\r?\n/', rtrim($text, "\r\n")) as $line) {
+            if (trim($line) === self::MAPLIST_START) {
+                $inside = true;
+            } elseif (trim($line) === self::MAPLIST_END) {
+                $inside = false;
+            } elseif (!$inside && ($line !== '' || $kept !== [])) {
+                $kept[] = $line;
+            }
+        }
+
+        return implode("\n", [...$kept, ...$block]) . "\n";
     }
 
     /** A zip of a GitHub release, e.g. a CounterStrikeSharp plugin: pulled by Wings, then like an upload. */
@@ -1504,6 +1618,11 @@ class Installer
         $updates = [];
 
         foreach ($this->installs() as $install) {
+            // the game keeps workshop maps up to date itself
+            if (str_starts_with($install->package, Workshop::PREFIX)) {
+                continue;
+            }
+
             try {
                 $latest = $this->sourceFor($install->package)->latestVersion($install->package, $this->gameVersion());
             } catch (\Throwable) {
@@ -1548,6 +1667,14 @@ class Installer
         if (str_starts_with($install->package, GameBanana::PREFIX)) {
             $this->writeMapcycle(fn (string $cycle) => self::withMaps($cycle, self::mapNames($install->files), $enabled));
             $install->update(['enabled' => $enabled]);
+
+            return;
+        }
+
+        // nothing on disk: on means it is in RockTheVote's maplist.txt
+        if (str_starts_with($install->package, Workshop::PREFIX)) {
+            $install->update(['enabled' => $enabled]);
+            $this->writeMaplist();
 
             return;
         }
