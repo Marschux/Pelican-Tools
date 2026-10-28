@@ -39,31 +39,11 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 
 ### Screenshots
 
-**Mod Manager** - installed mods with their loader, dependencies and configs, and the Thunderstore browser:
+**Mod Manager** on a Valheim server - installed mods with their loader, dependencies and configs, and the Thunderstore browser:
 
 ![Mod Manager, installed mods](assets/screenshots/mod-manager-installed.png)
 
 ![Mod Manager, browsing Thunderstore](assets/screenshots/mod-manager-browse.png)
-
-On a Minecraft Paper server - plugins from Modrinth and Hangar next to datapacks:
-
-![Mod Manager on a Paper server](assets/screenshots/mod-manager-paper.png)
-
-On a Counter-Strike 1.6 server - Metamod-R + AMX Mod X as the loader, maps from GameBanana, the plugins of AMX Mod X:
-
-![Mod Manager on a Counter-Strike 1.6 server](assets/screenshots/mod-manager-cs16.png)
-
-On a Counter-Strike: Source server - Metamod:Source + SourceMod as the loader, a map from GameBanana, the plugins of SourceMod:
-
-![Mod Manager on a Counter-Strike: Source server](assets/screenshots/mod-manager-css.png)
-
-On a Counter-Strike: Global Offensive server - the same loader, a map from GameBanana in the mod manager's own mapgroup:
-
-![Mod Manager on a Counter-Strike: Global Offensive server](assets/screenshots/mod-manager-csgo.png)
-
-On a Counter-Strike 2 server - Metamod:Source + CounterStrikeSharp, a plugin from GitHub, workshop maps with the start map:
-
-![Mod Manager on a Counter-Strike 2 server](assets/screenshots/mod-manager-cs2.png)
 
 **Server Resources** - panel host, nodes and their servers on the admin dashboard:
 

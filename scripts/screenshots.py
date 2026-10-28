@@ -7,11 +7,6 @@ from playwright.sync_api import sync_playwright
 
 BASE = 'http://192.168.2.73'
 SERVER = 'ab740b72'
-PAPER = '11189972'
-CS16 = '01dec94b'
-CSS = 'eeb6e9c2'
-CSGO = '223301e7'
-CS2 = '235c0f85'
 ONLY = sys.argv[3:]
 # the chromium that is installed; this playwright version would want a newer build
 CHROME = pathlib.Path.home() / 'AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe'
@@ -63,11 +58,6 @@ with sync_playwright() as p:
 
     shot('mod-manager-browse', f'{BASE}/server/{SERVER}/mods', browse)
 
-    shot('mod-manager-paper', f'{BASE}/server/{PAPER}/mods')
-    shot('mod-manager-cs16', f'{BASE}/server/{CS16}/mods')
-    shot('mod-manager-css', f'{BASE}/server/{CSS}/mods')
-    shot('mod-manager-csgo', f'{BASE}/server/{CSGO}/mods')
-    shot('mod-manager-cs2', f'{BASE}/server/{CS2}/mods')
 
     def entries():
         # typed in, never saved
