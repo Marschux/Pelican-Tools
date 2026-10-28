@@ -12,7 +12,7 @@
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
-    $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
+    $loaderPlugins = $tab === 'installed' ? $this->loaderPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
@@ -89,7 +89,7 @@
     @if ($tab === 'installed')
         @include('mod-manager::pages.mods.installed-table')
 
-        @if ($installed->isEmpty() && !$unmanaged && !$amxx)
+        @if ($installed->isEmpty() && !$unmanaged && !$loaderPlugins)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />

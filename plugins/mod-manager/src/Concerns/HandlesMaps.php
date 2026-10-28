@@ -132,7 +132,7 @@ trait HandlesMaps
         $scratch = '.mod-manager/map';
         $file = basename((string) $package['file']);
 
-        if (!preg_match('/^[\w .()\[\]+-]+\.\w+\z/', $file)) {
+        if (!self::plainFileName($file)) {
             throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $file]));
         }
 
@@ -147,6 +147,12 @@ trait HandlesMaps
         } finally {
             $this->files->delete([$scratch]);
         }
+    }
+
+    /** A file name Wings and the page can take as it is: letters, digits, spaces, a few signs, one extension. */
+    public static function plainFileName(string $name): bool
+    {
+        return (bool) preg_match('/^[\w .()\[\]+-]+\.\w+\z/', $name);
     }
 
     /**

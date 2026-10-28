@@ -495,28 +495,28 @@ class ModsPage extends Page
     }
 
     /** A plugin of AMX Mod X's plugins.ini on or off. */
-    public function toggleAmxx(string $file, bool $enabled): void
+    public function toggleLoaderPlugin(string $file, bool $enabled): void
     {
         $this->requirePermission(SubuserPermission::FileUpdate);
 
         $this->attempt(
-            fn () => $this->installer()->setAmxxPlugin($file, $enabled),
+            fn () => $this->installer()->setLoaderPlugin($file, $enabled),
             trans($enabled ? 'mod-manager::mods.messages.enabled' : 'mod-manager::mods.messages.disabled', ['name' => $file]),
         );
     }
 
     /** A plugin of AMX Mod X's plugins.ini deleted, file and line. */
-    public function deleteAmxx(string $file): void
+    public function deleteLoaderPlugin(string $file): void
     {
         $this->requirePermission(SubuserPermission::FileDelete);
 
-        $this->attempt(fn () => $this->installer()->deleteAmxxPlugin($file), trans('mod-manager::mods.messages.removed', ['name' => $file]));
+        $this->attempt(fn () => $this->installer()->deleteLoaderPlugin($file), trans('mod-manager::mods.messages.removed', ['name' => $file]));
     }
 
     /** @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}> */
-    public function amxxPlugins(): array
+    public function loaderPlugins(): array
     {
-        return $this->installer()->amxxPlugins();
+        return $this->installer()->loaderPlugins();
     }
 
     public function adopt(string $path): void

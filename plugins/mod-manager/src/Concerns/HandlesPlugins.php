@@ -15,7 +15,7 @@ trait HandlesPlugins
      *
      * @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}>
      */
-    public function amxxPlugins(): array
+    public function loaderPlugins(): array
     {
         if ($this->source1()) {
             return $this->sourcemodPlugins();
@@ -34,7 +34,7 @@ trait HandlesPlugins
     }
 
     /** Switches a plugin of plugins.ini on or off: its line commented out or back in. */
-    public function setAmxxPlugin(string $file, bool $enabled): void
+    public function setLoaderPlugin(string $file, bool $enabled): void
     {
         if ($this->source1()) {
             // SourceMod loads every .smx in plugins/ and ignores plugins/disabled/
@@ -63,7 +63,7 @@ trait HandlesPlugins
      * A plugin of plugins.ini gone: its file and its line. One AMX Mod X comes with is back as a
      * file after the next loader update - without a line, so it is not loaded.
      */
-    public function deleteAmxxPlugin(string $file): void
+    public function deleteLoaderPlugin(string $file): void
     {
         if ($this->source1()) {
             $plugin = collect($this->sourcemodPlugins())->firstWhere('file', $file)
@@ -107,7 +107,7 @@ trait HandlesPlugins
 
             // a .bsp, or an archive with one: a map, not a plugin
             if (preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
-                if (!preg_match('/^[\w .()\[\]+-]+\.\w+\z/', $name)) {
+                if (!self::plainFileName($name)) {
                     throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $name]));
                 }
 

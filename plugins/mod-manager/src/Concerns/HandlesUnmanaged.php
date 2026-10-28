@@ -22,7 +22,7 @@ trait HandlesUnmanaged
             return $this->unmanagedAmxx($known);
         }
 
-        // SourceMod's own plugins and those put there by hand have their own section (amxxPlugins)
+        // SourceMod's own plugins and those put there by hand have their own section (loaderPlugins)
         if ($this->source1()) {
             return [];
         }

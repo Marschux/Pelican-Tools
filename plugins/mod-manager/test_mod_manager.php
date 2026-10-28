@@ -184,6 +184,8 @@ foreach ([
     assert(Installer::mapPlacement($from) === $to, $from);
 }
 
+assert(Installer::plainFileName('de_x (v2).zip') && !Installer::plainFileName('../x.zip') && !Installer::plainFileName('x'));
+
 // CS:GO mapgroup: a new file, a group replaced, other groups and keys stay
 $new = Installer::withMapgroup('', ['de_dust2', 'de_x']);
 assert(Installer::mapgroupMaps($new, 'mg_modmanager') === ['de_dust2', 'de_x']);
