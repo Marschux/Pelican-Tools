@@ -14,6 +14,8 @@
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - removing the loader leaves it behind, without Metamod none of it runs
     $amxx = ($loader['installed'] ?? false) ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
+    // GoldSrc maps and jar plugins never have any - the column only costs width there
+    $hasRelations = collect($relations)->contains(fn (array $relation) => $relation['requires'] || $relation['needed_by']);
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
     $canEngine = $tab === 'installed' && $this->canUpload();
@@ -139,7 +141,9 @@
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.type') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.version') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('mod-manager::mods.columns.size') }}</th>
+                                @if ($hasRelations)
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
+                                @endif
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.status') }}</th>
                                 <th></th>
                             </tr>
@@ -164,7 +168,9 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">–</td>
                                     <td style="padding:.6rem .5rem;text-align:right">–</td>
+                                    @if ($hasRelations)
                                     <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
+                                    @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                                 @if ($loader['installed'])
@@ -185,7 +191,43 @@
                                     </td>
                                 </tr>
                             @endif
-                            @foreach (collect([$loaderInstall, $engineInstall])->filter()->concat($installed) as $install)
+                            {{-- what the profile offers comes first: loader, then engine, installed or not --}}
+                            @foreach (collect([$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null)])->filter()->concat($installed) as $install)
+                                @if ($install === 'engine')
+                                    {{-- GoldSrc: ReHLDS, ReGameDLL and ReAPI are offered, never needed --}}
+                                    <tr wire:key="engine-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
+                                        <td style="padding:.6rem .5rem .6rem 0">
+                                            <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
+                                                <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
+                                                    <x-filament::icon icon="tabler-engine" style="width:1.25rem;height:1.25rem;opacity:.6" />
+                                                </div>
+                                                <div style="min-width:0;max-width:22rem">
+                                                    <div style="font-weight:600">ReHLDS + ReGameDLL + ReAPI</div>
+                                                    <div style="{{ $muted }}">{{ trans('mod-manager::mods.engine.hint') }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="padding:.6rem .5rem">
+                                            <x-filament::badge color="info" size="sm" icon="tabler-engine" style="width:max-content">{{ trans('mod-manager::mods.types.engine') }}</x-filament::badge>
+                                        </td>
+                                        <td style="padding:.6rem .5rem">–</td>
+                                        <td style="padding:.6rem .5rem;text-align:right">–</td>
+                                        @if ($hasRelations)
+                                        <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
+                                        @endif
+                                        <td style="padding:.6rem .5rem;min-width:8rem">
+                                            <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.engine.optional') }}</x-filament::badge>
+                                        </td>
+                                        <td style="padding:.6rem .5rem">
+                                            <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
+                                                @if ($canInstall && $canUpdate)
+                                                    <x-filament::button size="xs" icon="tabler-download" wire:click="installEngine" wire:loading.attr="disabled" style="white-space:nowrap">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @continue
+                                @endif
                                 @php
                                     // the loader: no switch and no remove, without it no mod runs
                                     $isLoader = $install->is($loaderInstall);
@@ -245,6 +287,7 @@
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
                                     </td>
+                                    @if ($hasRelations)
                                     <td style="padding:.6rem .5rem;{{ $muted }};min-width:10rem">
                                         @if ($relation['requires'])
                                             <div>{{ trans('mod-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
@@ -256,6 +299,7 @@
                                             –
                                         @endif
                                     </td>
+                                    @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                             @if (isset($updates[$install->package]) && !$install->pinned)
@@ -328,38 +372,6 @@
                                     </td>
                                 </tr>
                             @endforeach
-                            @if ($canEngine && !$engineInstall)
-                                {{-- GoldSrc: ReHLDS, ReGameDLL and ReAPI are offered, never needed --}}
-                                <tr wire:key="engine-row" style="border-top:1px solid rgba(127,127,127,.15);vertical-align:middle">
-                                    <td style="padding:.6rem .5rem .6rem 0">
-                                        <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem">
-                                            <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
-                                                <x-filament::icon icon="tabler-engine" style="width:1.25rem;height:1.25rem;opacity:.6" />
-                                            </div>
-                                            <div style="min-width:0;max-width:22rem">
-                                                <div style="font-weight:600">ReHLDS + ReGameDLL + ReAPI</div>
-                                                <div style="{{ $muted }}">{{ trans('mod-manager::mods.engine.hint') }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td style="padding:.6rem .5rem">
-                                        <x-filament::badge color="info" size="sm" icon="tabler-engine" style="width:max-content">{{ trans('mod-manager::mods.types.engine') }}</x-filament::badge>
-                                    </td>
-                                    <td style="padding:.6rem .5rem">–</td>
-                                    <td style="padding:.6rem .5rem;text-align:right">–</td>
-                                    <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
-                                    <td style="padding:.6rem .5rem;min-width:8rem">
-                                        <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.engine.optional') }}</x-filament::badge>
-                                    </td>
-                                    <td style="padding:.6rem .5rem">
-                                        <div style="display:flex;gap:.25rem;align-items:center;justify-content:flex-end">
-                                            @if ($canInstall && $canUpdate)
-                                                <x-filament::button size="xs" icon="tabler-download" wire:click="installEngine" wire:loading.attr="disabled" style="white-space:nowrap">{{ trans('mod-manager::mods.install') }}</x-filament::button>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endif
                         </tbody>
                     </table>
                 </div>
