@@ -11,8 +11,8 @@
     $updates = $onInstalled ? $this->updates() : [];
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
-    // GoldSrc only: the plugins of AMX Mod X's plugins.ini
-    $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
+    // GoldSrc only: the plugins of AMX Mod X's plugins.ini - removing the loader leaves it behind, without Metamod none of it runs
+    $amxx = ($loader['installed'] ?? false) ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
@@ -272,7 +272,8 @@
                                                 @else
                                                     <x-filament::badge color="danger" size="sm" icon="tabler-x">{{ trans('mod-manager::mods.loader.missing') }}</x-filament::badge>
                                                 @endif
-                                            @elseif (!$isLoader && !$loaderRuns)
+                                            {{-- maps and the engine are loaded by the game itself --}}
+                                            @elseif (!$isLoader && !$isMap && !$isEngine && !$loaderRuns)
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle" :tooltip="trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']])">{{ trans('mod-manager::mods.not_loaded') }}</x-filament::badge>
                                             @elseif ($relation['missing'])
                                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.missing', ['names' => implode(', ', $relation['missing'])]) }}</x-filament::badge>
