@@ -86,10 +86,24 @@
         @if ($installed->isNotEmpty() || $loaderInstall || $loader)
             @php
                 $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
+                // filter by type, in the browser, loader and engine rows count too
+                $types = collect([$loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
+                    ->concat($installed->map(fn ($install) => $this->type($install->package)[0])->sort())
+                    ->filter()->unique()->values();
             @endphp
+            {{-- the section brings an x-data of its own, so the filter state lives around it --}}
+            <div x-data="{ type: '' }" style="display:contents">
             <x-filament::section>
                 <x-slot name="afterHeader">
                     <div style="display:flex;gap:.5rem">
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select x-model="type" :aria-label="trans('mod-manager::mods.columns.type')">
+                                <option value="">{{ trans('mod-manager::mods.all_types') }}</option>
+                                @foreach ($types as $key)
+                                    <option value="{{ $key }}">{{ trans("mod-manager::mods.types.$key") }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
                         @if ($canInstall && $this->canUpload())
                             {{--
                                 picking the file sends it straight to Wings, like Pelican's file manager - not through
@@ -134,21 +148,6 @@
                 </x-slot>
                 <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
 
-                @php
-                    // filter by type, in the browser - only worth it with more than one kind of row; loader and engine rows count too
-                    $types = collect([$loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
-                        ->concat($installed->map(fn ($install) => $this->type($install->package)[0])->sort())
-                        ->filter()->unique()->values();
-                @endphp
-                <div x-data="{ type: '' }">
-                @if ($types->count() > 1)
-                    <div style="display:flex;gap:.25rem;flex-wrap:wrap;margin-bottom:.75rem">
-                        <x-filament::button size="sm" color="primary" x-bind:style="type === '' ? '' : 'opacity:.45'" x-on:click="type = ''">{{ trans('mod-manager::mods.all_types') }}</x-filament::button>
-                        @foreach ($types as $key)
-                            <x-filament::button size="sm" color="primary" x-bind:style="type === {{ $js($key) }} ? '' : 'opacity:.45'" x-on:click="type = {{ $js($key) }}">{{ trans("mod-manager::mods.types.$key") }}</x-filament::button>
-                        @endforeach
-                    </div>
-                @endif
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
                 <div style="overflow-x:auto;overflow-y:hidden">
@@ -268,6 +267,10 @@
                                         <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem;{{ $install->enabled ? '' : 'opacity:.5' }}">
                                             @if ($install->icon)
                                                 <img src="{{ $install->icon }}" alt="" loading="lazy" style="{{ $icon }};width:2.25rem;height:2.25rem">
+                                            @elseif ($isLoader || $isEngine)
+                                                <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
+                                                    <x-filament::icon :icon="$typeIcon" style="width:1.25rem;height:1.25rem;opacity:.6" />
+                                                </div>
                                             @else
                                                 <div style="{{ $icon }};width:2.25rem;height:2.25rem"></div>
                                             @endif
@@ -391,8 +394,8 @@
                         </tbody>
                     </table>
                 </div>
-                </div>
             </x-filament::section>
+            </div>
         @endif
 
         @if ($installed->isEmpty() && !$unmanaged && !$amxx)

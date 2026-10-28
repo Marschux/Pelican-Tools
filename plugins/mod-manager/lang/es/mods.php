@@ -56,7 +56,7 @@ return [
         'datapack' => 'Datapacks',
         'resourcepack' => 'Paquetes de recursos',
     ],
-    'all_types' => 'Todos',
+    'all_types' => 'Todos los tipos',
     'types' => [
         'mod' => 'Mod',
         'plugin' => 'Plugin',
