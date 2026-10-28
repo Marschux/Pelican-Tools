@@ -27,10 +27,10 @@
                 </div>
             </div>
         @else
-            {{-- only the icon, at the right edge above the first entry --}}
-            <div style="display:flex;justify-content:flex-end;margin:-.75rem 0 -.5rem">
-                <x-filament::icon-button icon="tabler-pencil" color="gray" size="sm" wire:click="edit" :label="trans('server-navigation::navigation.edit')" :tooltip="trans('server-navigation::navigation.edit')" />
-            </div>
+            {{-- only the icon, below the last entry and in line with the entries' icons --}}
+            <button type="button" wire:click="edit" title="{{ trans('server-navigation::navigation.edit') }}" aria-label="{{ trans('server-navigation::navigation.edit') }}" style="display:flex;padding:.5rem .75rem;margin-left:-.6rem;border-radius:.5rem;opacity:.6;cursor:pointer">
+                <x-filament::icon icon="tabler-pencil" style="width:1.25rem;height:1.25rem" />
+            </button>
         @endif
     @endif
 </div>
