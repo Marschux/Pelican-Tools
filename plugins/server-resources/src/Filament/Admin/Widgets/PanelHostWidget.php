@@ -2,6 +2,7 @@
 
 namespace Marschux\ServerResources\Filament\Admin\Widgets;
 
+use App\Services\Helpers\SoftwareVersionService;
 use Filament\Widgets\Widget;
 use Marschux\ServerResources\Host\HostStats;
 use Marschux\ServerResources\Resources;
@@ -56,6 +57,7 @@ class PanelHostWidget extends Widget
                 Resources::bytesBar('disk', $diskUsed, $diskTotal),
             ],
             'facts' => $facts,
+            'update' => Resources::update(fn (SoftwareVersionService $versions) => $versions->isLatestPanel() ? null : $versions->latestPanelVersion()),
         ];
     }
 

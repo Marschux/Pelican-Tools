@@ -52,6 +52,19 @@ class Resources
         return self::bar($key, $used, $total, $total > 0 ? convert_bytes_to_readable($used) . ' / ' . convert_bytes_to_readable($total) : '-');
     }
 
+    /**
+     * The newer version to update to, or null. Asks the panel's own version service (GitHub,
+     * cached an hour); null on any failure, the card must not break over it.
+     */
+    public static function update(callable $latest): ?string
+    {
+        try {
+            return app()->call($latest);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     /** @return array{icon: string, text: string} */
     public static function fact(string $icon, string $text): array
     {

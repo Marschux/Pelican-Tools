@@ -5,6 +5,8 @@ return [
     'memory' => 'Memoria',
     'disk' => 'Disco',
 
+    'update' => 'Actualizar a :version',
+
     'host' => [
         'heading' => 'Host del panel',
         'cores' => ':count núcleos',

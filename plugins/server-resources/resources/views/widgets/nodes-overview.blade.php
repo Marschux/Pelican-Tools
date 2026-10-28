@@ -10,6 +10,9 @@
                     <x-filament::icon icon="tabler-server-2" style="width: 1.25rem; height: 1.25rem; display: inline-block; vertical-align: -.25rem; margin-right: .375rem;" />
                     <a href="{{ $node['url'] }}" style="font-weight: 600;">{{ $node['name'] }}</a>
                     <span style="opacity: .6; font-weight: 400; margin-left: .5rem;">{{ $node['fqdn'] }}</span>
+                    @if ($node['update'])
+                        <x-filament::badge color="warning" icon="tabler-download" style="margin-left: .5rem;">{{ trans('server-resources::resources.update', ['version' => $node['update']]) }}</x-filament::badge>
+                    @endif
                 </x-slot>
 
                 {{-- open/closed of the server list lives in alpine and is kept per node across reloads;

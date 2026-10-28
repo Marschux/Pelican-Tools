@@ -5,6 +5,8 @@ return [
     'memory' => 'Arbeitsspeicher',
     'disk' => 'Speicher',
 
+    'update' => 'Update auf :version',
+
     'host' => [
         'heading' => 'Panel-Host',
         'cores' => ':count Kerne',

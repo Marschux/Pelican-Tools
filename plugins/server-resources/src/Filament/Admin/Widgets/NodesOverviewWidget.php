@@ -11,6 +11,7 @@ use App\Filament\Admin\Resources\Servers\ServerResource;
 use App\Models\Node;
 use App\Models\Server;
 use App\Repositories\Daemon\DaemonServerRepository;
+use App\Services\Helpers\SoftwareVersionService;
 use Filament\Notifications\Notification;
 use Filament\Widgets\Widget;
 use Marschux\GameQuery\Models\GameQuery;
@@ -128,6 +129,8 @@ class NodesOverviewWidget extends Widget
             'name' => $node->name,
             'fqdn' => $node->fqdn,
             'url' => NodeResource::getUrl('edit', ['record' => $node]),
+            // wings reports its own version in the system information
+            'update' => isset($info['version']) ? Resources::update(fn (SoftwareVersionService $versions) => $versions->isLatestWings((string) $info['version']) ? null : $versions->latestWingsVersion()) : null,
             'state' => $maintenance ? 'maintenance' : ($reachable ? null : 'unreachable'),
             'bars' => $stats === null ? [] : [
                 Resources::bar('cpu', (float) $stats['cpu_percent'], 100, format_number($stats['cpu_percent'], 1) . ' %'),
