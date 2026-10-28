@@ -46,9 +46,6 @@ class Installer
     /** the package of a plugin uploaded through the page: "upload:<file name without .amxx>" */
     public const UPLOAD = 'upload:';
 
-    /** Counter-Strike 2: the egg variable holding the workshop map the server starts on. */
-    public const START_MAP = 'WORKSHOP_MAP';
-
     /** Counter-Strike 2: the CounterStrikeSharp plugin that changes to workshop maps, and its block in maplist.txt. */
     public const MAP_VOTE = 'RockTheVote';
 
@@ -184,10 +181,6 @@ class Installer
 
         if (str_starts_with($install->package, Workshop::PREFIX)) {
             $this->writeMaplist();
-
-            if ($this->startMap() === substr($install->package, strlen(Workshop::PREFIX))) {
-                $this->setStartMap('');
-            }
         }
 
         return $removing->pluck('name')->all();
@@ -1141,11 +1134,6 @@ class Installer
             ['name' => $map['title'], 'version' => $map['name'], 'icon' => $map['icon'], 'dependency' => false, 'requires' => [], 'files' => [], 'enabled' => true, 'size' => $map['size']],
         );
 
-        // the first map is where the server starts
-        if ($this->startMap() === '') {
-            $this->setStartMap($id);
-        }
-
         $this->writeMaplist();
 
         return $install;
@@ -1169,22 +1157,6 @@ class Installer
         $variable = $this->server->egg->variables()->where('env_variable', $name)->first();
 
         return $variable ? trim((string) $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value')) : '';
-    }
-
-    /** The workshop id the server starts on (WORKSHOP_MAP), '' for none. */
-    public function startMap(): string
-    {
-        $value = $this->variable(self::START_MAP);
-
-        return $value === '0' ? '' : $value;
-    }
-
-    public function setStartMap(string $id): void
-    {
-        $variable = $this->server->egg->variables()->where('env_variable', self::START_MAP)->first()
-            ?? throw new RuntimeException(trans('mod-manager::mods.workshop.no_variable', ['variable' => self::START_MAP]));
-
-        $this->server->serverVariables()->updateOrCreate(['variable_id' => $variable->id], ['variable_value' => $id]);
     }
 
     /**

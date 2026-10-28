@@ -81,6 +81,11 @@
                 {{ $label }}
             </x-filament::tabs.item>
         @endforeach
+        @if ($canInstall && $this->source2())
+            <x-filament::tabs.item icon="tabler-link" :active="$tab === 'links'" wire:click="setTab('links')">
+                {{ trans('mod-manager::mods.tabs.links') }}
+            </x-filament::tabs.item>
+        @endif
     </x-filament::tabs>
 
     @if ($tab === 'installed')
@@ -154,45 +159,6 @@
                     </div>
                 </x-slot>
 
-                {{-- Counter-Strike 2: a workshop map by id or link; without RockTheVote only the start map is played --}}
-                @if ($canInstall && $this->source2())
-                    <form wire:submit="addWorkshopMap" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.5rem">
-                        <x-filament::input.wrapper prefix-icon="tabler-map" style="flex:1 1 20rem">
-                            <x-filament::input type="text" wire:model="workshopLink" :placeholder="trans('mod-manager::mods.workshop.placeholder')" />
-                        </x-filament::input.wrapper>
-                        <x-filament::button type="submit" color="gray" icon="tabler-plus" wire:loading.attr="disabled" wire:target="addWorkshopMap">{{ trans('mod-manager::mods.workshop.add_map') }}</x-filament::button>
-                    </form>
-                    @if (!$this->hasLoginToken() && $installed->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX)))
-                        <div style="margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.workshop.token_hint') }}</div>
-                    @endif
-                    @if (!$this->hasMapVote() && $installed->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX)))
-                        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">
-                            <span style="flex:1 1 20rem">{{ trans('mod-manager::mods.workshop.vote_hint') }}</span>
-                            <x-filament::button size="sm" icon="tabler-download" wire:click="setUpMapVote" wire:loading.attr="disabled">{{ trans('mod-manager::mods.workshop.vote_setup') }}</x-filament::button>
-                        </div>
-                    @endif
-                @endif
-                {{-- Counter-Strike 2: a plugin from a GitHub release, pasted as a link; several zips in it - pick one --}}
-                @if ($canInstall && $this->source2())
-                    <form wire:submit="installGitHub" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
-                        <x-filament::input.wrapper prefix-icon="tabler-brand-github" style="flex:1 1 20rem">
-                            <x-filament::input type="text" wire:model="githubLink" :placeholder="trans('mod-manager::mods.github.placeholder')" />
-                        </x-filament::input.wrapper>
-                        <x-filament::button type="submit" icon="tabler-download" wire:loading.attr="disabled" wire:target="installGitHub">{{ trans('mod-manager::mods.install') }}</x-filament::button>
-                    </form>
-                    @if ($githubAssets)
-                        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
-                            <span style="font-size:.875rem;{{ $muted }}">{{ trans('mod-manager::mods.github.pick') }}</span>
-                            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-                                @foreach ($githubAssets as $asset)
-                                    <x-filament::button size="sm" color="gray" icon="tabler-file-zip" wire:click="installGitHub({{ $js($asset['name']) }})" wire:loading.attr="disabled">
-                                        {{ $asset['name'] }} ({{ \Illuminate\Support\Number::fileSize($asset['size'], 1) }})
-                                    </x-filament::button>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                @endif
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
                 <div style="overflow-x:auto;overflow-y:hidden">
@@ -360,9 +326,6 @@
                                     @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
-                                            @if ($isWorkshop && $workshopId === $this->startMap())
-                                                <x-filament::badge color="info" size="sm" icon="tabler-flag">{{ trans('mod-manager::mods.workshop.start') }}</x-filament::badge>
-                                            @endif
                                             @if ($install->pinned)
                                                 <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
                                             @endif
@@ -403,11 +366,6 @@
                                                     {{-- grey while the version is pinned, still there to update on purpose --}}
                                                     <button type="button" @class(['mod-action', 'mod-update' => !$install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" @disabled(!($isLoader ? $canLoader : $canUpdate)) title="{{ $updateLabel }}" aria-label="{{ $updateLabel }}">
                                                         <x-filament::icon icon="tabler-arrow-up" />
-                                                    </button>
-                                                @elseif ($isWorkshop && $this->may(\App\Enums\SubuserPermission::StartupUpdate))
-                                                    {{-- where the server starts (WORKSHOP_MAP): one map at a time --}}
-                                                    <button type="button" @class(['mod-action', 'mod-update' => $workshopId === $this->startMap()]) wire:click="setStartMap({{ $install->id }})" @disabled($workshopId === $this->startMap()) title="{{ trans('mod-manager::mods.workshop.make_start') }}" aria-label="{{ trans('mod-manager::mods.workshop.make_start') }}">
-                                                        <x-filament::icon icon="tabler-flag" />
                                                     </button>
                                                 @endif
                                             </span>
@@ -567,6 +525,50 @@
                 @endforeach
             </x-filament::section>
         @endif
+    @elseif ($tab === 'links')
+        {{-- Counter-Strike 2: what goes in by link - workshop maps and plugins from GitHub releases --}}
+        @php
+            $hasWorkshopMaps = $this->installer()->installs()->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX));
+        @endphp
+        <x-filament::section>
+                    {{-- Counter-Strike 2: a workshop map by id or link; without RockTheVote only the server's start map is played --}}
+                    <form wire:submit="addWorkshopMap" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.5rem">
+                        <x-filament::input.wrapper prefix-icon="tabler-map" style="flex:1 1 20rem">
+                            <x-filament::input type="text" wire:model="workshopLink" :placeholder="trans('mod-manager::mods.workshop.placeholder')" />
+                        </x-filament::input.wrapper>
+                        <x-filament::button type="submit" color="gray" icon="tabler-plus" wire:loading.attr="disabled" wire:target="addWorkshopMap">{{ trans('mod-manager::mods.workshop.add_map') }}</x-filament::button>
+                    </form>
+                    @if (!$this->hasLoginToken() && $hasWorkshopMaps)
+                        <div style="margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.workshop.token_hint') }}</div>
+                    @endif
+                    @if (!$this->hasMapVote() && $hasWorkshopMaps)
+                        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">
+                            <span style="flex:1 1 20rem">{{ trans('mod-manager::mods.workshop.vote_hint') }}</span>
+                            <x-filament::button size="sm" icon="tabler-download" wire:click="setUpMapVote" wire:loading.attr="disabled">{{ trans('mod-manager::mods.workshop.vote_setup') }}</x-filament::button>
+                        </div>
+                    @endif
+                @endif
+                {{-- Counter-Strike 2: a plugin from a GitHub release, pasted as a link; several zips in it - pick one --}}
+                @if ($canInstall && $this->source2())
+                    <form wire:submit="installGitHub" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+                        <x-filament::input.wrapper prefix-icon="tabler-brand-github" style="flex:1 1 20rem">
+                            <x-filament::input type="text" wire:model="githubLink" :placeholder="trans('mod-manager::mods.github.placeholder')" />
+                        </x-filament::input.wrapper>
+                        <x-filament::button type="submit" icon="tabler-download" wire:loading.attr="disabled" wire:target="installGitHub">{{ trans('mod-manager::mods.install') }}</x-filament::button>
+                    </form>
+                    @if ($githubAssets)
+                        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
+                            <span style="font-size:.875rem;{{ $muted }}">{{ trans('mod-manager::mods.github.pick') }}</span>
+                            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                                @foreach ($githubAssets as $asset)
+                                    <x-filament::button size="sm" color="gray" icon="tabler-file-zip" wire:click="installGitHub({{ $js($asset['name']) }})" wire:loading.attr="disabled">
+                                        {{ $asset['name'] }} ({{ \Illuminate\Support\Number::fileSize($asset['size'], 1) }})
+                                    </x-filament::button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+        </x-filament::section>
     @else
         @php
             $gameVersion = $this->gameVersion();

@@ -106,15 +106,15 @@ Without a version picked, the newest one for the server's game version is instal
 **Counter-Strike 2.** The loader is Metamod:Source 2.0 (AlliedModders build drop) and
 CounterStrikeSharp with its .NET runtime (GitHub), one button for both; the server picks it up on
 its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
-- Plugins: "Upload plugin or zip" takes a `.zip` or a `.dll`, or paste a GitHub link above the
-  table - a release with several zips asks which one. A plugin is a folder with a `.dll` of the same
+- Plugins: "Upload plugin or zip" takes a `.zip` or a `.dll`, or paste a GitHub link in the tab
+  "Add by link" - a release with several zips asks which one. A plugin is a folder with a `.dll` of the same
   name; `addons/`, `counterstrikesharp/`, `plugins/`, `configs/`, `shared/`, `gamedata/` and `cfg/`
   count from wherever they sit in the zip. A plugin from GitHub gets update hints from new releases.
   Switching off moves the plugin folder to `plugins_disabled`, its configs stay editable.
-- Workshop maps: paste an id or a workshop link, or - with the key - pick one in the tab "Steam
+- Workshop maps: paste an id or a workshop link in the tab "Add by link", or - with the key - pick one in the tab "Steam
   Workshop Maps" (search, game mode, sort). Title and picture come from Steam, nothing is
-  downloaded by the panel. The first map becomes the start map (`WORKSHOP_MAP`), the flag in a row
-  makes another one the start map. Downloading needs a Game Server Login Token (`STEAM_ACC`, App
+  downloaded by the panel. The map the server starts on is the startup variable `WORKSHOP_MAP`.
+  Downloading needs a Game Server Login Token (`STEAM_ACC`, App
   730) - the page says so when it is missing.
 - Changing between workshop maps needs a plugin: RockTheVote (`Oz-Lin/cs2-rockthevote`), set up
   with one button. The switch of a map puts it in or out of a block of RockTheVote's `maplist.txt`;

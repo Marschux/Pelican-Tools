@@ -161,7 +161,7 @@ class ModsPage extends Page
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['installed', 'browse'], true) ? $tab : 'browse';
+        $this->tab = in_array($tab, ['installed', 'browse', 'links'], true) ? $tab : 'browse';
 
         if ($this->tab === 'browse' && $this->items === []) {
             $this->fetch();
@@ -434,21 +434,6 @@ class ModsPage extends Page
 
         $this->attempt(fn () => $this->installer()->addWorkshopMap($this->workshopLink), trans('mod-manager::mods.workshop.added'));
         $this->workshopLink = '';
-    }
-
-    public function setStartMap(int $installId): void
-    {
-        $this->requirePermission(SubuserPermission::StartupUpdate);
-
-        $install = $this->findInstall($installId);
-
-        $this->attempt(fn () => $this->installer()->setStartMap(substr($install->package, strlen(Workshop::PREFIX))), trans('mod-manager::mods.workshop.start_set', ['name' => $install->name]));
-    }
-
-    /** The workshop id the server starts on, '' for none. */
-    public function startMap(): string
-    {
-        return once(fn () => $this->source2() ? $this->installer()->startMap() : '');
     }
 
     /** RockTheVote, the plugin that changes to the workshop maps: installed from its GitHub releases, the RELEASE build. */
