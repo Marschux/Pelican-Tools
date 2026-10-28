@@ -5,6 +5,7 @@
                 <span style="display: flex; align-items: center; gap: .5rem;">
                     <x-filament::icon icon="tabler-layout-dashboard" style="width: 1.25rem; height: 1.25rem;" />
                     {{ trans('server-resources::resources.host.heading') }}
+                    <span style="opacity: .6; font-weight: 400;">{{ parse_url((string) config('app.url'), PHP_URL_HOST) }}</span>
                 </span>
             </x-slot>
 
