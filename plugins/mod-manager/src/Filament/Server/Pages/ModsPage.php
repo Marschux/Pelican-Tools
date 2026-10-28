@@ -1022,9 +1022,10 @@ class ModsPage extends Page
     }
 
     /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
+    /** The Steam Web API key in the server's startup variable WORKSHOP_AUTHKEY, '' without. */
     private function steamKey(): string
     {
-        return trim((string) $this->profile()->setting('steam_api_key'));
+        return once(fn () => $this->installer()->steamKey());
     }
 
     /**

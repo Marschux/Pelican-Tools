@@ -104,9 +104,8 @@ class Presets
                 'name' => 'Counter-Strike 2',
                 'settings' => [
                     // maps; plugins are uploaded or come from a GitHub release. Browsing the
-                    // workshop needs a Steam Web API key (steam_api_key), without one maps go in by id
+                    // workshop needs the server's Steam Web API key (WORKSHOP_AUTHKEY), without one maps go in by id
                     'sources' => ['workshop'],
-                    'steam_api_key' => '',
                     'game_dir' => 'game/csgo',
                     'mods_dir' => 'game/csgo/addons/counterstrikesharp/plugins',
                     'config_dir' => 'game/csgo/addons/counterstrikesharp/configs',

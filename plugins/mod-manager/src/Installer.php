@@ -1154,18 +1154,29 @@ class Installer
     /** Workshop maps only download with a Game Server Login Token (STEAM_ACC): the server has to be logged on to Steam. */
     public function hasLoginToken(): bool
     {
-        $variable = $this->server->egg->variables()->where('env_variable', 'STEAM_ACC')->first();
+        return $this->variable('STEAM_ACC') !== '';
+    }
 
-        return $variable && trim((string) $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value')) !== '';
+    /** Counter-Strike 2: the Steam Web API key in WORKSHOP_AUTHKEY - browsing the workshop needs it. */
+    public function steamKey(): string
+    {
+        return $this->variable('WORKSHOP_AUTHKEY');
+    }
+
+    /** A startup variable of the server by its env name, '' when the egg has none or it is empty. */
+    private function variable(string $name): string
+    {
+        $variable = $this->server->egg->variables()->where('env_variable', $name)->first();
+
+        return $variable ? trim((string) $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value')) : '';
     }
 
     /** The workshop id the server starts on (WORKSHOP_MAP), '' for none. */
     public function startMap(): string
     {
-        $variable = $this->server->egg->variables()->where('env_variable', self::START_MAP)->first();
-        $value = $variable ? $this->server->serverVariables()->where('variable_id', $variable->id)->value('variable_value') : null;
+        $value = $this->variable(self::START_MAP);
 
-        return in_array((string) $value, ['', '0'], true) ? '' : (string) $value;
+        return $value === '0' ? '' : $value;
     }
 
     public function setStartMap(string $id): void

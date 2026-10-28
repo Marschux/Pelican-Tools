@@ -250,8 +250,6 @@ return [
             'gamebanana_game_hint' => 'Die Nummer in gamebanana.com/games/<Nummer>, z. B. 4254 für Counter-Strike 1.6.',
             'gamebanana_category' => 'GameBanana-Kategorie',
             'gamebanana_category_hint' => 'Die Nummer in gamebanana.com/mods/cats/<Nummer>, z. B. 5474 für dessen Maps.',
-            'steam_api_key' => 'Steam-Web-API-Key',
-            'steam_api_key_hint' => 'Von steamcommunity.com/dev/apikey. Zeigt den Tab zum Durchsuchen des Workshops; ohne Key kommen Maps per ID oder Link dazu.',
             'mods_dir' => 'Mod-Ordner',
             'config_dir' => 'Config-Ordner',
             'version_file' => 'Versionsdatei',

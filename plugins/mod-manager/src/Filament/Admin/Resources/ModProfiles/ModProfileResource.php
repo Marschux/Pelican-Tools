@@ -130,12 +130,6 @@ class ModProfileResource extends Resource
                         ->numeric()
                         ->visible(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true))
                         ->required(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true)),
-                    TextInput::make('settings.steam_api_key')
-                        ->label(trans($field('steam_api_key')))
-                        ->helperText(trans($field('steam_api_key_hint')))
-                        ->password()
-                        ->revealable()
-                        ->visible(fn (Get $get) => in_array('workshop', (array) $get('settings.sources'), true)),
                     TextInput::make('settings.mods_dir')
                         ->label(trans($field('mods_dir')))
                         ->required(),
