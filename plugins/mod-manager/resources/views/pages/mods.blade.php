@@ -135,8 +135,10 @@
                 <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
 
                 @php
-                    // filter by type, in the browser - only worth it with more than one kind of thing installed
-                    $types = $installed->map(fn ($install) => $this->type($install->package)[0])->unique()->sort()->values();
+                    // filter by type, in the browser - only worth it with more than one kind of row; loader and engine rows count too
+                    $types = collect([$loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
+                        ->concat($installed->map(fn ($install) => $this->type($install->package)[0])->sort())
+                        ->filter()->unique()->values();
                 @endphp
                 <div x-data="{ type: '' }">
                 @if ($types->count() > 1)
