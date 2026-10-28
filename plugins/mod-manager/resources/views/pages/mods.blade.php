@@ -14,8 +14,6 @@
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
-    // GoldSrc maps and jar plugins never have any - the column only costs width there
-    $hasRelations = collect($relations)->contains(fn (array $relation) => $relation['requires'] || $relation['needed_by']);
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
     $canEngine = $tab === 'installed' && $this->goldsrc();
@@ -162,16 +160,24 @@
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
                 <div style="overflow-x:auto;overflow-y:hidden">
-                    <table style="width:100%;border-collapse:collapse;font-size:.875rem">
+                    {{-- fixed column widths, the same for every game; below 60rem the table scrolls --}}
+                    <table style="width:100%;min-width:60rem;table-layout:fixed;border-collapse:collapse;font-size:.875rem">
+                        <colgroup>
+                            <col style="width:22%">
+                            <col style="width:9%">
+                            <col style="width:10%">
+                            <col style="width:7%">
+                            <col style="width:20%">
+                            <col style="width:12%">
+                            <col style="width:20%">
+                        </colgroup>
                         <thead>
                             <tr style="text-align:left;{{ $muted }}">
                                 <th style="padding:.4rem .5rem .4rem 0;font-weight:500">{{ trans('mod-manager::mods.columns.mod') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.type') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.version') }}</th>
                                 <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('mod-manager::mods.columns.size') }}</th>
-                                @if ($hasRelations)
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.dependencies') }}</th>
-                                @endif
                                 <th style="padding:.4rem .5rem;font-weight:500">{{ trans('mod-manager::mods.columns.status') }}</th>
                                 <th></th>
                             </tr>
@@ -196,9 +202,7 @@
                                     </td>
                                     <td style="padding:.6rem .5rem">–</td>
                                     <td style="padding:.6rem .5rem;text-align:right">–</td>
-                                    @if ($hasRelations)
                                     <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
-                                    @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                                 @if ($loader['installed'])
@@ -240,9 +244,7 @@
                                         </td>
                                         <td style="padding:.6rem .5rem">–</td>
                                         <td style="padding:.6rem .5rem;text-align:right">–</td>
-                                        @if ($hasRelations)
                                         <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
-                                        @endif
                                         <td style="padding:.6rem .5rem;min-width:8rem">
                                             <x-filament::badge color="gray" size="sm">{{ trans('mod-manager::mods.engine.optional') }}</x-filament::badge>
                                         </td>
@@ -304,14 +306,13 @@
                                         {{-- one badge per row, a colour per type: what kind of thing it is --}}
                                         <x-filament::badge :color="$this->typeColor($type)" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
                                     </td>
-                                    <td style="padding:.6rem .5rem;white-space:nowrap">
+                                    <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
                                         {{-- a loader's or engine's version is several: one per line --}}
                                         {!! implode('<br>', array_map('e', explode(' / ', $install->version))) !!}
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap;text-align:right">
                                         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
                                     </td>
-                                    @if ($hasRelations)
                                     <td style="padding:.6rem .5rem;{{ $muted }};min-width:10rem">
                                         @if ($relation['requires'])
                                             <div>{{ trans('mod-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
@@ -323,7 +324,6 @@
                                             –
                                         @endif
                                     </td>
-                                    @endif
                                     <td style="padding:.6rem .5rem;min-width:8rem">
                                         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
                                             @if ($install->pinned)
