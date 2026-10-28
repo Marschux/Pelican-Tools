@@ -449,9 +449,9 @@
         @if ($amxx)
             {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
             <x-filament::section collapsible collapsed>
-                <x-slot name="heading">{{ trans('mod-manager::mods.amxx.heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
+                <x-slot name="heading">{{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.heading' : 'mod-manager::mods.amxx.sourcemod_heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
                 <x-slot name="description">
-                    {{ trans('mod-manager::mods.amxx.hint') }}
+                    {{ trans($this->goldsrc() ? 'mod-manager::mods.amxx.hint' : 'mod-manager::mods.amxx.sourcemod_hint') }}
                     {{-- the loader removed leaves plugins.ini behind, switched on or not none of it runs --}}
                     @if (!$loaderRuns)
                         <span style="display:block;margin-top:.25rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.loader.hint', ['loader' => $loader['name']]) }}</span>
@@ -474,7 +474,7 @@
                             <span style="font-family:monospace;font-size:.875rem;min-width:11rem;{{ $plugin['enabled'] ? '' : 'opacity:.5' }}">{{ $plugin['file'] }}</span>
                             <span style="{{ $muted }};flex:1">{{ $plugin['note'] }}</span>
                             @php
-                                $pluginConfig = \Marschux\ModManager\Installer::configFor(substr($plugin['file'], 0, -5), $configs);
+                                $pluginConfig = \Marschux\ModManager\Installer::configFor(pathinfo($plugin['file'], PATHINFO_FILENAME), $configs);
                             @endphp
                             @if ($pluginConfig && $canReadConfig)
                                 <button type="button" class="mod-action" wire:click="openConfig({{ $js($pluginConfig) }})" title="{{ $pluginConfig }}" aria-label="{{ trans('mod-manager::mods.config.edit', ['file' => $pluginConfig]) }}">
@@ -484,7 +484,8 @@
                             @if (!$plugin['exists'])
                                 <x-filament::badge color="warning" size="sm" icon="tabler-alert-triangle">{{ trans('mod-manager::mods.amxx.missing') }}</x-filament::badge>
                             @endif
-                            @if ($canDelete)
+                            {{-- SourceMod's own plugins are only switched, never deleted --}}
+                            @if ($canDelete && $this->goldsrc())
                                 <button type="button" class="mod-action mod-danger" wire:click="deleteAmxx({{ $js($plugin['file']) }})" wire:confirm="{{ trans('mod-manager::mods.amxx.confirm_delete', ['file' => $plugin['file']]) }}" title="{{ trans('mod-manager::mods.remove') }}" aria-label="{{ trans('mod-manager::mods.remove') }}">
                                     <x-filament::icon icon="tabler-trash" />
                                 </button>

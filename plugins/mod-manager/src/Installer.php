@@ -531,6 +531,14 @@ class Installer
                     $to = "$game/" . ($goldsrc ? self::goldsrcTarget($path) : $path);
                     $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
+                    // a SourceMod plugin switched on or off on the page keeps that: its new version goes where the old one is
+                    $plugins = $this->modsDir();
+                    if ($this->source1() && in_array(dirname($to), [$plugins, "$plugins/disabled"], true) && !isset($listings[dirname($to)][basename($to)])) {
+                        $other = dirname($to) === $plugins ? "$plugins/disabled" : $plugins;
+                        $listings[$other] ??= $this->files->list($other);
+                        $to = isset($listings[$other][basename($to)]) ? "$other/" . basename($to) : $to;
+                    }
+
                     if (isset($listings[dirname($to)][basename($to)])) {
                         if (self::keptOnUpdate($path) || (!$goldsrc && self::loaderConfig($path))) {
                             continue;
@@ -795,6 +803,10 @@ class Installer
      */
     public function amxxPlugins(): array
     {
+        if ($this->source1()) {
+            return $this->sourcemodPlugins();
+        }
+
         if (!$this->goldsrc()) {
             return [];
         }
@@ -810,6 +822,19 @@ class Installer
     /** Switches a plugin of plugins.ini on or off: its line commented out or back in. */
     public function setAmxxPlugin(string $file, bool $enabled): void
     {
+        if ($this->source1()) {
+            // SourceMod loads every .smx in plugins/ and ignores plugins/disabled/
+            if (!collect($this->sourcemodPlugins())->contains(fn (array $plugin) => $plugin['file'] === $file && $plugin['enabled'] !== $enabled)) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
+            }
+
+            $on = $this->modsDir() . "/$file";
+            $off = $this->modsDir() . "/disabled/$file";
+            $this->files->move([$enabled ? ['from' => $off, 'to' => $on] : ['from' => $on, 'to' => $off]]);
+
+            return;
+        }
+
         $path = $this->configDir() . '/plugins.ini';
         $ini = (string) $this->files->read($path);
 
@@ -818,6 +843,31 @@ class Installer
         }
 
         $this->files->write($path, self::withAmxxPlugin($ini, $file, $enabled));
+    }
+
+    /**
+     * The .smx in SourceMod's plugins/ (on) and plugins/disabled/ (off) not installed through the
+     * plugin - those SourceMod comes with, and any put there by hand.
+     *
+     * @return array<int, array{file: string, enabled: bool, note: string, group: string, exists: bool}>
+     */
+    private function sourcemodPlugins(): array
+    {
+        // the loader's own files include SourceMod's plugins - those are exactly what is listed here
+        $known = $this->installs()->where('package', '!=', Source1::PACKAGE)->pluck('files')->flatten()->all();
+        $plugins = [];
+
+        foreach (['' => true, '/disabled' => false] as $folder => $enabled) {
+            foreach ($this->files->list($this->modsDir() . $folder) as $name => $isDirectory) {
+                if (!$isDirectory && str_ends_with(strtolower($name), '.smx') && !in_array($this->modsDir() . "$folder/$name", $known, true)) {
+                    $plugins[] = ['file' => $name, 'enabled' => $enabled, 'note' => '', 'group' => '', 'exists' => true];
+                }
+            }
+        }
+
+        usort($plugins, fn (array $a, array $b) => strcasecmp($a['file'], $b['file']));
+
+        return $plugins;
     }
 
     /**
@@ -1841,7 +1891,7 @@ class Installer
             return $this->unmanagedAmxx($known);
         }
 
-        // ponytail: SourceMod's own plugins get their section in phase C2, until then nothing is listed
+        // SourceMod's own plugins and those put there by hand have their own section (amxxPlugins)
         if ($this->source1()) {
             return [];
         }
