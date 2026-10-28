@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Collection;
 use App\Enums\NodeJwtScope;
 use App\Services\Nodes\NodeJWTService;
@@ -121,9 +122,6 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    /** Counter-Strike 2: where RockTheVote comes from - the maintained fork, it reads workshop ids */
-    private const MAP_VOTE_REPOSITORY = 'Oz-Lin/cs2-rockthevote';
-
     private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
 
     public function mount(): void
@@ -436,27 +434,9 @@ class ModsPage extends Page
         $this->workshopLink = '';
     }
 
-    /** RockTheVote, the plugin that changes to the workshop maps: installed from its GitHub releases, the RELEASE build. */
-    public function setUpMapVote(): void
-    {
-        $this->requirePermission(SubuserPermission::FileCreate);
-
-        $this->attempt(function () {
-            $assets = (new GitHub())->release(self::MAP_VOTE_REPOSITORY)['assets'];
-            $asset = collect($assets)->first(fn (array $asset) => str_contains($asset['name'], 'RELEASE')) ?? $assets[0];
-
-            $this->installer()->installGitHub(self::MAP_VOTE_REPOSITORY, $asset['name']);
-        }, trans('mod-manager::mods.messages.installed', ['name' => Installer::MAP_VOTE]));
-    }
-
     public function hasLoginToken(): bool
     {
         return once(fn () => $this->installer()->hasLoginToken());
-    }
-
-    public function hasMapVote(): bool
-    {
-        return once(fn () => $this->installer()->hasMapVote());
     }
 
     /** A GitHub release link pasted in: the asset to install, or the choice when there are several. */
@@ -691,6 +671,20 @@ class ModsPage extends Page
             // jars of Paper and AMX Mod X's .amxx are plugins, Thunderstore packages mods
             Installer::uploaded($package), Installer::jarPackage($package), str_starts_with($package, GitHub::PREFIX) => ['plugin', 'tabler-puzzle'],
             default => ['mod', 'tabler-puzzle'],
+        };
+    }
+
+    /** A type's badge colour: one hue each, none of the status colours (green, amber, red). */
+    public function typeColor(string $type): array
+    {
+        return match ($type) {
+            'loader' => Color::Sky,
+            'engine' => Color::Orange,
+            'map' => Color::Teal,
+            'plugin' => Color::Violet,
+            'datapack' => Color::Fuchsia,
+            'resourcepack' => Color::Pink,
+            default => Color::Indigo,
         };
     }
 

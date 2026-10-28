@@ -160,7 +160,7 @@ class Installer
         $others = $this->filesOfOthers($install->package);
         $files = array_filter(
             $removing->pluck('files')->flatten()->all(),
-            fn (string $path) => (!self::uploaded($install->package) || !$this->inConfigDir($path)) && !in_array($path, $others, true),
+            fn (string $path) => (!$this->ownPlugin($install->package) || !$this->inConfigDir($path)) && !in_array($path, $others, true),
         );
 
         $this->files->delete([...$files, ...$configs]);
@@ -169,7 +169,7 @@ class Installer
             $this->useResourcePack(null);
         }
 
-        if ($this->goldsrc() && self::uploaded($install->package)) {
+        if ($this->goldsrc() && $this->ownPlugin($install->package)) {
             $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withoutAmxxPlugin($ini, $file), $ini));
         }
 
@@ -198,7 +198,7 @@ class Installer
         // what an uploaded archive brought into the config folder
         if ($this->goldsrc()) {
             return array_values(array_filter(
-                $installs->filter(fn (ModInstall $install) => self::uploaded($install->package))->pluck('files')->flatten()->all(),
+                $installs->filter(fn (ModInstall $install) => $this->ownPlugin($install->package))->pluck('files')->flatten()->all(),
                 fn (string $path) => $this->inConfigDir($path),
             ));
         }
@@ -854,10 +854,10 @@ class Installer
      * into plugins-modmanager.ini - AMX Mod X reads every plugins-*.ini, so the plugins.ini the
      * admin keeps stays untouched. The same name again replaces it.
      */
-    private function installAmxx(string $name, string $directory): ModInstall
+    private function installAmxx(string $name, string $directory, ?string $package = null, ?string $version = null): ModInstall
     {
         $name = self::amxxName($name);
-        $package = self::UPLOAD . substr($name, 0, -5);
+        $package ??= self::UPLOAD . substr($name, 0, -5);
         $existing = $this->installs()->firstWhere('package', $package);
         $path = $this->modsDir() . "/$name";
 
@@ -881,7 +881,7 @@ class Installer
             [
                 'name' => substr($name, 0, -5),
                 // a compiled plugin carries no version that can be read here: when it came is what there is
-                'version' => now()->format('Y-m-d H:i'),
+                'version' => $version ?? now()->format('Y-m-d H:i'),
                 'icon' => null,
                 'dependency' => false,
                 'requires' => [],
@@ -931,13 +931,13 @@ class Installer
      * amxxPlacement), every plugin in it gets its line. Configs and other files already there are
      * kept; a plugin file that is there and not from this upload stops it.
      */
-    private function installAmxxArchive(string $name, string $scratch): ModInstall
+    private function installAmxxArchive(string $name, string $scratch, ?string $package = null, ?string $version = null): ModInstall
     {
         if (!preg_match('/^\w[\w.-]*\.zip\z/i', $name)) {
             throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $name]));
         }
 
-        $package = self::UPLOAD . substr($name, 0, -4);
+        $package ??= self::UPLOAD . substr($name, 0, -4);
         $existing = $this->installs()->firstWhere('package', $package);
         $game = $this->gameDir();
 
@@ -1012,7 +1012,7 @@ class Installer
             ['server_id' => $this->server->id, 'package' => $package],
             [
                 'name' => substr($name, 0, -4),
-                'version' => now()->format('Y-m-d H:i'),
+                'version' => $version ?? now()->format('Y-m-d H:i'),
                 'icon' => null,
                 'dependency' => false,
                 'requires' => [],
@@ -1184,12 +1184,6 @@ class Installer
         $this->files->write("$folder/maplist.txt", self::withWorkshopBlock($current, $maps));
     }
 
-    /** RockTheVote is there, on or off. */
-    public function hasMapVote(): bool
-    {
-        return $this->installs()->contains(fn (ModInstall $install) => in_array(self::MAP_VOTE, array_map('basename', $install->files), true));
-    }
-
     /** $text with the block of workshop maps replaced by $lines, or put at its end. */
     public static function withWorkshopBlock(string $text, array $lines): string
     {
@@ -1210,7 +1204,7 @@ class Installer
         return implode("\n", [...$kept, ...$block]) . "\n";
     }
 
-    /** A zip of a GitHub release, e.g. a CounterStrikeSharp plugin: pulled by Wings, then like an upload. */
+    /** A zip of a GitHub release, e.g. a CounterStrikeSharp plugin, or an AMX Mod X .amxx: pulled by Wings, then like an upload. */
     public function installGitHub(string $repository, string $asset): ModInstall
     {
         $release = (new GitHub())->release($repository);
@@ -1226,7 +1220,17 @@ class Installer
         $scratch = self::UPLOADS . '/' . bin2hex(random_bytes(16));
         $this->files->pull($asset['url'], $scratch, $asset['name']);
 
-        return $this->installCssArchive($asset['name'], $scratch, $package, $tag);
+        if ($this->source2()) {
+            return $this->installCssArchive($asset['name'], $scratch, $package, $tag);
+        }
+
+        try {
+            return str_ends_with(strtolower($asset['name']), '.zip')
+                ? $this->installAmxxArchive($asset['name'], $scratch, $package, $tag)
+                : $this->installAmxx($asset['name'], $scratch, $package, $tag);
+        } finally {
+            $this->files->delete([$scratch]);
+        }
     }
 
     /**
@@ -1571,6 +1575,12 @@ class Installer
         return str_starts_with($package, self::UPLOAD);
     }
 
+    /** An upload, or on GoldSrc an AMX Mod X plugin from GitHub: its lines in plugins-modmanager.ini, its configs kept. */
+    private function ownPlugin(string $package): bool
+    {
+        return self::uploaded($package) || ($this->goldsrc() && str_starts_with($package, GitHub::PREFIX));
+    }
+
     private function goldsrc(): bool
     {
         return $this->profile->setting('loader_type') === 'goldsrc';
@@ -1679,7 +1689,7 @@ class Installer
         }
 
         // the file stays where it is, AMX Mod X skips a line commented out
-        if ($this->goldsrc() && self::uploaded($install->package)) {
+        if ($this->goldsrc() && $this->ownPlugin($install->package)) {
             $this->writeUploadedIni(fn (string $ini) => array_reduce($this->amxxFilesOf($install), fn (string $ini, string $file) => self::withAmxxPlugin($ini, $file, $enabled), $ini));
             $install->update(['enabled' => $enabled]);
 

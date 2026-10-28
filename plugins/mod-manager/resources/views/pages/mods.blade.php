@@ -81,7 +81,7 @@
                 {{ $label }}
             </x-filament::tabs.item>
         @endforeach
-        @if ($canInstall && $this->source2())
+        @if ($canInstall && $this->canUpload())
             <x-filament::tabs.item icon="tabler-link" :active="$tab === 'links'" wire:click="setTab('links')">
                 {{ trans('mod-manager::mods.tabs.links') }}
             </x-filament::tabs.item>
@@ -192,7 +192,7 @@
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
-                                        <x-filament::badge color="info" size="sm" icon="tabler-plug" style="width:max-content">{{ trans('mod-manager::mods.types.loader') }}</x-filament::badge>
+                                        <x-filament::badge :color="$this->typeColor('loader')" size="sm" icon="tabler-plug" style="width:max-content">{{ trans('mod-manager::mods.types.loader') }}</x-filament::badge>
                                     </td>
                                     <td style="padding:.6rem .5rem">–</td>
                                     <td style="padding:.6rem .5rem;text-align:right">–</td>
@@ -236,7 +236,7 @@
                                             </div>
                                         </td>
                                         <td style="padding:.6rem .5rem">
-                                            <x-filament::badge color="info" size="sm" icon="tabler-engine" style="width:max-content">{{ trans('mod-manager::mods.types.engine') }}</x-filament::badge>
+                                            <x-filament::badge :color="$this->typeColor('engine')" size="sm" icon="tabler-engine" style="width:max-content">{{ trans('mod-manager::mods.types.engine') }}</x-filament::badge>
                                         </td>
                                         <td style="padding:.6rem .5rem">–</td>
                                         <td style="padding:.6rem .5rem;text-align:right">–</td>
@@ -301,8 +301,8 @@
                                         </div>
                                     </td>
                                     <td style="padding:.6rem .5rem">
-                                        {{-- one badge per row, the same colour for all: what kind of thing it is --}}
-                                        <x-filament::badge color="info" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
+                                        {{-- one badge per row, a colour per type: what kind of thing it is --}}
+                                        <x-filament::badge :color="$this->typeColor($type)" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("mod-manager::mods.types.$type") }}</x-filament::badge>
                                     </td>
                                     <td style="padding:.6rem .5rem;white-space:nowrap">
                                         {{-- a loader's or engine's version is several: one per line --}}
@@ -526,12 +526,13 @@
             </x-filament::section>
         @endif
     @elseif ($tab === 'links')
-        {{-- Counter-Strike 2: what goes in by link - workshop maps and plugins from GitHub releases --}}
+        {{-- what goes in by link: plugins from GitHub releases, on Counter-Strike 2 also workshop maps --}}
         @php
             $hasWorkshopMaps = $this->installer()->installs()->contains(fn ($install) => str_starts_with($install->package, \Marschux\ModManager\Sources\Workshop::PREFIX));
         @endphp
         <x-filament::section>
-                    {{-- Counter-Strike 2: a workshop map by id or link; without RockTheVote only the server's start map is played --}}
+                {{-- Counter-Strike 2: a workshop map by id or link; without a map vote plugin only the server's start map is played --}}
+                @if ($this->source2())
                     <form wire:submit="addWorkshopMap" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.5rem">
                         <x-filament::input.wrapper prefix-icon="tabler-map" style="flex:1 1 20rem">
                             <x-filament::input type="text" wire:model="workshopLink" :placeholder="trans('mod-manager::mods.workshop.placeholder')" />
@@ -541,15 +542,9 @@
                     @if (!$this->hasLoginToken() && $hasWorkshopMaps)
                         <div style="margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">{{ trans('mod-manager::mods.workshop.token_hint') }}</div>
                     @endif
-                    @if (!$this->hasMapVote() && $hasWorkshopMaps)
-                        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;font-size:.875rem;color:rgb(234,179,8)">
-                            <span style="flex:1 1 20rem">{{ trans('mod-manager::mods.workshop.vote_hint') }}</span>
-                            <x-filament::button size="sm" icon="tabler-download" wire:click="setUpMapVote" wire:loading.attr="disabled">{{ trans('mod-manager::mods.workshop.vote_setup') }}</x-filament::button>
-                        </div>
-                    @endif
                 @endif
-                {{-- Counter-Strike 2: a plugin from a GitHub release, pasted as a link; several zips in it - pick one --}}
-                @if ($canInstall && $this->source2())
+                {{-- a plugin from a GitHub release, pasted as a link; several files in it - pick one --}}
+                @if ($canInstall && $this->canUpload())
                     <form wire:submit="installGitHub" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
                         <x-filament::input.wrapper prefix-icon="tabler-brand-github" style="flex:1 1 20rem">
                             <x-filament::input type="text" wire:model="githubLink" :placeholder="trans('mod-manager::mods.github.placeholder')" />
@@ -568,6 +563,7 @@
                             </div>
                         </div>
                     @endif
+                @endif
         </x-filament::section>
     @else
         @php

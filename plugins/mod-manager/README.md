@@ -6,7 +6,7 @@ passes through the panel. Eggs are not changed.
 
 Built in: Valheim (Thunderstore + BepInEx), Minecraft Paper (plugins from Modrinth and Hangar,
 datapacks and resource packs from Modrinth), Counter-Strike 1.6 and Condition Zero (Metamod-R +
-AMX Mod X, plugins uploaded, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
+AMX Mod X, plugins uploaded or from a GitHub release, maps from GameBanana), Counter-Strike 2 (Metamod:Source +
 CounterStrikeSharp, plugins uploaded or from a GitHub release, maps from the Steam Workshop).
 
 ## Install
@@ -100,6 +100,8 @@ Without a version picked, the newest one for the server's game version is instal
   left out, a zip with nothing but source code is refused - compile it first. Uploaded plugins get
   their lines in `configs/plugins-modmanager.ini` (AMX Mod X reads every `plugins-*.ini`), so
   `plugins.ini` stays as the admin keeps it. Configs already there are not overwritten.
+- A plugin on GitHub: paste the link in the tab "Add by link"; the release's `.amxx` or zip goes in
+  like an upload and gets update hints from new releases.
 - `.amxx` files in the plugins folder that no `plugins*.ini` names are not loaded; they are listed
   and can be taken over (registered) or deleted.
 
@@ -116,9 +118,9 @@ its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
   downloaded by the panel. The map the server starts on is the startup variable `WORKSHOP_MAP`.
   Downloading needs a Game Server Login Token (`STEAM_ACC`, App
   730) - the page says so when it is missing.
-- Changing between workshop maps needs a plugin: RockTheVote (`Oz-Lin/cs2-rockthevote`), set up
-  with one button. The switch of a map puts it in or out of a block of RockTheVote's `maplist.txt`;
-  lines written there by hand stay.
+- Changing between workshop maps needs a map vote plugin, e.g. RockTheVote (`Oz-Lin/cs2-rockthevote`),
+  installed by its GitHub link. With it installed, the switch of a map puts it in or out of a block
+  of RockTheVote's `maplist.txt`; lines written there by hand stay.
 
 **Installed.**
 - Updates: a blue arrow button left of the switch, per mod, and "update all"; the status stays "Active". A version picked by hand is pinned and left out of
