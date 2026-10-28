@@ -162,7 +162,7 @@ class Installer
         $others = $this->filesOfOthers($install->package);
         $files = array_filter(
             $removing->pluck('files')->flatten()->all(),
-            fn (string $path) => (!$this->ownPlugin($install->package) || !$this->inConfigDir($path)) && !in_array($path, $others, true),
+            fn (string $path) => (!$this->ownPlugin($install->package) || !$this->pluginConfig($path)) && !in_array($path, $others, true),
         );
 
         $this->files->delete([...$files, ...$configs]);
@@ -198,10 +198,10 @@ class Installer
     public function runtimeConfigs(Collection $installs): array
     {
         // what an uploaded archive brought into the config folder
-        if ($this->goldsrc()) {
+        if ($this->goldsrc() || $this->source1()) {
             return array_values(array_filter(
                 $installs->filter(fn (ModInstall $install) => $this->ownPlugin($install->package))->pluck('files')->flatten()->all(),
-                fn (string $path) => $this->inConfigDir($path),
+                fn (string $path) => $this->pluginConfig($path),
             ));
         }
 
@@ -941,47 +941,62 @@ class Installer
                 return $this->installCssArchive($name, $directory, self::UPLOAD . self::cssName([], $name), now()->format('Y-m-d H:i'));
             }
 
-            return str_ends_with(strtolower($name), '.zip') ? $this->installAmxxArchive($name, $directory) : $this->installAmxx($name, $directory);
+            return str_ends_with(strtolower($name), '.zip') || $this->source1() ? $this->installPluginArchive($name, $directory) : $this->installAmxx($name, $directory);
         } finally {
             $this->files->delete([$directory]);
         }
     }
 
     /**
-     * A zip of AMX Mod X plugins: unpacked on the server, sorted into the game folder (see
-     * amxxPlacement), every plugin in it gets its line. Configs and other files already there are
-     * kept; a plugin file that is there and not from this upload stops it.
+     * A zip of AMX Mod X plugins - or SourceMod plugins, a .smx on its own too: unpacked on the
+     * server, sorted into the game folder (see amxxPlacement, smxPlacement). An AMX Mod X plugin
+     * gets its line; SourceMod loads every .smx in its folder. Configs and other files already
+     * there are kept; a plugin file that is there and not from this upload stops it.
      */
-    private function installAmxxArchive(string $name, string $scratch, ?string $package = null, ?string $version = null): ModInstall
+    private function installPluginArchive(string $name, string $scratch, ?string $package = null, ?string $version = null): ModInstall
     {
-        if (!preg_match('/^\w[\w.-]*\.zip\z/i', $name)) {
-            throw new RuntimeException(trans('mod-manager::mods.messages.bad_amxx', ['file' => $name]));
+        $sourcemod = $this->source1();
+
+        if (!preg_match($sourcemod ? '/^\w[\w.+-]*\.(zip|smx)\z/i' : '/^\w[\w.-]*\.zip\z/i', $name)) {
+            throw new RuntimeException(trans($sourcemod ? 'mod-manager::mods.messages.bad_smx' : 'mod-manager::mods.messages.bad_amxx', ['file' => $name]));
         }
 
         $package ??= self::UPLOAD . substr($name, 0, -4);
         $existing = $this->installs()->firstWhere('package', $package);
         $game = $this->gameDir();
+        $extension = $sourcemod ? '.smx' : '.amxx';
+
+        // switched off, the plugins sit in plugins/disabled: back first, so the new files replace them
+        $switchOff = $sourcemod && $existing && !$existing->enabled;
+
+        if ($switchOff) {
+            $this->setEnabled($existing, true);
+            $existing->refresh();
+        }
 
         try {
-            $this->files->decompress($scratch, $name);
-            $this->files->delete(["$scratch/$name"]);
+            if (str_ends_with(strtolower($name), '.zip')) {
+                $this->files->decompress($scratch, $name);
+                $this->files->delete(["$scratch/$name"]);
+            }
 
             $placed = [];
 
             foreach ($this->files->walk($scratch) as $path) {
-                $to = self::amxxPlacement($path);
+                $to = $sourcemod ? self::smxPlacement($path) : self::amxxPlacement($path);
 
                 if ($to !== null) {
                     $placed["$game/$to"] = "$scratch/$path";
                 }
             }
 
-            $plugins = array_values(array_filter(array_keys($placed), fn (string $path) => str_ends_with($path, '.amxx')));
+            $plugins = array_values(array_filter(array_keys($placed), fn (string $path) => str_ends_with(strtolower($path), $extension)));
 
             if ($plugins === []) {
-                $sources = array_filter($this->files->walk($scratch), fn (string $path) => str_ends_with(strtolower($path), '.sma'));
+                $sources = array_filter($this->files->walk($scratch), fn (string $path) => str_ends_with(strtolower($path), $sourcemod ? '.sp' : '.sma'));
+                $message = $sourcemod ? ($sources ? 'source_only_smx' : 'no_smx') : ($sources ? 'source_only' : 'no_plugin');
 
-                throw new RuntimeException(trans($sources ? 'mod-manager::mods.messages.source_only' : 'mod-manager::mods.messages.no_plugin', ['file' => $name]));
+                throw new RuntimeException(trans("mod-manager::mods.messages.$message", ['file' => $name]));
             }
 
             $ours = $existing?->files ?? [];
@@ -994,7 +1009,7 @@ class Installer
                 $listings[dirname($to)] ??= $this->files->list(dirname($to));
 
                 if (isset($listings[dirname($to)][basename($to)])) {
-                    if (str_ends_with($to, '.amxx') && !in_array($to, $ours, true)) {
+                    if (str_ends_with(strtolower($to), $extension) && !in_array($to, $ours, true)) {
                         throw new RuntimeException(trans('mod-manager::mods.messages.exists', ['file' => basename($to)]));
                     }
 
@@ -1027,9 +1042,11 @@ class Installer
         $enabled = $existing?->enabled ?? true;
         $names = array_map('basename', $plugins);
 
-        $this->writeUploadedIni(fn (string $ini) => array_reduce($names, fn (string $ini, string $file) => self::withAmxxPlugin(self::withAmxxLine($ini, $file), $file, $enabled), $ini));
+        if (!$sourcemod) {
+            $this->writeUploadedIni(fn (string $ini) => array_reduce($names, fn (string $ini, string $file) => self::withAmxxPlugin(self::withAmxxLine($ini, $file), $file, $enabled), $ini));
+        }
 
-        return ModInstall::query()->updateOrCreate(
+        $install = ModInstall::query()->updateOrCreate(
             ['server_id' => $this->server->id, 'package' => $package],
             [
                 'name' => substr($name, 0, -4),
@@ -1044,6 +1061,12 @@ class Installer
                 'size' => array_sum(array_map(fn (array $move) => $this->files->size($move['to']), $moves)),
             ],
         );
+
+        if ($switchOff) {
+            $this->setEnabled($install, false);
+        }
+
+        return $install;
     }
 
     /**
@@ -1246,8 +1269,8 @@ class Installer
         }
 
         try {
-            return str_ends_with(strtolower($asset['name']), '.zip')
-                ? $this->installAmxxArchive($asset['name'], $scratch, $package, $tag)
+            return str_ends_with(strtolower($asset['name']), '.zip') || $this->source1()
+                ? $this->installPluginArchive($asset['name'], $scratch, $package, $tag)
                 : $this->installAmxx($asset['name'], $scratch, $package, $tag);
         } finally {
             $this->files->delete([$scratch]);
@@ -1360,6 +1383,60 @@ class Installer
             $extension === 'txt' && ($lower[count($lower) - 2] ?? '') === 'lang' => "addons/amxmodx/data/lang/$file",
             default => null,
         };
+    }
+
+    /**
+     * Where a file of a SourceMod plugin's zip goes, relative to the game folder - null to leave
+     * it out. Whatever the zip wraps things in, an addons/sourcemod/, cfg/ or game folder
+     * (sound/, models/, materials/ ...) counts from there; loose files go where SourceMod looks for
+     * them by their kind. Source code, the scripting folder and readmes stay out.
+     */
+    public static function smxPlacement(string $path): ?string
+    {
+        $parts = explode('/', str_replace('\\', '/', $path));
+        $lower = array_map('strtolower', $parts);
+        $file = end($parts);
+        $name = strtolower($file);
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+        if (($index = array_search('addons', $lower, true)) !== false) {
+            $rest = array_slice($lower, $index);
+
+            return ($rest[1] ?? '') === 'sourcemod' && count($rest) > 3 && in_array($rest[2], ['plugins', 'configs', 'data', 'gamedata', 'translations', 'extensions'], true) && !in_array($extension, ['sp', 'inc'], true)
+                ? implode('/', array_slice($parts, $index))
+                : null;
+        }
+
+        foreach (['cfg', 'sound', 'models', 'materials', 'particles', 'maps', 'resource', 'scripts'] as $folder) {
+            if (($index = array_search($folder, $lower, true)) !== false && $index < count($parts) - 1) {
+                return implode('/', array_slice($parts, $index));
+            }
+        }
+
+        return match (true) {
+            $extension === 'smx' => "addons/sourcemod/plugins/$file",
+            str_ends_with($name, '.phrases.txt') => "addons/sourcemod/translations/$file",
+            str_ends_with($name, '.games.txt') => "addons/sourcemod/gamedata/$file",
+            str_ends_with($name, '.ext.so') => "addons/sourcemod/extensions/$file",
+            $extension === 'cfg' => "cfg/sourcemod/$file",
+            $extension === 'ini' => "addons/sourcemod/configs/$file",
+            default => null,
+        };
+    }
+
+    /**
+     * SourceMod skips plugins/disabled/ on its own: switching off moves a .smx below the plugins
+     * folder there, back again when switched on. Translations, configs and the rest stay.
+     */
+    public static function smxSwitched(string $path, bool $enabled, string $plugins): string
+    {
+        if ($enabled) {
+            return str_starts_with($path, "$plugins/disabled/") ? "$plugins/" . substr($path, strlen("$plugins/disabled/")) : $path;
+        }
+
+        return str_starts_with($path, "$plugins/") && !str_starts_with($path, "$plugins/disabled/") && str_ends_with(strtolower($path), '.smx')
+            ? "$plugins/disabled/" . substr($path, strlen("$plugins/"))
+            : $path;
     }
 
     /**
@@ -1550,6 +1627,12 @@ class Installer
         return array_values(array_map('basename', array_filter($install->files, fn (string $path) => str_ends_with($path, '.amxx'))));
     }
 
+    /** A config a plugin brought along: in the config folder, on SourceMod also below cfg/ (cfg/sourcemod/...). */
+    private function pluginConfig(string $path): bool
+    {
+        return $this->inConfigDir($path) || ($this->source1() && str_starts_with($path, $this->gameDir() . '/cfg/'));
+    }
+
     private function inConfigDir(string $path): bool
     {
         return $this->configDir() !== '' && str_starts_with($path, $this->configDir() . '/');
@@ -1596,10 +1679,10 @@ class Installer
         return str_starts_with($package, self::UPLOAD);
     }
 
-    /** An upload, or on GoldSrc an AMX Mod X plugin from GitHub: its lines in plugins-modmanager.ini, its configs kept. */
+    /** An upload, or an AMX Mod X / SourceMod plugin from GitHub: on GoldSrc its lines in plugins-modmanager.ini, its configs kept. */
     private function ownPlugin(string $package): bool
     {
-        return self::uploaded($package) || ($this->goldsrc() && str_starts_with($package, GitHub::PREFIX));
+        return self::uploaded($package) || (($this->goldsrc() || $this->source1()) && str_starts_with($package, GitHub::PREFIX));
     }
 
     private function goldsrc(): bool
@@ -1731,7 +1814,7 @@ class Installer
 
         // CounterStrikeSharp: only the plugin folder moves (to plugins_disabled), its configs stay editable
         $bases = $this->source2() ? [$this->modsDir()] : $this->bases();
-        $files = array_map(fn (string $path) => self::switched($path, $enabled, $bases), $install->files);
+        $files = array_map(fn (string $path) => $this->source1() ? self::smxSwitched($path, $enabled, $this->modsDir()) : self::switched($path, $enabled, $bases), $install->files);
         $moves = [];
 
         foreach ($install->files as $index => $from) {

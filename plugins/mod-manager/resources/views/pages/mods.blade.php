@@ -134,7 +134,7 @@
                                 <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" x-bind:class="busy && 'opacity-50 pointer-events-none'">
                                     <span x-show="!busy">{{ trans('mod-manager::mods.upload.button') }}</span>
                                     <span x-show="busy" x-cloak>{{ trans('mod-manager::mods.upload.busy') }}</span>
-                                    <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : '.amxx,.zip' }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
+                                    <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.amxx,.zip' : '.smx,.zip') }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
                                 </x-filament::button>
                             </div>
                         @endif

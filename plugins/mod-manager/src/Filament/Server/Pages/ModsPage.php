@@ -406,10 +406,10 @@ class ModsPage extends Page
         return $this->goldsrc() && Installer::amxxCore($path);
     }
 
-    /** Plugins are uploaded for GoldSrc games: AMX Mod X has no site to browse. */
+    /** Plugins are uploaded for the Counter-Strike games: AMX Mod X, SourceMod and CounterStrikeSharp have no site to browse. */
     public function canUpload(): bool
     {
-        return in_array($this->profile()->setting('loader_type'), ['goldsrc', 'source2'], true);
+        return in_array($this->profile()->setting('loader_type'), Presets::ARCHIVE_LOADERS, true);
     }
 
     /** GoldSrc: AMX Mod X's plugin list, its configs and the optional engine. */

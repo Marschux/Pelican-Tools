@@ -397,4 +397,28 @@ $twice = Installer::withWorkshopBlock($once, ['fy_pool:222222']);
 assert(!str_contains($twice, 'aim_map') && str_contains($twice, 'fy_pool:222222') && substr_count($twice, 'mod-manager: end') === 1, 'the block is replaced, not added again');
 assert(str_starts_with(Installer::withWorkshopBlock('', []), '// mod-manager'), 'an empty file gets only the block');
 
+// SourceMod: where a plugin zip's files go, and switching a .smx off and on
+foreach ([
+    ['MyPlugin/addons/sourcemod/plugins/my.smx', 'addons/sourcemod/plugins/my.smx'],
+    ['addons/sourcemod/translations/my.phrases.txt', 'addons/sourcemod/translations/my.phrases.txt'],
+    ['addons/sourcemod/scripting/my.sp', null],
+    ['addons/sourcemod/scripting/include/my.inc', null],
+    ['pack/cfg/sourcemod/plugin.my.cfg', 'cfg/sourcemod/plugin.my.cfg'],
+    ['pack/sound/my/hit.wav', 'sound/my/hit.wav'],
+    ['my.smx', 'addons/sourcemod/plugins/my.smx'],
+    ['my.phrases.txt', 'addons/sourcemod/translations/my.phrases.txt'],
+    ['my.games.txt', 'addons/sourcemod/gamedata/my.games.txt'],
+    ['my.ext.so', 'addons/sourcemod/extensions/my.ext.so'],
+    ['plugin.my.cfg', 'cfg/sourcemod/plugin.my.cfg'],
+    ['my.sp', null],
+    ['README.md', null],
+] as [$from, $to]) {
+    assert(Installer::smxPlacement($from) === $to, $from);
+}
+$plugins = 'cstrike/addons/sourcemod/plugins';
+assert(Installer::smxSwitched("$plugins/my.smx", false, $plugins) === "$plugins/disabled/my.smx");
+assert(Installer::smxSwitched("$plugins/disabled/my.smx", true, $plugins) === "$plugins/my.smx");
+assert(Installer::smxSwitched('cstrike/addons/sourcemod/translations/my.phrases.txt', false, $plugins) === 'cstrike/addons/sourcemod/translations/my.phrases.txt', 'only plugins move');
+assert(Installer::smxSwitched("$plugins/disabled/my.smx", false, $plugins) === "$plugins/disabled/my.smx", 'off stays off');
+
 echo "ok\n";

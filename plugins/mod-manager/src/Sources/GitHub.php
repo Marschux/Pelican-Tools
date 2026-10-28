@@ -63,7 +63,7 @@ class GitHub
 
             foreach (is_array($releases) ? $releases : [] as $release) {
                 $assets = collect($release['assets'] ?? [])
-                    ->filter(fn (array $asset) => preg_match('/\.(zip|amxx)\z/i', $asset['name']))
+                    ->filter(fn (array $asset) => preg_match('/\.(zip|amxx|smx)\z/i', $asset['name']))
                     ->map(fn (array $asset) => ['name' => (string) $asset['name'], 'url' => (string) $asset['browser_download_url'], 'size' => (int) $asset['size']])
                     ->values()
                     ->all();
