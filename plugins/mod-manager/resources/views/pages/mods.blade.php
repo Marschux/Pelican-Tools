@@ -11,8 +11,8 @@
     $updates = $onInstalled ? $this->updates() : [];
     $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
     $configs = $tab === 'installed' ? $this->configs() : [];
-    // GoldSrc only: the plugins of AMX Mod X's plugins.ini - removing the loader leaves it behind, without Metamod none of it runs
-    $amxx = ($loader['installed'] ?? false) ? $this->amxxPlugins() : [];
+    // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
+    $amxx = $tab === 'installed' ? $this->amxxPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     // GoldSrc maps and jar plugins never have any - the column only costs width there
     $hasRelations = collect($relations)->contains(fn (array $relation) => $relation['requires'] || $relation['needed_by']);
@@ -411,7 +411,7 @@
         @endif
         @if ($amxx)
             {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
-            <x-filament::section collapsible collapsed>
+            <x-filament::section collapsible>
                 <x-slot name="heading">{{ trans('mod-manager::mods.amxx.heading') }} ({{ collect($amxx)->where('enabled', true)->count() }}/{{ count($amxx) }})</x-slot>
                 <x-slot name="description">{{ trans('mod-manager::mods.amxx.hint') }}</x-slot>
 
