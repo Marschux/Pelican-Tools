@@ -143,7 +143,9 @@ its next start. Removing it keeps `configs/`, `plugins/` and `logs/`.
   count from wherever they sit in the zip. A plugin from GitHub gets update hints from new releases.
   Switching off moves the plugin folder to `plugins_disabled`, its configs stay editable.
 - Workshop maps: paste an id or a workshop link in the tab "Add by link", or - with the key - pick one in the tab "Steam
-  Workshop Maps" (search, game mode, sort). Title and picture come from Steam, nothing is
+  Workshop Maps" (search, game mode, sort). A collection goes in the same way, by link or from the tab "Steam Workshop
+  Collections": each of its Counter-Strike 2 maps (tagged Map and Cs2) is added as a map of its own, older CS:GO maps in
+  it are skipped and counted. Title and picture come from Steam, nothing is
   downloaded by the panel. The map the server starts on is the startup variable `WORKSHOP_MAP`.
   Downloading needs a Game Server Login Token (`STEAM_ACC`, App
   730) - the page says so when it is missing.

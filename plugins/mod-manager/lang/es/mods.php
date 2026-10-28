@@ -11,6 +11,7 @@ return [
         'maps' => 'Mapas',
         'mods' => 'Mods',
         'plugins' => 'Plugins',
+        'collections' => 'Colecciones',
     ],
 
     'nothing_installed' => 'Todavía no hay mods instalados.',
@@ -189,11 +190,14 @@ return [
     ],
 
     'workshop' => [
-        'placeholder' => 'Mapa del Workshop: id o enlace, p. ej. https://steamcommunity.com/sharedfiles/filedetails/?id=3070284539',
+        'placeholder' => 'Mapa o colección del Workshop: id o enlace, p. ej. https://steamcommunity.com/sharedfiles/filedetails/?id=3070284539',
         'add_map' => 'Añadir mapa',
         'bad_link' => 'Eso no es una id ni un enlace del Workshop.',
         'not_found' => 'El elemento :id del Workshop no es un mapa de Counter-Strike 2 o no es público.',
         'added' => 'Mapa añadido',
+        'collection_added' => ':added mapas de la colección añadidos, :skipped omitidos (no son mapas de Counter-Strike 2)',
+        'collection_empty' => 'La colección no tiene ningún mapa de Counter-Strike 2.',
+        'collection_size' => ':count elementos',
         'token_hint' => 'Los mapas del Workshop solo se descargan con un Game Server Login Token: crea uno para la App 730 en steamcommunity.com/dev/managegameservers y ponlo en Startup como STEAM_ACC.',
         'add' => 'Añadir a la votación de mapas',
         'remove' => 'Quitar de la votación de mapas',

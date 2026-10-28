@@ -194,9 +194,9 @@ class ModsPage extends Page
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
-        if (str_starts_with($id, Workshop::PREFIX)) {
+        if (str_starts_with($id, Workshop::PREFIX) || str_starts_with($id, Workshop::COLLECTION)) {
             $this->dispatch('close-modal', id: 'mod-details');
-            $this->attempt(fn () => $this->installer()->addWorkshopMap(substr($id, strlen(Workshop::PREFIX))), trans('mod-manager::mods.workshop.added'));
+            $this->addWorkshop(substr($id, strpos($id, ':') + 1));
 
             return;
         }
@@ -428,11 +428,22 @@ class ModsPage extends Page
     /** A workshop map pasted in, by id or link. */
     public string $workshopLink = '';
 
+    /** A workshop map or collection by id or link; a collection says how many of its maps came along. */
+    private function addWorkshop(string $input): void
+    {
+        $this->attempt(
+            fn () => $this->installer()->addWorkshop($input),
+            fn (array $result) => $result['collection']
+                ? trans('mod-manager::mods.workshop.collection_added', ['added' => $result['added'], 'skipped' => $result['skipped']])
+                : trans('mod-manager::mods.workshop.added'),
+        );
+    }
+
     public function addWorkshopMap(): void
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
-        $this->attempt(fn () => $this->installer()->addWorkshopMap($this->workshopLink), trans('mod-manager::mods.workshop.added'));
+        $this->addWorkshop($this->workshopLink);
         $this->workshopLink = '';
     }
 
@@ -864,10 +875,11 @@ class ModsPage extends Page
         Notification::make()->title(trans('mod-manager::mods.messages.installed', ['name' => $names]))->body(trans('mod-manager::mods.messages.restart'))->success()->send();
     }
 
-    private function attempt(callable $action, string $success, bool $restart = true): void
+    /** @param  string|callable(mixed): string  $success  a callable gets what $action returned */
+    private function attempt(callable $action, string|callable $success, bool $restart = true): void
     {
         try {
-            $action();
+            $result = $action();
         } catch (Throwable $exception) {
             $this->fail($exception);
 
@@ -878,7 +890,7 @@ class ModsPage extends Page
             $this->markRestart();
         }
 
-        Notification::make()->title($success)->body($restart ? trans('mod-manager::mods.messages.restart') : null)->success()->send();
+        Notification::make()->title(is_callable($success) ? $success($result) : $success)->body($restart ? trans('mod-manager::mods.messages.restart') : null)->success()->send();
     }
 
     private function markRestart(): void
@@ -1024,7 +1036,8 @@ class ModsPage extends Page
         foreach ($this->sources() as $source => $name) {
             $whats = match (true) {
                 $source === 'modrinth' && $this->jarMods() => collect(array_keys(Modrinth::KINDS))->mapWithKeys(fn (string $kind) => ["$source:$kind" => trans("mod-manager::mods.kinds.$kind")])->all(),
-                $source === 'gamebanana', $source === 'workshop' => [$source => trans('mod-manager::mods.tabs.maps')],
+                $source === 'workshop' => [$source => trans('mod-manager::mods.tabs.maps'), "$source:collection" => trans('mod-manager::mods.tabs.collections')],
+                $source === 'gamebanana' => [$source => trans('mod-manager::mods.tabs.maps')],
                 $this->jarMods() => [$source => trans('mod-manager::mods.tabs.plugins')],
                 default => [$source => trans('mod-manager::mods.tabs.mods')],
             };
@@ -1042,7 +1055,11 @@ class ModsPage extends Page
     {
         $source = (string) $this->sourceKey();
 
-        return $source === 'modrinth' && $this->jarMods() ? "$source:$this->kind" : $source;
+        return match (true) {
+            $source === 'modrinth' && $this->jarMods() => "$source:$this->kind",
+            $source === 'workshop' && $this->kind === 'collection' => 'workshop:collection',
+            default => $source,
+        };
     }
 
     /** Opens a browse tab; another source or kind has its own categories, so the search starts over. */
@@ -1053,7 +1070,8 @@ class ModsPage extends Page
         }
 
         $this->tab = 'browse';
-        [$source, $kind] = explode(':', $key) + [1 => $this->kind];
+        // the workshop's maps tab has no kind in its key
+        [$source, $kind] = explode(':', $key) + [1 => $key === 'workshop' ? 'map' : $this->kind];
 
         if ($key !== $this->browseKey()) {
             $this->source = $source;
@@ -1090,7 +1108,7 @@ class ModsPage extends Page
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             'gamebanana' => $this->gameBanana(),
-            'workshop' => new Workshop($this->steamKey()),
+            'workshop' => new Workshop($this->steamKey(), $this->kind === 'collection' ? 'collection' : 'map'),
             default => null,
         };
     }
@@ -1109,7 +1127,7 @@ class ModsPage extends Page
             $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
             $id === Source1::PACKAGE => new Source1(),
             $id === Source2::PACKAGE => new Source2(),
-            str_starts_with($id, Workshop::PREFIX) => new Workshop($this->steamKey()),
+            str_starts_with($id, Workshop::PREFIX), str_starts_with($id, Workshop::COLLECTION) => new Workshop($this->steamKey()),
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),

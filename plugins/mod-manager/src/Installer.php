@@ -1264,16 +1264,52 @@ class Installer
     public function addWorkshopMap(string $input): ModInstall
     {
         $id = Workshop::id($input) ?? throw new RuntimeException(trans('mod-manager::mods.workshop.bad_link'));
-        $map = (new Workshop())->summary($id);
-
-        $install = ModInstall::query()->updateOrCreate(
-            ['server_id' => $this->server->id, 'package' => Workshop::PREFIX . $id],
-            ['name' => $map['title'], 'version' => $map['name'], 'icon' => $map['icon'], 'dependency' => false, 'requires' => [], 'files' => [], 'enabled' => true, 'size' => $map['size']],
-        );
+        $install = $this->storeWorkshopMap((new Workshop())->summary($id));
 
         $this->writeMaplist();
 
         return $install;
+    }
+
+    /**
+     * A workshop map, or each Counter-Strike 2 map of a collection - by id or link.
+     *
+     * @return array{collection: bool, added: int, skipped: int}
+     */
+    public function addWorkshop(string $input): array
+    {
+        $id = Workshop::id($input) ?? throw new RuntimeException(trans('mod-manager::mods.workshop.bad_link'));
+        $workshop = new Workshop();
+        $children = $workshop->children($id);
+
+        if ($children === null) {
+            $this->addWorkshopMap($id);
+
+            return ['collection' => false, 'added' => 1, 'skipped' => 0];
+        }
+
+        $maps = $workshop->maps($children);
+
+        if ($maps === []) {
+            throw new RuntimeException(trans('mod-manager::mods.workshop.collection_empty'));
+        }
+
+        foreach ($maps as $map) {
+            $this->storeWorkshopMap($map);
+        }
+
+        $this->writeMaplist();
+
+        return ['collection' => true, 'added' => count($maps), 'skipped' => count($children) - count($maps)];
+    }
+
+    /** @param  array{id: string, name: string, title: string, icon: ?string, size: int}  $map  from Workshop::summary() */
+    private function storeWorkshopMap(array $map): ModInstall
+    {
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => Workshop::PREFIX . $map['id']],
+            ['name' => $map['title'], 'version' => $map['name'], 'icon' => $map['icon'], 'dependency' => false, 'requires' => [], 'files' => [], 'enabled' => true, 'size' => $map['size']],
+        );
     }
 
     /** Workshop maps only download with a Game Server Login Token (STEAM_ACC): the server has to be logged on to Steam. */
