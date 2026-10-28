@@ -40,6 +40,9 @@
 <x-filament-panels::page>
     {{-- "installed" next to buttons: as tall as they are, text in the middle - filament's badge keeps its own height --}}
     <style>
+        /* the buttons and the filter in a section header share one height */
+        .mod-head .fi-btn, .mod-head .fi-input-wrp { height: 2.25rem; box-sizing: border-box; }
+        .mod-head .fi-input-wrp select { height: 100%; padding-block: 0; }
         .mod-installed { align-self: stretch; display: inline-flex; align-items: center; gap: .35rem; padding: 0 .75rem; border-radius: .5rem; font-size: .875rem; font-weight: 500; color: rgb(21,128,61); background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); }
         .dark .mod-installed { color: rgb(74,222,128); }
         .mod-slot { display: inline-flex; justify-content: center; width: 2.5rem; }
@@ -95,15 +98,7 @@
             <div x-data="{ type: '' }" style="display:contents">
             <x-filament::section>
                 <x-slot name="afterHeader">
-                    <div style="display:flex;gap:.5rem">
-                        <x-filament::input.wrapper>
-                            <x-filament::input.select x-model="type" :aria-label="trans('mod-manager::mods.columns.type')">
-                                <option value="">{{ trans('mod-manager::mods.all_types') }}</option>
-                                @foreach ($types as $key)
-                                    <option value="{{ $key }}">{{ trans("mod-manager::mods.types.$key") }}</option>
-                                @endforeach
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
+                    <div class="mod-head" style="display:flex;gap:.5rem">
                         @if ($canInstall && $this->canUpload())
                             {{--
                                 picking the file sends it straight to Wings, like Pelican's file manager - not through
@@ -146,7 +141,20 @@
                         @endif
                     </div>
                 </x-slot>
-                <x-slot name="heading">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</x-slot>
+                {{-- the type filter sits left, next to the heading --}}
+                <x-slot name="heading">
+                    <div class="mod-head" style="display:flex;align-items:center;gap:1rem;font-weight:normal">
+                        <span style="font-weight:600">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</span>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select x-model="type" :aria-label="trans('mod-manager::mods.columns.type')">
+                                <option value="">{{ trans('mod-manager::mods.all_types') }}</option>
+                                @foreach ($types as $key)
+                                    <option value="{{ $key }}">{{ trans("mod-manager::mods.types.$key") }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+                </x-slot>
 
                 {{-- a table, scrolling sideways when the page gets narrow --}}
                 {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
