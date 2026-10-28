@@ -55,7 +55,7 @@ with sync_playwright() as p:
     shot('mod-manager-installed', f'{BASE}/server/{SERVER}/mods')
 
     def browse():
-        page.get_by_text('Browse', exact=True).first.click()
+        page.locator('.fi-tabs-item').nth(1).click()
         page.wait_for_timeout(2500)
 
     shot('mod-manager-browse', f'{BASE}/server/{SERVER}/mods', browse)
