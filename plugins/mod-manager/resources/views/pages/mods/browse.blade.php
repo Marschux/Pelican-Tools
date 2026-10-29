@@ -101,6 +101,9 @@
                 @elseif ($canInstall)
                     <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
+                @if ($item['url'] ?? null)
+                    <x-filament::button size="sm" color="gray" icon="tabler-external-link" tag="a" :href="$item['url']" target="_blank">{{ $this->sourceName($item['id']) }}</x-filament::button>
+                @endif
             </div>
         </div>
     @empty
