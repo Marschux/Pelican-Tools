@@ -57,7 +57,7 @@ class PanelHostWidget extends Widget
                 Resources::bytesBar('disk', $diskUsed, $diskTotal),
             ],
             'facts' => $facts,
-            'update' => Resources::update(fn (SoftwareVersionService $versions) => $versions->isLatestPanel() ? null : $versions->latestPanelVersion()),
+            'update' => Resources::update('panel.' . config('app.version'), fn (SoftwareVersionService $versions) => $versions->isLatestPanel() ? null : $versions->latestPanelVersion()),
         ];
     }
 

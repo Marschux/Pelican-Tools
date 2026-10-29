@@ -130,7 +130,7 @@ class NodesOverviewWidget extends Widget
             'fqdn' => $node->fqdn,
             'url' => NodeResource::getUrl('edit', ['record' => $node]),
             // wings reports its own version in the system information
-            'update' => isset($info['version']) ? Resources::update(fn (SoftwareVersionService $versions) => $versions->isLatestWings((string) $info['version']) ? null : $versions->latestWingsVersion()) : null,
+            'update' => isset($info['version']) ? Resources::update("wings.{$info['version']}", fn (SoftwareVersionService $versions) => $versions->isLatestWings((string) $info['version']) ? null : $versions->latestWingsVersion()) : null,
             'state' => $maintenance ? 'maintenance' : ($reachable ? null : 'unreachable'),
             'bars' => $stats === null ? [] : [
                 Resources::bar('cpu', (float) $stats['cpu_percent'], 100, format_number($stats['cpu_percent'], 1) . ' %'),

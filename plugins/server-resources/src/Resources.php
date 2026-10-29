@@ -53,16 +53,19 @@ class Resources
     }
 
     /**
-     * The newer version to update to, or null. Asks the panel's own version service (GitHub,
-     * cached an hour); null on any failure, the card must not break over it.
+     * The newer version to update to, or null. Asks the panel's own version service (GitHub);
+     * null on any failure, the card must not break over it. Cached here an hour, failures too:
+     * the service retries a failed GitHub call on every use, up to 6s on each poll.
      */
-    public static function update(callable $latest): ?string
+    public static function update(string $key, callable $latest): ?string
     {
-        try {
-            return app()->call($latest);
-        } catch (\Throwable) {
-            return null;
-        }
+        return cache()->remember("server-resources.update.$key", now()->addHour(), function () use ($latest) {
+            try {
+                return ['version' => app()->call($latest)];
+            } catch (\Throwable) {
+                return ['version' => null];
+            }
+        })['version'];
     }
 
     /** @return array{icon: string, text: string} */

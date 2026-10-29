@@ -127,10 +127,12 @@ class GameQuery extends Model
             return $this->executeQuery($server);
         }
 
-        // wrapped in an array because Cache::remember treats a null result as a miss and would
-        // re-query every offline server on every poll - which is the expensive case, since an
-        // unreachable server costs the full timeout
-        return Cache::remember($key, $ttl, fn () => ['result' => $this->executeQuery($server)])['result'];
+        // wrapped in an array because the cache treats a null result as a miss and would re-query
+        // every offline server on every poll - the expensive case, an unreachable server costs the
+        // full timeout. flexible: once older than the ttl the last result is still served and the
+        // query reruns after the response, so a page listing many servers never waits on them
+        // (the dashboard polls as often as the ttl, a plain remember was a miss on nearly every poll)
+        return Cache::flexible($key, [$ttl, $ttl + 600], fn () => ['result' => $this->executeQuery($server)])['result'];
     }
 
     private function executeQuery(Server $server): ?QueryResult
