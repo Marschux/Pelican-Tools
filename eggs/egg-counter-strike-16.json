@@ -23,7 +23,7 @@
         "Default": "./hlds_run -console -game cstrike -port {{SERVER_PORT}} -sport {{VAC_PORT}} +ip 0.0.0.0 -strictportbind -norestart +maxplayers {{MAX_PLAYERS}} +hostname \"{{SERVER_NAME}}\" +rcon_password \"{{RCON_PASSWORD}}\" +sv_password \"{{SRV_PASSWORD}}\" +sv_setsteamaccount \"{{STEAM_ACC}}\" +map {{SRCDS_MAP}} {{EXTRA_ARGS}}"
     },
     "config": {
-        "files": "{}",
+        "files": "{\n    \"cstrike/server.cfg\": {\n        \"parser\": \"file\",\n        \"find\": {\n            \"hostname\": \"hostname \\\"{{env.SERVER_NAME}}\\\"\"\n        }\n    }\n}",
         "startup": "{\n    \"done\": \"Connection to Steam servers successful\"\n}",
         "logs": "{}",
         "stop": "quit"
