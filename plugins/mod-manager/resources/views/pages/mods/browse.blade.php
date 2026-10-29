@@ -101,7 +101,6 @@
                 @elseif ($canInstall)
                     <x-filament::button size="sm" icon="tabler-download" wire:click="install({{ $js($item['id']) }})">{{ trans('mod-manager::mods.install') }}</x-filament::button>
                 @endif
-                <x-filament::button size="sm" color="gray" icon="tabler-info-circle" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})">{{ trans('mod-manager::mods.details') }}</x-filament::button>
             </div>
         </div>
     @empty

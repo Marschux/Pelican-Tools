@@ -33,7 +33,6 @@ return [
     'deprecated' => 'Obsoleto',
     'install' => 'Instalar',
     'update' => 'Actualizar',
-    'details' => 'Detalles',
     'no_results' => 'No se encontró nada.',
     'previous' => 'Página anterior',
     'next' => 'Página siguiente',

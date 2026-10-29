@@ -34,7 +34,6 @@ return [
     'deprecated' => 'Deprecated',
     'install' => 'Install',
     'update' => 'Update',
-    'details' => 'Details',
     'no_results' => 'Nothing found.',
     'previous' => 'Previous page',
     'next' => 'Next page',
