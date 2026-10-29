@@ -77,7 +77,7 @@
                 </div>
             </div>
 
-            <div style="font-size:.875rem;opacity:.8;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ $item['summary'] }}</div>
+            <div x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($item['id']) }})" style="cursor:pointer;font-size:.875rem;opacity:.8;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{{ $item['summary'] }}</div>
 
             @if ($item['categories'] || $item['deprecated'] || $item['side'])
                 <div style="display:flex;gap:.25rem;flex-wrap:wrap">

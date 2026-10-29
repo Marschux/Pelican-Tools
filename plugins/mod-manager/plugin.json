@@ -2,7 +2,7 @@
     "id": "mod-manager",
     "name": "Mod Manager",
     "author": "Marschux",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Browse and install mods for a game server from the panel",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/mod-manager",
