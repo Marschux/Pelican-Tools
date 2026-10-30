@@ -3,9 +3,14 @@
         <x-slot name="heading">{{ trans('mod-manager::mods.config.heading') }} ({{ count($configs) }})</x-slot>
         <x-slot name="description">{{ trans('mod-manager::mods.config.hint') }}</x-slot>
 
-        @foreach ($configs as $config)
-            <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
-                <span style="flex:1;font-family:monospace;font-size:.875rem">{{ $config }}</span>
+        {{-- one group per folder, its rows show the file name only --}}
+        @foreach (collect($configs)->groupBy(fn ($config) => dirname($config)) as $folder => $files)
+            <div style="{{ $muted }};display:flex;align-items:center;gap:.4rem;font-weight:600;font-family:monospace;margin:{{ $loop->first ? '0' : '1rem' }} 0 .25rem">
+                <x-filament::icon icon="tabler-folder" style="width:1rem;height:1rem" />{{ $folder === '.' ? '/' : $folder . '/' }}
+            </div>
+        @foreach ($files as $config)
+            <div wire:key="config-{{ md5($config) }}" style="display:flex;gap:.75rem;align-items:center;padding:.4rem 0 .4rem 1.4rem;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
+                <span style="flex:1;font-family:monospace;font-size:.875rem">{{ basename($config) }}</span>
                 {{-- the same square buttons as the rows of the installed table, side by side --}}
                 <span style="display:inline-flex;gap:.25rem">
                     @if ($canReadConfig)
@@ -25,6 +30,7 @@
                     @endif
                 </span>
             </div>
+        @endforeach
         @endforeach
     </x-filament::section>
 @endif
