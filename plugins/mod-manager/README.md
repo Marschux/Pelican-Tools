@@ -1,6 +1,6 @@
 # Mod Manager
 
-A "Server management" page on the server: browse a mod site for the server's game, install with
+A "Mods & Configs" page on the server: browse a mod site for the server's game, install with
 one click, update, switch off or remove later, and edit its configs and access lists (admins, bans,
 whitelists, server.cfg). Wings does the downloading and unpacking; eggs are not changed.
 
@@ -28,7 +28,7 @@ sudo -u www-data php artisan p:plugin:install mod-manager
 ## Setup
 
 **Admin → Mod profiles → Create**, pick a preset and assign the eggs. Servers with those eggs get
-the Server management page.
+the Mods & Configs page.
 
 **Admin → Access Lists → Create** does the same for the files of the Configs tab: a file path, plain
 text lines, `key = value` settings or JSON. A game without a mod profile (TeamSpeak) gets an

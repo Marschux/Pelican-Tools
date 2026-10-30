@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'navigation' => 'Gestión del servidor',
+    'navigation' => 'Mods y configs',
 
     'tabs' => [
         'installed' => 'Instalados',
