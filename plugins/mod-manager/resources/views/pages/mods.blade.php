@@ -12,7 +12,8 @@
     // the installed tab shows one section at a time and only asks Wings for that one's files
     $section = $onInstalled ? $this->section : null;
     $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
-    $configs = $tab === 'configs' ? $this->configs() : [];
+    $configTab = $tab === 'configs' ? $this->configTab() : null;
+    $configs = $configTab === 'mods' ? $this->configs() : [];
     $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
@@ -111,19 +112,22 @@
     </x-filament::tabs>
 
     {{-- the second level: small pills, so it does not look like a second set of the tabs --}}
-    @unless ($tab === 'configs')
     <nav class="mod-pills">
         @if ($onInstalled)
             @foreach (['mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'], 'plugins' => ['mod-manager::mods.tabs.plugins', 'tabler-plug'], 'maps' => ['mod-manager::mods.tabs.maps', 'tabler-map']] as $key => [$label, $icon])
                 <button type="button" @class(['mod-pill', 'mod-pill-on' => $section === $key]) wire:click="setSection('{{ $key }}')"><x-filament::icon :icon="$icon" />{{ trans($label) }}</button>
             @endforeach
-        @else
+        @elseif ($onAdd)
             @foreach ($addTabs as $sub)
                 <button type="button" @class(['mod-pill', 'mod-pill-on' => $tab === $sub[0] && ($sub[0] !== 'browse' || $sub[1] === $this->browseKey())]) wire:click="{{ $openAdd($sub) }}"><x-filament::icon :icon="$sub[3]" />{{ $sub[2] }}</button>
             @endforeach
+        @else
+            {{-- the egg's access lists (bans, whitelists, server.cfg), then what the mods wrote --}}
+            @foreach ($this->listTabs() + ['mods' => trans('mod-manager::mods.config.mod_configs')] as $key => $label)
+                <button type="button" @class(['mod-pill', 'mod-pill-on' => $configTab === $key]) wire:click="setConfigTab({{ $js($key) }})"><x-filament::icon :icon="$key === 'mods' ? 'tabler-puzzle' : 'tabler-list-check'" />{{ $label }}</button>
+            @endforeach
         @endif
     </nav>
-    @endunless
     {{-- on every tab, at the far right of the menu --}}
     <div style="margin-left:auto"><x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
     </div>
@@ -155,6 +159,11 @@
 
         @include('mod-manager::pages.mods.unmanaged')
         @include('mod-manager::pages.mods.loader-plugins')
+    @elseif ($configTab && $configTab !== 'mods')
+        {{-- a new key mounts a fresh editor, reading the other file --}}
+        <x-filament::section>
+            @livewire('mod-manager.access-list-editor', ['server' => \Filament\Facades\Filament::getTenant(), 'file' => $configTab], key("list-$configTab"))
+        </x-filament::section>
     @elseif ($tab === 'configs')
         @include('mod-manager::pages.mods.configs')
         @unless ($configs)

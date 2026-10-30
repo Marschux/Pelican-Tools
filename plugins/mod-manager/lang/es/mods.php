@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'navigation' => 'Mods',
+    'navigation' => 'Gestión del servidor',
 
     'tabs' => [
         'installed' => 'Instalados',
@@ -159,6 +159,7 @@ return [
     ],
 
     'config' => [
+        'mod_configs' => 'Configuración de mods',
         'none_yet' => 'Aún sin configuración - el mod la escribe en su primer inicio',
         'heading' => 'Configuraciones',
         'hint' => 'Ajustes que los mods escribieron en su primer arranque. Un mod que nunca se ejecutó aún no tiene.',

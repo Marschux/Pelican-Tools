@@ -56,6 +56,9 @@ class ModsPage extends Page
     /** the sub tab "add" opened last: a browse key, upload or links */
     public string $addTab = '';
 
+    /** what the configs tab shows: an access list file ("<list id>:<index>") or "mods", the configs mods wrote */
+    public string $configTab = '';
+
     public string $query = '';
 
     public string $category = '';
@@ -128,7 +131,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll', 'section', 'addTab'];
+    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll', 'section', 'addTab', 'configTab'];
 
     public function mount(): void
     {
