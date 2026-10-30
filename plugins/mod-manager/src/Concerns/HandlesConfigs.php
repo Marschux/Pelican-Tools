@@ -145,9 +145,18 @@ trait HandlesConfigs
             return [];
         }
 
+        // Metamod plugins (MultiAddonManager ...) write theirs to cfg/<plugin>/, beside Valve's own files
+        $cfg = $this->source2() ? $this->gameDir() . '/cfg' : null;
+        $metamod = $cfg === null ? [] : collect($this->files->list($cfg))
+            ->filter()
+            ->keys()
+            ->flatMap(fn (string $folder) => collect($this->files->list("$cfg/$folder"))->reject()->keys()->map(fn (string $file) => "$cfg/$folder/$file"))
+            ->all();
+
         return collect($this->files->walk($directory))
-            ->filter(fn (string $path) => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::CONFIG_TYPES, true))
             ->map(fn (string $path) => "$directory/$path")
+            ->concat($metamod)
+            ->filter(fn (string $path) => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::CONFIG_TYPES, true))
             ->sort()
             ->values()
             ->all();
