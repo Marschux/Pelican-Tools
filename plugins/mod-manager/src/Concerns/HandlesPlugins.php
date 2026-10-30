@@ -87,8 +87,9 @@ trait HandlesPlugins
     }
 
     /**
-     * An upload the browser sent straight to Wings, into UPLOADS/<$token>/<$name>: a compiled
-     * plugin, or a zip with plugins and what they bring along. The token's folder goes afterwards.
+     * An upload the browser sent straight to Wings, into UPLOADS/<$token>/<$name>: a map, as a .bsp
+     * or an archive with one. Plugins are not uploaded - they come in too many shapes to place them
+     * on their own. The token's folder goes afterwards.
      */
     public function installUpload(string $token, string $name): ModInstall
     {
@@ -99,43 +100,31 @@ trait HandlesPlugins
         $directory = self::UPLOADS . "/$token";
 
         try {
-            if ($this->source2()) {
-                return $this->installCssArchive($name, $directory, self::UPLOAD . self::cssName([], $name), now()->format('Y-m-d H:i'));
-            }
-
             $lower = strtolower($name);
-            // GoldSrc takes maps only: its plugins come in too many shapes to place them on their own
-            $mapsOnly = $this->goldsrc();
 
-            if ($mapsOnly && !preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
+            // Counter-Strike 2's maps come from the workshop, not as a .bsp
+            if ($this->source2() || !preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
                 throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
             }
 
-            // a .bsp, or an archive with one: a map, not a plugin
-            if (preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
-                if (!self::plainFileName($name)) {
-                    throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $name]));
-                }
-
-                $size = $this->files->size("$directory/$name");
-
-                if (!str_ends_with($lower, '.bsp')) {
-                    $this->files->decompress($directory, $name);
-                    $this->files->delete(["$directory/$name"]);
-                }
-
-                if (array_filter($this->files->walk($directory), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
-                    $title = pathinfo($name, PATHINFO_FILENAME);
-
-                    return $this->placeMap(['id' => self::MAP_UPLOAD . $title, 'name' => $title, 'version' => now()->format('Y-m-d'), 'icon' => null, 'size' => $size], $directory, $name);
-                }
-
-                if ($mapsOnly || !str_ends_with($lower, '.zip')) {
-                    throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
-                }
+            if (!self::plainFileName($name)) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.bad_file', ['file' => $name]));
             }
 
-            return str_ends_with($lower, '.zip') || $this->source1() ? $this->installPluginArchive($name, $directory) : $this->installAmxx($name, $directory);
+            $size = $this->files->size("$directory/$name");
+
+            if (!str_ends_with($lower, '.bsp')) {
+                $this->files->decompress($directory, $name);
+                $this->files->delete(["$directory/$name"]);
+            }
+
+            if (!array_filter($this->files->walk($directory), fn (string $path) => str_ends_with(strtolower($path), '.bsp'))) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
+            }
+
+            $title = pathinfo($name, PATHINFO_FILENAME);
+
+            return $this->placeMap(['id' => self::MAP_UPLOAD . $title, 'name' => $title, 'version' => now()->format('Y-m-d'), 'icon' => null, 'size' => $size], $directory, $name);
         } finally {
             $this->files->delete([$directory]);
         }

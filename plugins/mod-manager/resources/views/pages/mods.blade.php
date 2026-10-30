@@ -10,7 +10,7 @@
     $versions = $this->installedVersions();
     $updates = $onInstalled ? $this->updates() : [];
     // the installed tab shows one section at a time and only asks Wings for that one's files
-    $section = $onInstalled ? $this->section : null;
+    $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : 'mods') : null;
     $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
     $configTab = $tab === 'configs' ? $this->configTab() : null;
     $configs = $configTab === 'mods' ? $this->configs() : [];
@@ -71,22 +71,11 @@
         .mod-pill-on, .mod-pill-on:hover { opacity: 1; color: rgb(37,99,235); background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.45); }
         .dark .mod-pill-on { color: rgb(96,165,250); }
     </style>
-    @if ($this->needsRestart())
-        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
-            <x-filament::icon icon="tabler-refresh-alert" style="width:1.25rem;height:1.25rem;color:rgb(234,179,8)" />
-            <span style="flex:1">{{ trans('mod-manager::mods.restart.hint') }}</span>
-            @if ($canRestart)
-                <x-filament::button size="sm" color="warning" icon="tabler-refresh" wire:click="restart">{{ trans('mod-manager::mods.restart.button') }}</x-filament::button>
-            @endif
-            <x-filament::icon-button color="gray" icon="tabler-x" wire:click="dismissRestart" :label="trans('mod-manager::mods.restart.dismiss')" />
-        </div>
-    @endif
-
     @php
         // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
         $addTabs = collect($this->browseTabs())->map(fn ($label, $key) => ['browse', $key, $label, 'tabler-search']);
         if ($canInstall && $this->canUpload()) {
-            $addTabs->put('upload', ['upload', null, trans($this->goldsrc() ? 'mod-manager::mods.tabs.upload_maps' : 'mod-manager::mods.tabs.upload'), 'tabler-upload']);
+            $addTabs->put('upload', ['upload', null, trans('mod-manager::mods.tabs.upload_maps'), 'tabler-upload']);
         }
         if ($canInstall && $this->canLink()) {
             $addTabs->put('links', ['links', null, trans('mod-manager::mods.tabs.links'), 'tabler-link']);
@@ -114,7 +103,7 @@
     {{-- the second level: small pills, so it does not look like a second set of the tabs --}}
     <nav class="mod-pills">
         @if ($onInstalled)
-            @foreach (['mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'], 'plugins' => ['mod-manager::mods.tabs.plugins', 'tabler-plug'], 'maps' => ['mod-manager::mods.tabs.maps', 'tabler-map']] as $key => [$label, $icon])
+            @foreach ($this->sections() as $key => [$label, $icon])
                 <button type="button" @class(['mod-pill', 'mod-pill-on' => $section === $key]) wire:click="setSection('{{ $key }}')"><x-filament::icon :icon="$icon" />{{ trans($label) }}</button>
             @endforeach
         @elseif ($onAdd)

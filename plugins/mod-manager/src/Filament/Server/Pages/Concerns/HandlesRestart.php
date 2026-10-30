@@ -7,7 +7,7 @@ use App\Repositories\Daemon\DaemonServerRepository;
 use Filament\Notifications\Notification;
 use Throwable;
 
-/** The note that changes need a restart, and the restart button. Part of ModsPage. */
+/** The restart button, amber while a change waits for a restart. Part of ModsPage. */
 trait HandlesRestart
 {
     public function restart(): void
@@ -25,11 +25,6 @@ trait HandlesRestart
         session()->forget($this->restartKey());
 
         Notification::make()->title(trans('mod-manager::mods.messages.restarting'))->success()->send();
-    }
-
-    public function dismissRestart(): void
-    {
-        session()->forget($this->restartKey());
     }
 
     /** Something changed since the server last started - from this page, the console or anywhere else. */

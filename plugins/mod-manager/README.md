@@ -9,8 +9,8 @@ whitelists, server.cfg). Wings does the downloading and unpacking; eggs are not 
 | Valheim | BepInEx | Thunderstore |
 | Minecraft Paper | - | Modrinth (plugins, datapacks, resource packs), Hangar |
 | Counter-Strike 1.6, Condition Zero | Metamod-R + AMX Mod X | GameBanana maps, maps uploaded |
-| Counter-Strike: Source, Global Offensive | Metamod:Source + SourceMod | GameBanana maps, plugins uploaded or from GitHub |
-| Counter-Strike 2 | Metamod:Source + CounterStrikeSharp | Steam Workshop maps, plugins uploaded or from GitHub |
+| Counter-Strike: Source, Global Offensive | Metamod:Source + SourceMod | GameBanana maps, maps uploaded |
+| Counter-Strike 2 | Metamod:Source + CounterStrikeSharp | Steam Workshop maps |
 
 ![Mod Manager, installed mods](../../assets/screenshots/mod-manager-installed.png)
 
@@ -48,7 +48,7 @@ uninstall Access Lists. Uninstalling it first deletes its lists.
 - **Browse:** search, categories, sorting; a tile shows versions, dependencies and changelog.
   Required dependencies are installed along.
 - **Installed:** mods, plugins and maps; update (one or all), switch off, remove. Mods installed by
-  hand can be taken over. After a change a banner offers to restart the server.
+  hand can be taken over. The restart button turns amber while a change waits for a restart.
 - **Configs:** the access lists as tags or settings, or as plain text; the configs the mods wrote.
   Minecraft and Counter-Strike rewrite some of these files while running - edit them with the
   server stopped, or use the game's commands.

@@ -14,7 +14,7 @@
     $hasConfigs = \Marschux\ModManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
     $config = $hasConfigs ? \Marschux\ModManager\Installer::configFor($install->name, $configs) : null;
     // the GoldSrc loader's settings are AMX Mod X's main config
-    if ($isLoader && $this->canUpload()) {
+    if ($isLoader && $this->archiveLoader()) {
         $config = collect($configs)->first(fn ($path) => str_ends_with($path, $this->goldsrc() ? '/amxx.cfg' : '/core.json'));
     }
     [$type, $typeIcon] = $this->type($install->package, $isLoader);

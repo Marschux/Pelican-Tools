@@ -1,8 +1,7 @@
 @if ($canInstall && $this->canUpload())
     @php
-        // GoldSrc takes maps only, plugins there are too varied to place on their own
-        $accept = $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.bsp,.zip,.rar,.7z' : '.smx,.zip,.bsp,.rar,.7z');
-        $label = $this->source2() ? 'button' : ($this->goldsrc() ? 'button_map' : 'button_maps');
+        // maps only: plugins come in too many shapes to place them on their own
+        $accept = '.bsp,.zip,.rar,.7z';
     @endphp
     {{--
         a file dropped or picked goes straight to Wings, like Pelican's file manager - not through
@@ -36,7 +35,7 @@
         x-on:dragover.prevent="over = true" x-on:dragleave.prevent="over = false" x-on:drop.prevent="over = false; send($event.dataTransfer.files[0])"
         class="mod-drop" x-bind:class="over && 'mod-drop-over'">
         <x-filament::icon icon="tabler-upload" style="width:2.5rem;height:2.5rem;opacity:.5" />
-        <span x-show="!busy" style="font-weight:600">{{ trans("mod-manager::mods.upload.$label") }}</span>
+        <span x-show="!busy" style="font-weight:600">{{ trans('mod-manager::mods.upload.button_map') }}</span>
         <span x-show="busy" x-cloak style="display:inline-flex;align-items:center;gap:.4rem;font-weight:600"><x-filament::loading-indicator style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.upload.busy') }}</span>
         <span style="font-size:.8rem;opacity:.7">{{ trans('mod-manager::mods.upload.drop') }} · {{ str_replace(',', ', ', $accept) }}</span>
         <input type="file" accept="{{ $accept }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">

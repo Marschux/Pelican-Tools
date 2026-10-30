@@ -7,7 +7,6 @@ return [
         'installed' => 'Installed',
         'browse' => 'Browse',
         // the browse tab names where its tiles come from and what they are
-        'upload' => 'Upload',
         'upload_maps' => 'Upload maps',
         'links' => 'By link',
         'add' => 'Add',
@@ -117,8 +116,6 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Upload plugin or zip',
-        'button_maps' => 'Upload plugin, map or zip',
         'button_map' => 'Upload a map (.bsp or archive)',
         'drop' => 'Drop a file here or click',
         'busy' => 'Uploading …',
@@ -156,9 +153,6 @@ return [
     'restart' => [
         'header' => 'Restart server',
         'confirm' => 'Restart the server now? Players get disconnected.',
-        'hint' => 'Changes take effect after the server restarts.',
-        'button' => 'Restart now',
-        'dismiss' => 'Hide',
     ],
 
     'config' => [
@@ -212,11 +206,6 @@ return [
         'add' => 'Put into the map vote',
         'remove' => 'Take out of the map vote',
         'out' => 'Not in the map vote',
-    ],
-    'github' => [
-        'placeholder' => 'Link to a plugin on GitHub (repository or release)',
-        'pick' => 'The newest release has several zips - which one?',
-        'bad_link' => 'That is no link to a GitHub repository.',
     ],
     'messages' => [
         'bad_css' => '":file" is no CounterStrikeSharp plugin - a .zip or a .dll is needed.',

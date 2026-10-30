@@ -9,10 +9,8 @@ use Carbon\CarbonImmutable;
 use Filament\Notifications\Notification;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Profiles\Presets;
-use Marschux\ModManager\Sources\GitHub;
-use Throwable;
 
-/** What goes in without browsing: uploads, GitHub and workshop links; the loader's own plugins and what was put there by hand. Part of ModsPage. */
+/** What goes in without browsing: uploaded maps and workshop links; the loader's own plugins and what was put there by hand. Part of ModsPage. */
 trait AddsPlugins
 {
     /**
@@ -46,6 +44,10 @@ trait AddsPlugins
     {
         $this->requirePermission(SubuserPermission::FileCreate);
 
+        if (!$this->canUpload()) {
+            return;
+        }
+
         $this->attempt(fn () => $this->installer()->installUpload($token, $name), trans('mod-manager::mods.messages.installed', ['name' => $name]));
     }
 
@@ -55,16 +57,22 @@ trait AddsPlugins
         Notification::make()->title(trans('mod-manager::mods.messages.failed'))->body(mb_substr($reason, 0, 200))->danger()->send();
     }
 
-    /** Plugins are uploaded for the Counter-Strike games: AMX Mod X, SourceMod and CounterStrikeSharp have no site to browse. */
-    public function canUpload(): bool
+    /** The Counter-Strike games: AMX Mod X, SourceMod or CounterStrikeSharp, plugin lists and maps. */
+    public function archiveLoader(): bool
     {
         return in_array($this->profile()->setting('loader_type'), Presets::ARCHIVE_LOADERS, true);
     }
 
-    /** GitHub (and on CS2 workshop) links; GoldSrc takes maps only, and those it has no link for */
+    /** Maps are uploaded as a .bsp - not on Counter-Strike 2, whose maps come from the workshop. */
+    public function canUpload(): bool
+    {
+        return $this->archiveLoader() && !$this->source2();
+    }
+
+    /** Counter-Strike 2's workshop maps, by id or link. */
     public function canLink(): bool
     {
-        return $this->canUpload() && !$this->goldsrc();
+        return $this->source2();
     }
 
     /** A workshop map or collection by id or link; a collection says how many of its maps came along. */
@@ -89,46 +97,6 @@ trait AddsPlugins
     public function hasLoginToken(): bool
     {
         return once(fn () => $this->installer()->hasLoginToken());
-    }
-
-    public function installGitHub(?string $asset = null): void
-    {
-        $this->requirePermission(SubuserPermission::FileCreate);
-
-        if (!$this->canLink()) {
-            return;
-        }
-
-        $repository = GitHub::repository($this->githubLink);
-
-        if ($repository === null) {
-            Notification::make()->title(trans('mod-manager::mods.github.bad_link'))->danger()->send();
-
-            return;
-        }
-
-        if ($asset === null) {
-            try {
-                $assets = (new GitHub())->release($repository)['assets'];
-            } catch (Throwable $exception) {
-                $this->fail($exception);
-
-                return;
-            }
-
-            // more than one zip in the release: the page lets the user pick
-            if (count($assets) > 1) {
-                $this->githubAssets = array_map(fn (array $asset) => ['name' => $asset['name'], 'size' => $asset['size']], $assets);
-
-                return;
-            }
-
-            $asset = $assets[0]['name'];
-        }
-
-        $this->githubAssets = [];
-        $this->attempt(fn () => $this->installer()->installGitHub($repository, $asset), trans('mod-manager::mods.messages.installed', ['name' => $asset]));
-        $this->githubLink = '';
     }
 
     /** A plugin of AMX Mod X's plugins.ini on or off. */

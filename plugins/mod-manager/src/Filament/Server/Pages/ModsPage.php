@@ -210,12 +210,6 @@ class ModsPage extends Page
     /** A workshop map pasted in, by id or link. */
     public string $workshopLink = '';
 
-    /** A GitHub release link pasted in: the asset to install, or the choice when there are several. */
-    public string $githubLink = '';
-
-    /** @var array<int, array{name: string, size: int}> */
-    public array $githubAssets = [];
-
     /** For the view: a button the user may not press is not shown, the action checks again. */
     public function may(SubuserPermission ...$permissions): bool
     {

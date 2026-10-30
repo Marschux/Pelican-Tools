@@ -19,6 +19,23 @@ use Marschux\ModManager\Sources\Workshop;
 /** What the installed table shows: origin, type, versions, dependencies, the list for players. Part of ModsPage. */
 trait ShowsInstalled
 {
+    /**
+     * The installed tab's pills, key => [label, icon]: plugins and maps only on a game that has
+     * them, or where some are installed already.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public function sections(): array
+    {
+        $kinds = $this->installer()->installs()->map(fn ($install) => $this->type($install->package)[0]);
+
+        return array_filter([
+            'mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'],
+            'plugins' => $this->archiveLoader() || $this->jarMods() || $kinds->contains('plugin') ? ['mod-manager::mods.tabs.plugins', 'tabler-plug'] : null,
+            'maps' => $this->archiveLoader() || $kinds->contains('map') ? ['mod-manager::mods.tabs.maps', 'tabler-map'] : null,
+        ]);
+    }
+
     public function playerList(): string
     {
         return $this->installer()->playerList();

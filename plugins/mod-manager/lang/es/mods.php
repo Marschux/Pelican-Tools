@@ -6,7 +6,6 @@ return [
     'tabs' => [
         'installed' => 'Instalados',
         'browse' => 'Explorar',
-        'upload' => 'Subir',
         'upload_maps' => 'Subir mapas',
         'links' => 'Por enlace',
         'add' => 'Añadir',
@@ -116,8 +115,6 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Subir plugin o zip',
-        'button_maps' => 'Subir plugin, mapa o zip',
         'button_map' => 'Subir un mapa (.bsp o archivo comprimido)',
         'drop' => 'Arrastra un archivo aquí o haz clic',
         'busy' => 'Subiendo …',
@@ -155,9 +152,6 @@ return [
     'restart' => [
         'header' => 'Reiniciar servidor',
         'confirm' => '¿Reiniciar el servidor ahora? Los jugadores se desconectarán.',
-        'hint' => 'Los cambios se aplican tras reiniciar el servidor.',
-        'button' => 'Reiniciar ahora',
-        'dismiss' => 'Ocultar',
     ],
 
     'config' => [
@@ -211,11 +205,6 @@ return [
         'add' => 'Añadir a la votación de mapas',
         'remove' => 'Quitar de la votación de mapas',
         'out' => 'No está en la votación de mapas',
-    ],
-    'github' => [
-        'placeholder' => 'Enlace a un plugin en GitHub (repositorio o versión)',
-        'pick' => 'La versión más reciente tiene varios zips: ¿cuál?',
-        'bad_link' => 'Eso no es un enlace a un repositorio de GitHub.',
     ],
     'messages' => [
         'bad_css' => '":file" no es un plugin de CounterStrikeSharp: se necesita un .zip o un .dll.',

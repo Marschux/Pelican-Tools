@@ -6,7 +6,6 @@ return [
     'tabs' => [
         'installed' => 'Installiert',
         'browse' => 'Durchsuchen',
-        'upload' => 'Hochladen',
         'upload_maps' => 'Maps hochladen',
         'links' => 'Per Link',
         'add' => 'Hinzufügen',
@@ -116,8 +115,6 @@ return [
     ],
 
     'upload' => [
-        'button' => 'Plugin oder Zip hochladen',
-        'button_maps' => 'Plugin, Map oder Zip hochladen',
         'button_map' => 'Map hochladen (.bsp oder Archiv)',
         'drop' => 'Datei hierher ziehen oder klicken',
         'busy' => 'Wird hochgeladen …',
@@ -155,9 +152,6 @@ return [
     'restart' => [
         'header' => 'Server neu starten',
         'confirm' => 'Server jetzt neu starten? Spieler werden getrennt.',
-        'hint' => 'Änderungen wirken erst nach einem Neustart des Servers.',
-        'button' => 'Jetzt neu starten',
-        'dismiss' => 'Ausblenden',
     ],
 
     'config' => [
@@ -211,11 +205,6 @@ return [
         'add' => 'In die Mapwahl aufnehmen',
         'remove' => 'Aus der Mapwahl nehmen',
         'out' => 'Nicht in der Mapwahl',
-    ],
-    'github' => [
-        'placeholder' => 'Link zu einem Plugin auf GitHub (Repository oder Release)',
-        'pick' => 'Das neueste Release hat mehrere Zips - welches?',
-        'bad_link' => 'Das ist kein Link zu einem GitHub-Repository.',
     ],
     'messages' => [
         'bad_css' => '":file" ist kein CounterStrikeSharp-Plugin - gebraucht wird eine .zip oder .dll.',
