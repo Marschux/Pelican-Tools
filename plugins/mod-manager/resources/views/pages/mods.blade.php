@@ -70,8 +70,9 @@
         .mod-pill svg { width: 1rem; height: 1rem; }
         .mod-pill-on, .mod-pill-on:hover { opacity: 1; color: rgb(37,99,235); background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.45); }
         .dark .mod-pill-on { color: rgb(96,165,250); }
-        .mod-pill-missing { border-style: dashed; opacity: .55; }
-        .mod-pill-missing.mod-pill-on { opacity: .85; }
+        .mod-pill-missing { border: 1.5px dashed rgba(217,119,6,.8); color: rgb(180,83,9); opacity: 1; }
+        .dark .mod-pill-missing { border-color: rgba(251,191,36,.7); color: rgb(251,191,36); }
+        .mod-pill-missing.mod-pill-on { background: rgba(245,158,11,.14); }
     </style>
     @php
         // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
