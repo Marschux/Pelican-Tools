@@ -276,11 +276,16 @@ class ModsPage extends Page
         return once(fn () => GameVersion::of($this->server(), $this->profile()));
     }
 
-    /** @return array<string, string> the profile's sources, key => name, for the switch above the search */
     /** The Steam Web API key in the server's startup variable WORKSHOP_AUTHKEY, '' without. */
     private function steamKey(): string
     {
         return once(fn () => $this->installer()->steamKey());
+    }
+
+    /** The workshop tab is open, but the server has no Steam Web API key to browse it with. */
+    public function needsSteamKey(): bool
+    {
+        return $this->sourceKey() === 'workshop' && $this->steamKey() === '';
     }
 
     private function profile(): ModProfile

@@ -205,6 +205,7 @@ return [
         'collection_empty' => 'Die Collection enthält keine Counter-Strike-2-Map.',
         'collection_size' => ':count Einträge',
         'token_hint' => 'Workshop-Maps laden nur mit einem Game Server Login Token: einen für App 730 unter steamcommunity.com/dev/managegameservers anlegen und unter Startup als STEAM_ACC eintragen.',
+        'key_hint' => 'Zum Durchsuchen des Workshops braucht der Server einen Steam-Web-API-Key: kostenlos unter steamcommunity.com/dev/apikey holen und unter Startup als WORKSHOP_AUTHKEY eintragen. Ohne Key kommen Maps per Link dazu.',
         'add' => 'In die Mapwahl aufnehmen',
         'remove' => 'Aus der Mapwahl nehmen',
         'out' => 'Nicht in der Mapwahl',

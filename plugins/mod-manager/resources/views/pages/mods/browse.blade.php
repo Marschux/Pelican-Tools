@@ -1,3 +1,12 @@
+@if ($this->needsSteamKey())
+    {{-- no key, no browsing: what to do instead of an empty grid --}}
+    <x-filament::section>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 1rem;text-align:center">
+            <x-filament::icon icon="tabler-key" style="width:2.5rem;height:2.5rem;opacity:.5" />
+            <span style="opacity:.8;max-width:40rem">{{ trans('mod-manager::mods.workshop.key_hint') }}</span>
+        </div>
+    </x-filament::section>
+@else
 @php
     $gameVersion = $this->gameVersion();
 @endphp
@@ -124,4 +133,5 @@
         @endforeach
         <x-filament::icon-button icon="tabler-chevron-right" color="gray" :disabled="$page >= $pages" wire:click="goToPage({{ $page + 1 }})" :label="trans('mod-manager::mods.next')" />
     </div>
+@endif
 @endif

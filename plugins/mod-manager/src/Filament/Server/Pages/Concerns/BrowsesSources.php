@@ -158,8 +158,6 @@ trait BrowsesSources
     {
         return collect($this->profile()->sources())
             ->filter(fn (string $source) => isset(Presets::SOURCES[$source]))
-            // the workshop is only browsed with a Steam Web API key; without one maps go in by id
-            ->reject(fn (string $source) => $source === 'workshop' && $this->steamKey() === '')
             ->mapWithKeys(fn (string $source) => [$source => Presets::SOURCES[$source]])
             ->all();
     }
@@ -179,7 +177,8 @@ trait BrowsesSources
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             'gamebanana' => $this->gameBanana(),
-            'workshop' => new Workshop($this->steamKey(), $this->kind === 'collection' ? 'collection' : 'map'),
+            // the workshop is only browsed with a Steam Web API key - without one its tab says how to get one
+            'workshop' => $this->needsSteamKey() ? null : new Workshop($this->steamKey(), $this->kind === 'collection' ? 'collection' : 'map'),
             default => null,
         };
     }

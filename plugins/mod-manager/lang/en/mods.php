@@ -206,6 +206,7 @@ return [
         'collection_empty' => 'The collection has no Counter-Strike 2 map.',
         'collection_size' => ':count items',
         'token_hint' => 'Workshop maps only download with a Game Server Login Token: create one for App 730 at steamcommunity.com/dev/managegameservers and enter it under Startup as STEAM_ACC.',
+        'key_hint' => 'Browsing the workshop needs a Steam Web API key: get one for free at steamcommunity.com/dev/apikey and enter it under Startup as WORKSHOP_AUTHKEY. Without it, maps are added by link.',
         'add' => 'Put into the map vote',
         'remove' => 'Take out of the map vote',
         'out' => 'Not in the map vote',
