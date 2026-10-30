@@ -3,14 +3,46 @@
 namespace Marschux\ModManager\Filament\Server\Pages\Concerns;
 
 use App\Enums\SubuserPermission;
+use Livewire\Attributes\On;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Lists\ListDefinition;
 use Marschux\ModManager\Models\AccessList;
+use Marschux\ModManager\ServerFiles;
 use Throwable;
 
 /** The configs tab: the access lists of the egg and the configs mods wrote. Part of ModsPage. */
 trait EditsConfigs
 {
+    /**
+     * The list files not on the server yet - their pill is dashed, saving one creates it. One
+     * listing per folder, only while the configs tab is open.
+     *
+     * @return array<string, true>
+     */
+    public function missingLists(): array
+    {
+        return once(function () {
+            $files = new ServerFiles($this->server());
+            $folders = [];
+            $missing = [];
+
+            foreach (AccessList::definitionsFor($this->server()) as $key => $definition) {
+                $folder = dirname($definition->path) === '.' ? '' : dirname($definition->path);
+                $folders[$folder] ??= $files->list($folder);
+
+                if (!array_key_exists(basename($definition->path), $folders[$folder])) {
+                    $missing[$key] = true;
+                }
+            }
+
+            return $missing;
+        });
+    }
+
+    /** The editor saved a list: a file it created loses its dashed pill. */
+    #[On('mod-manager-list-saved')]
+    public function listSaved(): void {}
+
     /** @return array<string, string> key => label, the egg's access list files - each a pill of the configs tab */
     public function listTabs(): array
     {

@@ -63,13 +63,15 @@
         .dark .mod-action.mod-update { color: rgb(96,165,250); }
         .mod-drop { display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: 2.5rem 1rem; text-align: center; border: 2px dashed rgba(127,127,127,.35); border-radius: .75rem; cursor: pointer; transition: background .15s, border-color .15s; }
         .mod-drop:hover, .mod-drop-over { border-color: rgb(59,130,246); background: rgba(59,130,246,.08); }
-        .mod-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
-        .mod-pills { display: flex; flex-wrap: wrap; gap: .5rem; padding-left: 1rem; border-left: 1px solid rgba(127,127,127,.3); }
-        .mod-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .8rem; border-radius: 9999px; font-size: .8rem; font-weight: 500; border: 1px solid rgba(127,127,127,.3); background: transparent; color: inherit; opacity: .75; cursor: pointer; transition: background .15s, opacity .15s; }
+        .mod-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+        .mod-pills { display: flex; flex-wrap: wrap; gap: .4rem; padding-left: .75rem; border-left: 1px solid rgba(127,127,127,.3); }
+        .mod-pill { display: inline-flex; align-items: center; gap: .3rem; padding: .3rem .65rem; border-radius: 9999px; font-size: .8rem; font-weight: 500; border: 1px solid rgba(127,127,127,.3); background: transparent; color: inherit; opacity: .75; cursor: pointer; transition: background .15s, opacity .15s; }
         .mod-pill:hover { opacity: 1; background: rgba(127,127,127,.12); }
         .mod-pill svg { width: 1rem; height: 1rem; }
         .mod-pill-on, .mod-pill-on:hover { opacity: 1; color: rgb(37,99,235); background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.45); }
         .dark .mod-pill-on { color: rgb(96,165,250); }
+        .mod-pill-missing { border-style: dashed; opacity: .55; }
+        .mod-pill-missing.mod-pill-on { opacity: .85; }
     </style>
     @php
         // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
@@ -112,8 +114,11 @@
             @endforeach
         @else
             {{-- the egg's access lists (bans, whitelists, server.cfg), then what the mods wrote --}}
+            {{-- a list file not on the server yet is dashed, with a plus: saving it creates it --}}
+            @php $missingLists = $this->missingLists(); @endphp
             @foreach ($this->listTabs() + ['mods' => trans('mod-manager::mods.config.mod_configs')] as $key => $label)
-                <button type="button" @class(['mod-pill', 'mod-pill-on' => $configTab === $key]) wire:click="setConfigTab({{ $js($key) }})"><x-filament::icon :icon="$key === 'mods' ? 'tabler-puzzle' : 'tabler-list-check'" />{{ $label }}</button>
+                @php $missing = isset($missingLists[$key]); @endphp
+                <button type="button" @class(['mod-pill', 'mod-pill-on' => $configTab === $key, 'mod-pill-missing' => $missing]) wire:click="setConfigTab({{ $js($key) }})" @if ($missing) title="{{ trans('mod-manager::lists.messages.missing_file') }}" @endif><x-filament::icon :icon="$key === 'mods' ? 'tabler-puzzle' : ($missing ? 'tabler-plus' : 'tabler-list-check')" />{{ $label }}</button>
             @endforeach
         @endif
     </nav>

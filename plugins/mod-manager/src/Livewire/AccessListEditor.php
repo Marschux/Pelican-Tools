@@ -154,6 +154,9 @@ class AccessListEditor extends Component implements HasForms
 
         Activity::event('server:file.write')->property('file', $definition->path)->log();
 
+        // a page showing the file as missing redraws its pill
+        $this->dispatch('mod-manager-list-saved');
+
         Notification::make()->title(trans('mod-manager::lists.messages.saved'))->success()->send();
 
         $this->read();
