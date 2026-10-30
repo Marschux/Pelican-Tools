@@ -20,20 +20,35 @@ use Marschux\ModManager\Sources\Workshop;
 trait ShowsInstalled
 {
     /**
-     * The installed tab's pills, key => [label, icon]: plugins and maps only on a game that has
-     * them, or where some are installed already.
+     * The installed tab's pills, key => [label, icon], each only on a game that has such things or
+     * where some are installed already. Paper has no mods: plugins, datapacks, resource packs.
      *
      * @return array<string, array{0: string, 1: string}>
      */
     public function sections(): array
     {
         $kinds = $this->installer()->installs()->map(fn ($install) => $this->type($install->package)[0]);
+        $jars = $this->jarMods();
 
         return array_filter([
-            'mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'],
-            'plugins' => $this->archiveLoader() || $this->jarMods() || $kinds->contains('plugin') ? ['mod-manager::mods.tabs.plugins', 'tabler-plug'] : null,
+            'mods' => !$jars || $kinds->contains('mod') ? ['mod-manager::mods.tabs.mods', 'tabler-puzzle'] : null,
+            'plugins' => $this->archiveLoader() || $jars || $kinds->contains('plugin') ? ['mod-manager::mods.tabs.plugins', 'tabler-plug'] : null,
+            'datapacks' => $jars || $kinds->contains('datapack') ? ['mod-manager::mods.kinds.datapack', 'tabler-package'] : null,
+            'resourcepacks' => $jars || $kinds->contains('resourcepack') ? ['mod-manager::mods.kinds.resourcepack', 'tabler-photo'] : null,
             'maps' => $this->archiveLoader() || $kinds->contains('map') ? ['mod-manager::mods.tabs.maps', 'tabler-map'] : null,
         ]);
+    }
+
+    /** The pill an install shows under, see sections(). */
+    public function sectionOf(string $package): string
+    {
+        return match ($this->type($package)[0]) {
+            'plugin' => 'plugins',
+            'map' => 'maps',
+            'datapack' => 'datapacks',
+            'resourcepack' => 'resourcepacks',
+            default => 'mods',
+        };
     }
 
     public function playerList(): string

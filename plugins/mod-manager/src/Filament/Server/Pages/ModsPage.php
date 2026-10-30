@@ -50,7 +50,7 @@ class ModsPage extends Page
     /** installed | browse | upload | links | configs - browse, upload and links are the sub tabs of "add" */
     public string $tab = 'installed';
 
-    /** what the installed tab shows: mods | plugins | maps */
+    /** what the installed tab shows: mods | plugins | datapacks | resourcepacks | maps, see sections() */
     public string $section = 'mods';
 
     /** the sub tab "add" opened last: a browse key, upload or links */
@@ -146,8 +146,8 @@ class ModsPage extends Page
         // what is there comes first, with the loader's row - the listing waits for the browse tab,
         // a cold source API costs up to a second
         $this->tab = 'installed';
-        // configs was a section before it became a tab of its own
-        $this->section = in_array($this->section, ['mods', 'plugins', 'maps'], true) ? $this->section : 'mods';
+        // a pill this game does not have (configs was one, before it became a tab)
+        $this->section = in_array($this->section, array_keys($this->sections()), true) ? $this->section : (string) array_key_first($this->sections());
     }
 
     private function remember(): void
@@ -185,7 +185,7 @@ class ModsPage extends Page
     public function setSection(string $section): void
     {
         $this->tab = 'installed';
-        $this->section = in_array($section, ['mods', 'plugins', 'maps'], true) ? $section : 'mods';
+        $this->section = in_array($section, array_keys($this->sections()), true) ? $section : (string) array_key_first($this->sections());
         $this->remember();
     }
 

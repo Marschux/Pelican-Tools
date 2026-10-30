@@ -10,7 +10,8 @@
     $versions = $this->installedVersions();
     $updates = $onInstalled ? $this->updates() : [];
     // the installed tab shows one section at a time and only asks Wings for that one's files
-    $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : 'mods') : null;
+    // the pill picked if this game has it, else its first one
+    $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : array_key_first($this->sections())) : null;
     $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
     $configTab = $tab === 'configs' ? $this->configTab() : null;
     $configs = $configTab === 'mods' ? $this->configs() : [];
@@ -135,8 +136,7 @@
     @if ($onInstalled)
         @php
             // mods: the loader, the engine and everything but plugins and maps; plugins: what was uploaded or linked, plus the loader's own
-            $sectionOf = fn ($install) => match ($this->type($install->package)[0]) { 'plugin' => 'plugins', 'map' => 'maps', default => 'mods' };
-            $installed = $installed->filter(fn ($install) => $sectionOf($install) === $section)->values();
+            $installed = $installed->filter(fn ($install) => $this->sectionOf($install->package) === $section)->values();
             $empty = match ($section) {
                 'mods' => $installed->isEmpty() && !$loaderInstall && !$loader,
                 'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
@@ -148,8 +148,8 @@
         @if ($empty)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                    <x-filament::icon :icon="['plugins' => 'tabler-plug-off', 'maps' => 'tabler-map-off'][$section] ?? 'tabler-package-off'" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans(['plugins' => 'mod-manager::mods.nothing_plugins', 'maps' => 'mod-manager::mods.nothing_maps'][$section] ?? 'mod-manager::mods.nothing_installed') }}</span>
+                    <x-filament::icon :icon="['plugins' => 'tabler-plug-off', 'maps' => 'tabler-map-off', 'resourcepacks' => 'tabler-photo-off'][$section] ?? 'tabler-package-off'" style="width:2.5rem;height:2.5rem;opacity:.5" />
+                    <span style="opacity:.7">{{ trans(['mods' => 'mod-manager::mods.nothing_installed', 'plugins' => 'mod-manager::mods.nothing_plugins', 'maps' => 'mod-manager::mods.nothing_maps'][$section] ?? 'mod-manager::mods.nothing_yet') }}</span>
                     @if ($addTabs->isNotEmpty())
                         <x-filament::button color="gray" icon="tabler-plus" wire:click="{{ $openAdd($addFirst) }}">{{ trans('mod-manager::mods.tabs.add') }}</x-filament::button>
                     @endif

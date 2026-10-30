@@ -511,7 +511,7 @@ assert($whitelist->lineTemplate() === null, 'a json list has no line shape');
 
 // --- key = value settings ------------------------------------------------------------------------
 
-$properties = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
+$properties = ListDefinition::fromArray('preset:minecraft:4', $presets['minecraft']['files'][4]);
 assert($properties->isPairs() && $properties->pairTemplate() === '{key}={value}');
 assert($properties->lineTemplate() === null, 'a settings file is not a templated line list');
 
@@ -559,7 +559,7 @@ assert($whitelistPreset->needsUuid());
 assert(ListFile::fillTemplate($whitelistPreset->templateArray(), ['{uuid}' => 'u', '{name}' => 'Notch']) === ['uuid' => 'u', 'name' => 'Notch']);
 
 // the ip ban list must not ask for a uuid - there is no player behind an address
-$ipPreset = ListDefinition::fromArray('preset:minecraft:4', $presets['minecraft']['files'][4]);
+$ipPreset = ListDefinition::fromArray('preset:minecraft:3', $presets['minecraft']['files'][3]);
 assert(!$ipPreset->needsUuid() && $ipPreset->valueField() === 'ip');
 
 // a typed uuid is taken as one, dashed or not; a name never is

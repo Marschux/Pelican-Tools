@@ -52,13 +52,6 @@ class Presets
                         'hint' => 'mc_bans',
                     ],
                     [
-                        'label' => 'Settings',
-                        'path' => 'server.properties',
-                        'format' => ListDefinition::FORMAT_PAIRS,
-                        'entry_template' => ListDefinition::DEFAULT_PAIR_TEMPLATE,
-                        'hint' => 'mc_properties',
-                    ],
-                    [
                         'label' => 'IP bans',
                         'path' => 'banned-ips.json',
                         'format' => ListDefinition::FORMAT_JSON,
@@ -66,6 +59,13 @@ class Presets
                         'display_field' => 'ip',
                         'entry_template' => '{"ip": "{ip}", "created": "{now}", "source": "Server", "expires": "forever", "reason": "' . self::REASON . '"}',
                         'hint' => 'mc_ip_bans',
+                    ],
+                    [
+                        'label' => 'Settings',
+                        'path' => 'server.properties',
+                        'format' => ListDefinition::FORMAT_PAIRS,
+                        'entry_template' => ListDefinition::DEFAULT_PAIR_TEMPLATE,
+                        'hint' => 'mc_properties',
                     ],
                 ],
             ],

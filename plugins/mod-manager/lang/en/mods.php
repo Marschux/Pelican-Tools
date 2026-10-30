@@ -20,6 +20,7 @@ return [
     'nothing_installed' => 'No mods installed yet.',
     'nothing_plugins' => 'No plugins installed yet.',
     'nothing_maps' => 'No maps installed yet.',
+    'nothing_yet' => 'Nothing installed yet.',
     'search_placeholder' => 'Search mods',
     'search_maps' => 'Search maps',
     'game_version' => 'Game version :version (from :from)',

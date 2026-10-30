@@ -19,6 +19,7 @@ return [
     'nothing_installed' => 'Noch keine Mods installiert.',
     'nothing_plugins' => 'Noch keine Plugins installiert.',
     'nothing_maps' => 'Noch keine Maps installiert.',
+    'nothing_yet' => 'Noch nichts installiert.',
     'search_placeholder' => 'Mods suchen',
     'search_maps' => 'Maps suchen',
     'game_version' => 'Spielversion :version (aus :from)',
