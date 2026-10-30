@@ -9,14 +9,16 @@
     $installed = $onInstalled ? $this->installed() : collect();
     $versions = $this->installedVersions();
     $updates = $onInstalled ? $this->updates() : [];
-    $unmanaged = $tab === 'installed' ? $this->unmanaged() : [];
-    $configs = $tab === 'installed' ? $this->configs() : [];
+    // the installed tab shows one section at a time and only asks Wings for that one's files
+    $section = $onInstalled ? $this->section : null;
+    $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
+    $configs = $section === 'configs' ? $this->configs() : [];
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
-    $loaderPlugins = $tab === 'installed' ? $this->loaderPlugins() : [];
+    $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
     $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
-    $canEngine = $tab === 'installed' && $this->goldsrc();
+    $canEngine = $section === 'mods' && $this->goldsrc();
     $engineInstall = $canEngine ? $this->engineInstall() : null;
     // without a running loader no mod loads, switched on or not
     $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
@@ -57,6 +59,15 @@
         .mod-action.mod-update { color: rgb(37,99,235); border-color: rgba(59,130,246,.45); background: rgba(59,130,246,.1); }
         .mod-action.mod-update:hover { background: rgba(59,130,246,.2); }
         .dark .mod-action.mod-update { color: rgb(96,165,250); }
+        .mod-drop { display: flex; flex-direction: column; align-items: center; gap: .6rem; padding: 2.5rem 1rem; text-align: center; border: 2px dashed rgba(127,127,127,.35); border-radius: .75rem; cursor: pointer; transition: background .15s, border-color .15s; }
+        .mod-drop:hover, .mod-drop-over { border-color: rgb(59,130,246); background: rgba(59,130,246,.08); }
+        .mod-nav { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+        .mod-pills { display: flex; flex-wrap: wrap; gap: .5rem; padding-left: 1rem; border-left: 1px solid rgba(127,127,127,.3); }
+        .mod-pill { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .8rem; border-radius: 9999px; font-size: .8rem; font-weight: 500; border: 1px solid rgba(127,127,127,.3); background: transparent; color: inherit; opacity: .75; cursor: pointer; transition: background .15s, opacity .15s; }
+        .mod-pill:hover { opacity: 1; background: rgba(127,127,127,.12); }
+        .mod-pill svg { width: 1rem; height: 1rem; }
+        .mod-pill-on, .mod-pill-on:hover { opacity: 1; color: rgb(37,99,235); background: rgba(59,130,246,.12); border-color: rgba(59,130,246,.45); }
+        .dark .mod-pill-on { color: rgb(96,165,250); }
     </style>
     @if ($this->needsRestart())
         <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:.75rem;border:1px solid rgba(234,179,8,.5);background:rgba(234,179,8,.08)">
@@ -69,34 +80,71 @@
         </div>
     @endif
 
-    <x-filament::tabs>
-        <x-filament::tabs.item icon="tabler-package" :active="$tab === 'installed'" wire:click="setTab('installed')">
+    @php
+        // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
+        $addTabs = collect($this->browseTabs())->map(fn ($label, $key) => ['browse', $key, $label, 'tabler-search']);
+        if ($canInstall && $this->canUpload()) {
+            $addTabs->put('upload', ['upload', null, trans('mod-manager::mods.tabs.upload'), 'tabler-upload']);
+        }
+        if ($canInstall && $this->canLink()) {
+            $addTabs->put('links', ['links', null, trans('mod-manager::mods.tabs.links'), 'tabler-link']);
+        }
+        // "add" opens the sub tab used last
+        $addFirst = $addTabs[$this->addTab] ?? $addTabs->first();
+        $openAdd = fn (array $sub) => $sub[0] === 'browse' ? 'browse(' . $js($sub[1]) . ')' : "setTab('{$sub[0]}')";
+    @endphp
+    {{-- one line: the main tabs on the left, the pills of the active one right next to them --}}
+    <div class="mod-nav">
+    <x-filament::tabs style="margin:0">
+        <x-filament::tabs.item icon="tabler-package" :active="$onInstalled" wire:click="setTab('installed')">
             {{ trans('mod-manager::mods.tabs.installed') }}
         </x-filament::tabs.item>
-        {{-- one tab per source, and per kind where Modrinth offers several --}}
-        @foreach ($this->browseTabs() as $key => $label)
-            <x-filament::tabs.item icon="tabler-search" :active="$tab === 'browse' && $key === $this->browseKey()" wire:click="browse({{ $js($key) }})">
-                {{ $label }}
-            </x-filament::tabs.item>
-        @endforeach
-        @if ($canInstall && $this->canUpload())
-            <x-filament::tabs.item icon="tabler-link" :active="$tab === 'links'" wire:click="setTab('links')">
-                {{ trans('mod-manager::mods.tabs.links') }}
+        @if ($addTabs->isNotEmpty())
+            <x-filament::tabs.item icon="tabler-plus" :active="!$onInstalled" wire:click="{{ $openAdd($addFirst) }}">
+                {{ trans('mod-manager::mods.tabs.add') }}
             </x-filament::tabs.item>
         @endif
     </x-filament::tabs>
 
-    @if ($tab === 'installed')
-        @include('mod-manager::pages.mods.installed-table')
+    {{-- the second level: small pills, so it does not look like a second set of the tabs --}}
+    <nav class="mod-pills">
+        @if ($onInstalled)
+            @foreach (['mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'], 'plugins' => ['mod-manager::mods.tabs.plugins', 'tabler-plug'], 'maps' => ['mod-manager::mods.tabs.maps', 'tabler-map'], 'configs' => ['mod-manager::mods.config.heading', 'tabler-settings']] as $key => [$label, $icon])
+                <button type="button" @class(['mod-pill', 'mod-pill-on' => $section === $key]) wire:click="setSection('{{ $key }}')"><x-filament::icon :icon="$icon" />{{ trans($label) }}</button>
+            @endforeach
+        @else
+            @foreach ($addTabs as $sub)
+                <button type="button" @class(['mod-pill', 'mod-pill-on' => $tab === $sub[0] && ($sub[0] !== 'browse' || $sub[1] === $this->browseKey())]) wire:click="{{ $openAdd($sub) }}"><x-filament::icon :icon="$sub[3]" />{{ $sub[2] }}</button>
+            @endforeach
+        @endif
+    </nav>
+    {{-- on every tab, at the far right of the menu --}}
+    <div style="margin-left:auto"><x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
+    </div>
 
-        @if ($installed->isEmpty() && !$unmanaged && !$loaderPlugins)
+    @if ($onInstalled)
+        @php
+            // mods: the loader, the engine and everything but plugins and maps; plugins: what was uploaded or linked, plus the loader's own
+            $sectionOf = fn ($install) => match ($this->type($install->package)[0]) { 'plugin' => 'plugins', 'map' => 'maps', default => 'mods' };
+            $installed = $installed->filter(fn ($install) => $sectionOf($install) === $section)->values();
+            $empty = match ($section) {
+                'mods' => $installed->isEmpty() && !$loaderInstall && !$loader,
+                'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
+                'maps' => $installed->isEmpty(),
+                default => !$configs,
+            };
+        @endphp
+        @if ($section !== 'configs')
+            @include('mod-manager::pages.mods.installed-table')
+        @endif
+
+        @if ($empty)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
-                    {{-- to the first browse tab; Counter-Strike 2 has none, its plugins are uploaded --}}
-                    @if ($browseTab = array_key_first($this->browseTabs()))
-                        <x-filament::button color="gray" icon="tabler-search" wire:click="browse({{ $js($browseTab) }})">{{ $this->browseTabs()[$browseTab] }}</x-filament::button>
+                    <span style="opacity:.7">{{ trans($section === 'configs' ? 'mod-manager::mods.config.hint' : 'mod-manager::mods.nothing_installed') }}</span>
+                    @if ($section !== 'configs' && $addTabs->isNotEmpty())
+                        <x-filament::button color="gray" icon="tabler-plus" wire:click="{{ $openAdd($addFirst) }}">{{ trans('mod-manager::mods.tabs.add') }}</x-filament::button>
                     @endif
                 </div>
             </x-filament::section>
@@ -104,8 +152,11 @@
 
         @include('mod-manager::pages.mods.unmanaged')
         @include('mod-manager::pages.mods.loader-plugins')
-
         @include('mod-manager::pages.mods.configs')
+    @elseif ($tab === 'upload')
+        <x-filament::section>
+            @include('mod-manager::pages.mods.upload-button')
+        </x-filament::section>
     @elseif ($tab === 'links')
         @include('mod-manager::pages.mods.links')
     @else
@@ -131,7 +182,6 @@
     <x-filament::modal id="mod-players" width="3xl">
         <x-slot name="heading">{{ trans('mod-manager::mods.players.heading') }}</x-slot>
         <x-slot name="description">{{ trans(match (true) {
-            $tab !== 'installed' => 'mod-manager::mods.players.hint',
             $this->goldsrc() => 'mod-manager::mods.players.hint_goldsrc',
             $this->source2() => 'mod-manager::mods.players.hint_source2',
             $this->jarMods() => 'mod-manager::mods.players.hint_plugins',
@@ -139,7 +189,7 @@
         }) }}</x-slot>
 
         @php
-            $playerList = $tab === 'installed' ? $this->playerList() : '';
+            $playerList = $this->playerList();
         @endphp
         <div x-data="{ copied: false }">
             <textarea readonly x-ref="list" rows="12" style="width:100%;font-family:monospace;font-size:.8rem;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit">{{ $playerList }}</textarea>

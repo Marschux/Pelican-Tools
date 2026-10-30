@@ -104,6 +104,12 @@ trait HandlesPlugins
             }
 
             $lower = strtolower($name);
+            // GoldSrc takes maps only: its plugins come in too many shapes to place them on their own
+            $mapsOnly = $this->goldsrc();
+
+            if ($mapsOnly && !preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
+                throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
+            }
 
             // a .bsp, or an archive with one: a map, not a plugin
             if (preg_match('/\.(bsp|zip|rar|7z)\z/', $lower)) {
@@ -124,7 +130,7 @@ trait HandlesPlugins
                     return $this->placeMap(['id' => self::MAP_UPLOAD . $title, 'name' => $title, 'version' => now()->format('Y-m-d'), 'icon' => null, 'size' => $size], $directory, $name);
                 }
 
-                if (!str_ends_with($lower, '.zip')) {
+                if ($mapsOnly || !str_ends_with($lower, '.zip')) {
                     throw new RuntimeException(trans('mod-manager::mods.messages.no_map', ['file' => $name]));
                 }
             }

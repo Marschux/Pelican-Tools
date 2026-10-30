@@ -61,6 +61,12 @@ trait AddsPlugins
         return in_array($this->profile()->setting('loader_type'), Presets::ARCHIVE_LOADERS, true);
     }
 
+    /** GitHub (and on CS2 workshop) links; GoldSrc takes maps only, and those it has no link for */
+    public function canLink(): bool
+    {
+        return $this->canUpload() && !$this->goldsrc();
+    }
+
     /** A workshop map or collection by id or link; a collection says how many of its maps came along. */
     private function addWorkshop(string $input): void
     {
@@ -88,6 +94,10 @@ trait AddsPlugins
     public function installGitHub(?string $asset = null): void
     {
         $this->requirePermission(SubuserPermission::FileCreate);
+
+        if (!$this->canLink()) {
+            return;
+        }
 
         $repository = GitHub::repository($this->githubLink);
 

@@ -47,8 +47,14 @@ class ModsPage extends Page
 
     protected static ?int $navigationSort = 32;
 
-    /** installed | browse */
+    /** installed | browse | upload | links - the last three are the sub tabs of "add" */
     public string $tab = 'installed';
+
+    /** what the installed tab shows: mods | plugins | maps | configs */
+    public string $section = 'mods';
+
+    /** the sub tab "add" opened last: a browse key, upload or links */
+    public string $addTab = '';
 
     public string $query = '';
 
@@ -122,7 +128,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll'];
+    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll', 'section', 'addTab'];
 
     public function mount(): void
     {
@@ -137,6 +143,11 @@ class ModsPage extends Page
         // what is there comes first, with the loader's row - the listing waits for the browse tab,
         // a cold source API costs up to a second
         $this->tab = 'installed';
+    }
+
+    private function remember(): void
+    {
+        session([$this->sessionKey() => array_combine(self::REMEMBERED, array_map(fn (string $property) => $this->{$property}, self::REMEMBERED))]);
     }
 
     /** Every filter change searches right away, typing included (debounced in the view). */
@@ -154,11 +165,23 @@ class ModsPage extends Page
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['installed', 'browse', 'links'], true) ? $tab : 'browse';
+        $this->tab = in_array($tab, ['installed', 'browse', 'upload', 'links'], true) ? $tab : 'browse';
+
+        if (in_array($this->tab, ['upload', 'links'], true)) {
+            $this->addTab = $this->tab;
+            $this->remember();
+        }
 
         if ($this->tab === 'browse' && $this->items === []) {
             $this->fetch();
         }
+    }
+
+    public function setSection(string $section): void
+    {
+        $this->tab = 'installed';
+        $this->section = in_array($section, ['mods', 'plugins', 'maps', 'configs'], true) ? $section : 'mods';
+        $this->remember();
     }
 
     /** GoldSrc: AMX Mod X's plugin list, its configs and the optional engine. */

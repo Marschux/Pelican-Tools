@@ -1,18 +1,21 @@
-@if ($installed->isNotEmpty() || $loaderInstall || $loader)
+@php $withLoader = $section === 'mods'; @endphp
+@if ($installed->isNotEmpty() || ($withLoader && ($loaderInstall || $loader)))
     @php
         $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
         // filter by type, in the browser, loader and engine rows count too
-        $types = collect([$loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
+        $types = collect([$withLoader && $loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
             ->concat($installed->map(fn ($install) => $this->type($install->package)[0])->sort())
             ->filter()->unique()->values();
+        // the filter only where the section mixes types; without it or an update note the header goes
+        $hasFilter = $installed->map(fn ($install) => $this->type($install->package)[0])->unique()->count() > 1;
+        $hasHeader = $hasFilter || !$this->updatesChecked || ($updatable && $canUpdate);
     @endphp
     {{-- the section brings an x-data of its own, so the filter state lives around it --}}
     <div x-data="{ type: '' }" style="display:contents" @unless ($this->updatesChecked) wire:init="checkUpdates" @endunless>
     <x-filament::section>
+        @if ($hasHeader)
         <x-slot name="afterHeader">
             <div class="mod-head" style="display:flex;gap:.5rem">
-                @include('mod-manager::pages.mods.upload-button')
-                <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button>
                 @unless ($this->updatesChecked)
                     <span style="{{ $muted }};display:inline-flex;align-items:center;gap:.4rem"><x-filament::loading-indicator style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.checking_updates') }}</span>
                 @endunless
@@ -24,17 +27,19 @@
         {{-- the type filter sits left, next to the heading --}}
         <x-slot name="heading">
             <div class="mod-head" style="display:flex;align-items:center;gap:1rem;font-weight:normal">
-                <span style="font-weight:600">{{ trans('mod-manager::mods.tabs.installed') }} ({{ $installed->count() }})</span>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select x-model="type" :aria-label="trans('mod-manager::mods.columns.type')">
-                        <option value="">{{ trans('mod-manager::mods.all_types') }}</option>
-                        @foreach ($types as $key)
-                            <option value="{{ $key }}">{{ trans("mod-manager::mods.types.$key") }}</option>
-                        @endforeach
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
+                @if ($hasFilter)
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select x-model="type" :aria-label="trans('mod-manager::mods.columns.type')">
+                            <option value="">{{ trans('mod-manager::mods.all_types') }}</option>
+                            @foreach ($types as $key)
+                                <option value="{{ $key }}">{{ trans("mod-manager::mods.types.$key") }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                @endif
             </div>
         </x-slot>
+        @endif
 
         {{-- a table, scrolling sideways when the page gets narrow --}}
         {{-- icon buttons have a negative margin, so the last column keeps some room on the right, else the edge alone makes it scroll --}}
@@ -62,9 +67,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @include('mod-manager::pages.mods.loader-missing-row')
+                    @if ($withLoader)
+                        @include('mod-manager::pages.mods.loader-missing-row')
+                    @endif
                     {{-- what the profile offers comes first: loader, then engine, installed or not --}}
-                    @foreach (collect([$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null)])->filter()->concat($installed) as $install)
+                    @foreach (collect($withLoader ? [$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null)] : [])->filter()->concat($installed) as $install)
                         @if ($install === 'engine')
                             @include('mod-manager::pages.mods.engine-row')
                             @continue

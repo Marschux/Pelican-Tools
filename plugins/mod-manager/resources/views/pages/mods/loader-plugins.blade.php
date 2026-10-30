@@ -1,6 +1,6 @@
 @if ($loaderPlugins)
     {{-- AMX Mod X's own plugins are part of the loader, the installed table stays for what was added --}}
-    <x-filament::section collapsible collapsed>
+    <x-filament::section collapsible>
         <x-slot name="heading">{{ trans($this->goldsrc() ? 'mod-manager::mods.loader_plugins.heading' : 'mod-manager::mods.loader_plugins.sourcemod_heading') }} ({{ collect($loaderPlugins)->where('enabled', true)->count() }}/{{ count($loaderPlugins) }})</x-slot>
         <x-slot name="description">
             {{ trans($this->goldsrc() ? 'mod-manager::mods.loader_plugins.hint' : 'mod-manager::mods.loader_plugins.sourcemod_hint') }}

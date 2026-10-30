@@ -1,12 +1,18 @@
 @if ($canInstall && $this->canUpload())
+    @php
+        // GoldSrc takes maps only, plugins there are too varied to place on their own
+        $accept = $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.bsp,.zip,.rar,.7z' : '.smx,.zip,.bsp,.rar,.7z');
+        $label = $this->source2() ? 'button' : ($this->goldsrc() ? 'button_map' : 'button_maps');
+    @endphp
     {{--
-        picking the file sends it straight to Wings, like Pelican's file manager - not through
+        a file dropped or picked goes straight to Wings, like Pelican's file manager - not through
         the panel, so PHP's upload limit does not apply - and then the page installs it
     --}}
-    <div x-data="{
+    <label x-data="{
         busy: false,
+        over: false,
         async send(file) {
-            if (!file) return;
+            if (!file || this.busy) return;
             this.busy = true;
             try {
                 const target = await $wire.uploadTarget();
@@ -26,11 +32,13 @@
                 this.busy = false;
             }
         },
-    }">
-        <x-filament::button size="sm" color="gray" icon="tabler-upload" tag="label" style="cursor:pointer" x-bind:class="busy && 'opacity-50 pointer-events-none'">
-            <span x-show="!busy">{{ trans($this->source2() ? 'mod-manager::mods.upload.button' : 'mod-manager::mods.upload.button_maps') }}</span>
-            <span x-show="busy" x-cloak>{{ trans('mod-manager::mods.upload.busy') }}</span>
-            <input type="file" accept="{{ $this->source2() ? '.zip,.dll' : ($this->goldsrc() ? '.amxx,.zip' : '.smx,.zip') . ',.bsp,.rar,.7z' }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
-        </x-filament::button>
-    </div>
+    }"
+        x-on:dragover.prevent="over = true" x-on:dragleave.prevent="over = false" x-on:drop.prevent="over = false; send($event.dataTransfer.files[0])"
+        class="mod-drop" x-bind:class="over && 'mod-drop-over'">
+        <x-filament::icon icon="tabler-upload" style="width:2.5rem;height:2.5rem;opacity:.5" />
+        <span x-show="!busy" style="font-weight:600">{{ trans("mod-manager::mods.upload.$label") }}</span>
+        <span x-show="busy" x-cloak style="display:inline-flex;align-items:center;gap:.4rem;font-weight:600"><x-filament::loading-indicator style="width:1rem;height:1rem" />{{ trans('mod-manager::mods.upload.busy') }}</span>
+        <span style="font-size:.8rem;opacity:.7">{{ trans('mod-manager::mods.upload.drop') }} · {{ str_replace(',', ', ', $accept) }}</span>
+        <input type="file" accept="{{ $accept }}" style="display:none" x-on:change="send($event.target.files[0]); $event.target.value = ''">
+    </label>
 @endif

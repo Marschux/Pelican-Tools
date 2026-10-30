@@ -76,7 +76,7 @@ trait BrowsesSources
         $this->items = $result['items'];
         $this->pages = $result['pages'];
 
-        session([$this->sessionKey() => array_combine(self::REMEMBERED, array_map(fn (string $property) => $this->{$property}, self::REMEMBERED))]);
+        $this->remember();
     }
 
     private function sessionKey(): string
@@ -139,6 +139,8 @@ trait BrowsesSources
         }
 
         $this->tab = 'browse';
+        $this->addTab = $key;
+        $this->remember();
         // the workshop's maps tab has no kind in its key
         [$source, $kind] = explode(':', $key) + [1 => $key === 'workshop' ? 'map' : $this->kind];
 

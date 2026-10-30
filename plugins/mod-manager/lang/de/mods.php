@@ -6,7 +6,9 @@ return [
     'tabs' => [
         'installed' => 'Installiert',
         'browse' => 'Durchsuchen',
-        'links' => 'Per Link hinzufügen',
+        'upload' => 'Hochladen',
+        'links' => 'Per Link',
+        'add' => 'Hinzufügen',
         'browse_from' => ':source :what',
         'maps' => 'Maps',
         'mods' => 'Mods',
@@ -115,6 +117,8 @@ return [
     'upload' => [
         'button' => 'Plugin oder Zip hochladen',
         'button_maps' => 'Plugin, Map oder Zip hochladen',
+        'button_map' => 'Map hochladen (.bsp oder Archiv)',
+        'drop' => 'Datei hierher ziehen oder klicken',
         'busy' => 'Wird hochgeladen …',
         'origin' => 'Hochgeladen',
     ],

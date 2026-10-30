@@ -1,5 +1,5 @@
 @if ($configs)
-    <x-filament::section collapsible collapsed>
+    <x-filament::section>
         <x-slot name="heading">{{ trans('mod-manager::mods.config.heading') }} ({{ count($configs) }})</x-slot>
         <x-slot name="description">{{ trans('mod-manager::mods.config.hint') }}</x-slot>
 

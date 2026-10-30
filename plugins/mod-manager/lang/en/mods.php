@@ -7,7 +7,9 @@ return [
         'installed' => 'Installed',
         'browse' => 'Browse',
         // the browse tab names where its tiles come from and what they are
-        'links' => 'Add by link',
+        'upload' => 'Upload',
+        'links' => 'By link',
+        'add' => 'Add',
         'browse_from' => ':source :what',
         'maps' => 'Maps',
         'mods' => 'Mods',
@@ -116,6 +118,8 @@ return [
     'upload' => [
         'button' => 'Upload plugin or zip',
         'button_maps' => 'Upload plugin, map or zip',
+        'button_map' => 'Upload a map (.bsp or archive)',
+        'drop' => 'Drop a file here or click',
         'busy' => 'Uploading …',
         'origin' => 'Uploaded',
     ],
