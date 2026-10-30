@@ -145,8 +145,9 @@ trait HandlesConfigs
             return [];
         }
 
-        // Metamod plugins (MultiAddonManager ...) write theirs to cfg/<plugin>/, beside Valve's own files
-        $cfg = $this->source2() ? $this->gameDir() . '/cfg' : null;
+        // plugins write theirs to cfg/<plugin>/ beside Valve's own files: SourceMod's to cfg/sourcemod/,
+        // Metamod plugins (MultiAddonManager ...) to a folder of their own
+        $cfg = $this->source1() || $this->source2() ? $this->gameDir() . '/cfg' : null;
         $metamod = $cfg === null ? [] : collect($this->files->list($cfg))
             ->filter()
             ->keys()
