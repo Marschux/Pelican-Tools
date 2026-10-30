@@ -155,16 +155,38 @@ class ListFile
     public static function pairEntries(string $content, string $template): array
     {
         $pairs = [];
+        $repeated = self::repeatedKeys($content, $template);
 
         foreach (self::lines($content) as $line) {
             $pair = self::parsePair($line, $template);
 
-            if ($pair !== null) {
+            if ($pair !== null && !isset($repeated[$pair[0]])) {
                 $pairs[$pair[0]] = $pair[1];
             }
         }
 
         return $pairs;
+    }
+
+    /**
+     * Keys set on more than one line: one editor field cannot stand for them, so they stay out of
+     * the editor and their lines stay as they are.
+     *
+     * @return array<string, true>
+     */
+    private static function repeatedKeys(string $content, string $template): array
+    {
+        $counts = [];
+
+        foreach (self::lines($content) as $line) {
+            $pair = self::parsePair($line, $template);
+
+            if ($pair !== null) {
+                $counts[$pair[0]] = ($counts[$pair[0]] ?? 0) + 1;
+            }
+        }
+
+        return array_fill_keys(array_keys(array_filter($counts, fn (int $count) => $count > 1)), true);
     }
 
     /**
@@ -178,19 +200,20 @@ class ListFile
     public static function buildPairs(string $original, array $pairs, string $template): string
     {
         $out = [];
+        $repeated = self::repeatedKeys($original, $template);
 
         foreach (self::lines($original) as $line) {
             $pair = self::parsePair($line, $template);
 
-            if ($pair === null) {
+            if ($pair === null || isset($repeated[$pair[0]])) {
                 $out[] = $line;
 
                 continue;
             }
 
-            // a key the editor no longer holds was deleted there
+            // a key the editor no longer holds was deleted there; an unchanged one keeps its line as it was
             if (array_key_exists($pair[0], $pairs)) {
-                $out[] = self::buildPair($pair[0], $pairs[$pair[0]], $template);
+                $out[] = (string) $pairs[$pair[0]] === $pair[1] ? $line : self::buildPair($pair[0], $pairs[$pair[0]], $template);
                 unset($pairs[$pair[0]]);
             }
         }
@@ -228,7 +251,24 @@ class ListFile
         }
 
         [$before, $between, $after] = self::pairParts($template);
+        $pair = self::splitPair($line, $before, $between, $after);
 
+        // a cvar config quotes its values in the template, but the game takes them bare too: sv_aim 0
+        if ($pair === null && $after === '"' && str_ends_with($between, '"')) {
+            $pair = self::splitPair($line, $before, substr($between, 0, -1), '');
+
+            // commands, not settings - and "exec" comes more than once
+            if ($pair !== null && in_array(strtolower($pair[0]), ['exec', 'echo', 'alias', 'bind', 'say', 'writeid', 'writeip', 'banid', 'addip'], true)) {
+                return null;
+            }
+        }
+
+        return $pair;
+    }
+
+    /** @return ?array{0: string, 1: string} */
+    private static function splitPair(string $line, string $before, string $between, string $after): ?array
+    {
         if ($before !== '' && !str_starts_with($line, $before)) {
             return null;
         }

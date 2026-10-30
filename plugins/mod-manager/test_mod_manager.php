@@ -545,6 +545,14 @@ mp_maxrounds \"24\"
 assert(ListFile::buildPair('sv_alltalk', '1', $cvars->pairTemplate()) === 'sv_alltalk "1"');
 assert(ListFile::parsePair('exec banned_user.cfg', '{key}={value}') === null, 'a line without the separator is no setting');
 
+// the game takes cvars bare too; commands and keys set twice stay out of the editor and as they were
+$serverCfg = "// default server name\nhostname \"CS 1.6 Test\"\nsv_aim 0\nmp_timelimit 20\nexec listip.cfg\nexec banned.cfg\nlog on\nlog off\n";
+assert(ListFile::pairEntries($serverCfg, $cvars->pairTemplate()) === ['hostname' => 'CS 1.6 Test', 'sv_aim' => '0', 'mp_timelimit' => '20']);
+assert(ListFile::buildPairs($serverCfg, ['hostname' => 'CS 1.6 Test', 'sv_aim' => '0', 'mp_timelimit' => '30'], $cvars->pairTemplate())
+    === "// default server name\nhostname \"CS 1.6 Test\"\nsv_aim 0\nmp_timelimit \"30\"\nexec listip.cfg\nexec banned.cfg\nlog on\nlog off\n", 'only the changed line is rewritten');
+assert(ListFile::buildPairs($serverCfg, ['hostname' => 'CS 1.6 Test', 'mp_timelimit' => '20'], $cvars->pairTemplate())
+    === "// default server name\nhostname \"CS 1.6 Test\"\nmp_timelimit 20\nexec listip.cfg\nexec banned.cfg\nlog on\nlog off\n", 'a removed bare cvar goes');
+
 // a whitelist entry has to end up with a real uuid, not the placeholder
 $whitelistPreset = ListDefinition::fromArray('preset:minecraft:0', $presets['minecraft']['files'][0]);
 assert($whitelistPreset->needsUuid());
