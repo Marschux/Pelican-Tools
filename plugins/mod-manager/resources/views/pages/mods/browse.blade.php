@@ -1,9 +1,6 @@
 @php
     $gameVersion = $this->gameVersion();
 @endphp
-@if ($gameVersion)
-    <span style="{{ $muted }}">{{ trans('mod-manager::mods.game_version', $gameVersion) }}</span>
-@endif
 {{-- every change searches right away, typing waits for a short pause --}}
 <form wire:submit="search" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
     <x-filament::input.wrapper prefix-icon="tabler-search" style="flex:1 1 16rem">
@@ -36,7 +33,8 @@
         </label>
     @endif
     @if ($gameVersion)
-        <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
+        {{-- where the server's version comes from, on hover --}}
+        <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer" title="{{ trans('mod-manager::mods.game_version', $gameVersion) }}">
             <x-filament::input.checkbox wire:model.live="showAll" />
             {{ trans('mod-manager::mods.show_all_versions', ['version' => $gameVersion['version']]) }}
         </label>
