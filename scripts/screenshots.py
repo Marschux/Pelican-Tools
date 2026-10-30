@@ -60,12 +60,14 @@ with sync_playwright() as p:
 
 
     def entries():
-        # typed in, never saved
+        # the configs tab opens on the first access list; typed in, never saved
+        page.locator('.fi-tabs-item').nth(2).click()
+        page.wait_for_timeout(2500)
         field = page.get_by_placeholder('Add entry')
         for entry in ['Steam_76561197960287930', 'Steam_76561198012345678']:
             field.fill(entry)
             field.press('Enter')
 
-    shot('access-lists', f'{BASE}/server/{SERVER}/access-lists', entries)
+    shot('mod-manager-configs', f'{BASE}/server/{SERVER}/mods', entries)
 
     browser.close()
