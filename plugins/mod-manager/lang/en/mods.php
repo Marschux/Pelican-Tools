@@ -154,6 +154,8 @@ return [
     ],
 
     'restart' => [
+        'header' => 'Restart server',
+        'confirm' => 'Restart the server now? Players get disconnected.',
         'hint' => 'Changes take effect after the server restarts.',
         'button' => 'Restart now',
         'dismiss' => 'Hide',

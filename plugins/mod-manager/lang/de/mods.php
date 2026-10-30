@@ -153,6 +153,8 @@ return [
     ],
 
     'restart' => [
+        'header' => 'Server neu starten',
+        'confirm' => 'Server jetzt neu starten? Spieler werden getrennt.',
         'hint' => 'Änderungen wirken erst nach einem Neustart des Servers.',
         'button' => 'Jetzt neu starten',
         'dismiss' => 'Ausblenden',

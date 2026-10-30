@@ -9,6 +9,7 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Contracts\View\View;
 use Marschux\ModManager\Filament\Server\Pages\Concerns\AddsPlugins;
 use Marschux\ModManager\Filament\Server\Pages\Concerns\BrowsesSources;
 use Marschux\ModManager\Filament\Server\Pages\Concerns\EditsConfigs;
@@ -123,6 +124,15 @@ class ModsPage extends Page
     public static function getNavigationLabel(): string
     {
         return trans('mod-manager::mods.navigation');
+    }
+
+    /** The heading with a restart button on the right - Filament's header actions do not render in this panel. */
+    public function getHeader(): ?View
+    {
+        return view('mod-manager::pages.mods.header', [
+            'heading' => $this->getTitle(),
+            'canRestart' => $this->may(SubuserPermission::ControlRestart),
+        ]);
     }
 
     public function getTitle(): string

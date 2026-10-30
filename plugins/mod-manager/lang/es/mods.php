@@ -153,6 +153,8 @@ return [
     ],
 
     'restart' => [
+        'header' => 'Reiniciar servidor',
+        'confirm' => '¿Reiniciar el servidor ahora? Los jugadores se desconectarán.',
         'hint' => 'Los cambios se aplican tras reiniciar el servidor.',
         'button' => 'Reiniciar ahora',
         'dismiss' => 'Ocultar',
