@@ -130,6 +130,14 @@ trait InstallsMods
         $this->attempt(fn () => $this->installer()->update($install), trans('mod-manager::mods.messages.updated', ['name' => $install->name]));
     }
 
+    /** Lets a pinned mod take updates again, without installing anything now. */
+    public function unpin(int $installId): void
+    {
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        $this->findInstall($installId)->update(['pinned' => false]);
+    }
+
     /** Every mod with a newer version, the loader not included - it has its own button. */
     public function updateAll(): void
     {

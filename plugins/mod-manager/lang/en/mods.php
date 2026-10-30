@@ -75,6 +75,7 @@ return [
     'checking_updates' => 'Checking for updates …',
     'update_to' => ':version available',
     'pinned' => 'Pinned',
+    'unpin' => 'Unpin: offer updates again',
     'off' => 'Off',
     'enable' => 'Switch on',
     'disable' => 'Switch off',

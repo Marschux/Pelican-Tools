@@ -37,7 +37,11 @@ class ValheimSchema extends SourceSchema
     {
         $lines = ConsoleLog::tail($server);
 
-        $result = $this->run($ip, $port, SourceQuery::SOURCE)
+        // with crossplay the a2s query can only time out (see fromConsole) - skip it, the timeout
+        // held up every page showing this server
+        $crossplay = $server->variables()->where('env_variable', 'ENABLE_CROSSPLAY')->first()?->server_value === '1';
+
+        $result = ($crossplay ? null : $this->run($ip, $port, SourceQuery::SOURCE))
             ?? $this->fromConsole($lines);
 
         if ($result === null) {

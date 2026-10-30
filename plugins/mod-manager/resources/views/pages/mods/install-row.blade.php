@@ -72,7 +72,14 @@
     <td style="padding:.6rem .5rem;min-width:8rem">
         <div style="display:flex;gap:.25rem;flex-wrap:wrap">
             @if ($install->pinned)
-                <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
+                {{-- a click unpins it: updates are offered for it again, nothing is installed --}}
+                @if ($canUpdate)
+                    <button type="button" wire:click="unpin({{ $install->id }})" title="{{ trans('mod-manager::mods.unpin') }}" style="cursor:pointer">
+                        <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
+                    </button>
+                @else
+                    <x-filament::badge color="gray" size="sm" icon="tabler-pin">{{ trans('mod-manager::mods.pinned') }}</x-filament::badge>
+                @endif
             @endif
             @if (!$install->enabled)
                 <x-filament::badge color="gray" size="sm" icon="tabler-power">{{ trans($isMap ? "mod-manager::mods.$cycle.out" : 'mod-manager::mods.off') }}</x-filament::badge>

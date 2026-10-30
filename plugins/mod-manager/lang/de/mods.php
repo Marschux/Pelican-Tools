@@ -74,6 +74,7 @@ return [
     'checking_updates' => 'Suche nach Updates …',
     'update_to' => ':version verfügbar',
     'pinned' => 'Festgepinnt',
+    'unpin' => 'Lösen: Updates wieder anbieten',
     'off' => 'Aus',
     'enable' => 'Einschalten',
     'disable' => 'Ausschalten',

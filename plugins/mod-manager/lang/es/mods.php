@@ -74,6 +74,7 @@ return [
     'checking_updates' => 'Buscando actualizaciones …',
     'update_to' => ':version disponible',
     'pinned' => 'Fijado',
+    'unpin' => 'Desfijar: volver a ofrecer actualizaciones',
     'off' => 'Apagado',
     'enable' => 'Activar',
     'disable' => 'Desactivar',
