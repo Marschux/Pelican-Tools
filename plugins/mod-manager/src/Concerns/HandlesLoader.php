@@ -23,7 +23,7 @@ trait HandlesLoader
             return $this->installArchiveLoader();
         }
 
-        $package = $this->source->release((string) $this->profile->setting('loader_package'), $version);
+        $package = $this->source->release($this->profile->loaderPackage(), $version);
         $scratch = '.mod-manager/loader';
 
         $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
@@ -84,7 +84,7 @@ trait HandlesLoader
      */
     public function uninstallLoader(): void
     {
-        $loader = $this->installs()->firstWhere('package', (string) $this->profile->setting('loader_package'));
+        $loader = $this->installs()->firstWhere('package', $this->profile->loaderPackage());
 
         if ($loader) {
             // AMX Mod X and SourceMod keep what plugins saved (vaults, languages, sqlite) in their data folder

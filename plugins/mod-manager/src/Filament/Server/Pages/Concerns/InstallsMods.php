@@ -25,7 +25,7 @@ trait InstallsMods
         }
 
         // the loader is hidden from the plan, a version of it picked in the details goes its own way
-        if ($id === (string) $this->profile()->setting('loader_package')) {
+        if ($id === $this->profile()->loaderPackage()) {
             $this->installLoader($version);
 
             return;

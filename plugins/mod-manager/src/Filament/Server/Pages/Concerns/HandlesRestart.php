@@ -32,15 +32,44 @@ trait HandlesRestart
         session()->forget($this->restartKey());
     }
 
-    /** Something changed since the last restart from this page. */
+    /** Something changed since the server last started - from this page, the console or anywhere else. */
     public function needsRestart(): bool
     {
-        return (bool) session($this->restartKey(), false);
+        $marked = session($this->restartKey());
+
+        if ($marked === null) {
+            return false;
+        }
+
+        // started again since: the server's start time moved past the one noted with the change
+        // (30s leeway, Pelican caches the uptime for 15s)
+        $started = $this->startedAt();
+
+        if ($started !== null && $started > (int) $marked + 30) {
+            session()->forget($this->restartKey());
+
+            return false;
+        }
+
+        return true;
     }
 
     private function markRestart(): void
     {
-        session([$this->restartKey() => true]);
+        // a server that is off notes 0: any later start counts
+        session([$this->restartKey() => $this->startedAt() ?? 0]);
+    }
+
+    /** When the running server started (unix time), null while it is off or Wings does not answer. */
+    private function startedAt(): ?int
+    {
+        try {
+            $uptime = (int) ($this->server()->retrieveResources()['uptime'] ?? 0);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return $uptime > 0 ? time() - intdiv($uptime, 1000) : null;
     }
 
     private function restartKey(): string

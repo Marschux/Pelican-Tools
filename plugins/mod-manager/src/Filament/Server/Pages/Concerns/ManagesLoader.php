@@ -60,14 +60,14 @@ trait ManagesLoader
             'started' => in_array($profile->setting('loader_type'), Presets::ARCHIVE_LOADERS, true)
                 ? $installed && $this->installer()->loaderHooked()
                 : $prefix === '' || str_contains((string) $this->server()->startup, $prefix),
-            'update' => $this->updates()[(string) $profile->setting('loader_package')] ?? null,
+            'update' => $this->updates()[$profile->loaderPackage()] ?? null,
         ];
     }
 
     /** The loader's own row in the installed table, null until it is installed through this page. */
     public function loaderInstall(): ?ModInstall
     {
-        $loader = $this->installer()->installs()->firstWhere('package', (string) $this->profile()->setting('loader_package'));
+        $loader = $this->installer()->installs()->firstWhere('package', $this->profile()->loaderPackage());
 
         if ($loader) {
             $this->installer()->fillSizes(new Collection([$loader]));

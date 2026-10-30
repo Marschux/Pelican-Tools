@@ -472,7 +472,7 @@ class Installer
     public function playerList(): string
     {
         $community = (string) $this->profile->setting('community');
-        $loader = (string) $this->profile->setting('loader_package');
+        $loader = $this->profile->loaderPackage();
 
         return $this->installs()
             ->filter(fn (ModInstall $install) => $install->enabled)
