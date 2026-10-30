@@ -129,7 +129,11 @@
         @endif
     </nav>
     {{-- on every tab, at the far right of the menu --}}
-    <div style="margin-left:auto"><x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
+    <div style="margin-left:auto;display:flex;gap:.5rem">
+        @if ($canRestart)
+            <x-filament::button size="sm" color="gray" icon="tabler-refresh" :tooltip="trans('mod-manager::mods.restart.header')" label-sr-only wire:click="restart" wire:confirm="{{ trans('mod-manager::mods.restart.confirm') }}">{{ trans('mod-manager::mods.restart.header') }}</x-filament::button>
+        @endif
+        <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
     </div>
 
     @if ($onInstalled)
