@@ -142,8 +142,8 @@
         @if ($empty)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                    <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
+                    <x-filament::icon :icon="['plugins' => 'tabler-plug-off', 'maps' => 'tabler-map-off'][$section] ?? 'tabler-package-off'" style="width:2.5rem;height:2.5rem;opacity:.5" />
+                    <span style="opacity:.7">{{ trans(['plugins' => 'mod-manager::mods.nothing_plugins', 'maps' => 'mod-manager::mods.nothing_maps'][$section] ?? 'mod-manager::mods.nothing_installed') }}</span>
                     @if ($addTabs->isNotEmpty())
                         <x-filament::button color="gray" icon="tabler-plus" wire:click="{{ $openAdd($addFirst) }}">{{ trans('mod-manager::mods.tabs.add') }}</x-filament::button>
                     @endif

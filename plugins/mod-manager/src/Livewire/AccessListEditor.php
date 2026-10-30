@@ -130,7 +130,8 @@ class AccessListEditor extends Component implements HasForms
                 (bool) ($state['raw'] ?? false) => $this->rawContent($definition, (string) ($state['text'] ?? '')),
                 $definition->isPairs() => ListFile::buildPairs(
                     $this->readFile($definition->path) ?? '',
-                    array_map(strval(...), $state['pairs'] ?? []),
+                    // the editor's blank row is no setting
+                    array_filter(array_map(strval(...), $state['pairs'] ?? []), fn (string $value, int|string $key) => trim((string) $key) !== '', ARRAY_FILTER_USE_BOTH),
                     $definition->pairTemplate(),
                 ),
                 default => $this->builtContent($definition, array_map(strval(...), $state['entries'] ?? [])),
