@@ -112,7 +112,8 @@ trait BrowsesSources
             };
 
             foreach ($whats as $key => $what) {
-                $tabs[$key] = trans('mod-manager::mods.tabs.browse_from', ['source' => $name, 'what' => $what]);
+                // a pill reads "Workshop Maps", the "Steam" is understood
+                $tabs[$key] = trans('mod-manager::mods.tabs.browse_from', ['source' => $source === 'workshop' ? 'Workshop' : $name, 'what' => $what]);
             }
         }
 
