@@ -19,7 +19,7 @@
     },
     "file_denylist": [],
     "startup_commands": {
-        "Default": "./valheim_server.x86_64 -nographics -batchmode -name \"<color=#$(echo ${COLOR} | sed 's/^white$/FFFFFF/;s/^cyan$/00FFFF/;s/^black$/000000/;s/^blue$/0000FF/;s/^magenta$/FF00FF/;s/^lime$/00FF00/;s/^green$/008000/;s/^grey$/808080/;s/^yellow$/FFFF00/;s/^teal$/008080/;s/^orange$/FFA500/')>{{SERVER_NAME}}</color>\" -port {{SERVER_PORT}} -world \"{{WORLD}}\" -password \"{{PASSWORD}}\" -savedir \"savegames\" -saveinterval {{SAVE_INTERVAL}} -backups {{BACKUPS}} -backupshort {{BACKUP_SHORT}} -backuplong {{BACKUP_LONG}} -public {{VISIBILITY}} $( [[ ${ENABLE_CROSSPLAY} -eq 1 ]] && echo \" -crossplay \") $( [[ -z \"${INSTANCE_ID}\" ]] || echo \" -instanceid ${INSTANCE_ID}\") $( [[ -z \"${PRESET}\" ]] || echo \" -preset ${PRESET}\") $( for m in combat:${MOD_COMBAT} deathpenalty:${MOD_DEATHPENALTY} resources:${MOD_RESOURCES} raids:${MOD_RAIDS} portals:${MOD_PORTALS}; do [[ -z \"${m#*:}\" ]] || echo \" -modifier ${m%%:*} ${m#*:}\"; done ) $( for k in ${SETKEYS}; do echo \" -setkey ${k}\"; done ) > >(sed -uE \"{{FILTER}}\") & trap \"{{STOP}}\" 15; wait $!"
+        "Default": "./valheim_server.x86_64 -nographics -batchmode -name \"<color=#$(echo ${COLOR} | sed 's/^white$/FFFFFF/;s/^black$/000000/;s/^blue$/0000FF/;s/^lime$/00FF00/;s/^green$/008000/;s/^grey$/808080/;s/^yellow$/FFFF00/;s/^orange$/FFA500/')>{{SERVER_NAME}}</color>\" -port {{SERVER_PORT}} -world \"{{WORLD}}\" -password \"{{PASSWORD}}\" -savedir \"savegames\" -saveinterval {{SAVE_INTERVAL}} -backups {{BACKUPS}} -backupshort {{BACKUP_SHORT}} -backuplong {{BACKUP_LONG}} -public {{VISIBILITY}} $( [[ ${ENABLE_CROSSPLAY} -eq 1 ]] && echo \" -crossplay \") $( [[ -z \"${INSTANCE_ID}\" ]] || echo \" -instanceid ${INSTANCE_ID}\") $( [[ -z \"${PRESET}\" ]] || echo \" -preset ${PRESET}\") $( for m in combat:${MOD_COMBAT} deathpenalty:${MOD_DEATHPENALTY} resources:${MOD_RESOURCES} raids:${MOD_RAIDS} portals:${MOD_PORTALS}; do [[ -z \"${m#*:}\" ]] || echo \" -modifier ${m%%:*} ${m#*:}\"; done ) $( for k in ${SETKEYS}; do echo \" -setkey ${k}\"; done ) > >(sed -uE \"{{FILTER}}\") & trap \"{{STOP}}\" 15; wait $!"
     },
     "config": {
         "files": "{}",
@@ -176,7 +176,7 @@
             "user_editable": true,
             "rules": [
                 "required",
-                "in:white,cyan,black,blue,magenta,lime,green,grey,yellow,teal,orange"
+                "in:white,black,blue,lime,green,grey,yellow,orange"
             ]
         },
         {
