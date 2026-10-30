@@ -47,10 +47,10 @@ class ModsPage extends Page
 
     protected static ?int $navigationSort = 32;
 
-    /** installed | browse | upload | links - the last three are the sub tabs of "add" */
+    /** installed | browse | upload | links | configs - browse, upload and links are the sub tabs of "add" */
     public string $tab = 'installed';
 
-    /** what the installed tab shows: mods | plugins | maps | configs */
+    /** what the installed tab shows: mods | plugins | maps */
     public string $section = 'mods';
 
     /** the sub tab "add" opened last: a browse key, upload or links */
@@ -143,6 +143,8 @@ class ModsPage extends Page
         // what is there comes first, with the loader's row - the listing waits for the browse tab,
         // a cold source API costs up to a second
         $this->tab = 'installed';
+        // configs was a section before it became a tab of its own
+        $this->section = in_array($this->section, ['mods', 'plugins', 'maps'], true) ? $this->section : 'mods';
     }
 
     private function remember(): void
@@ -165,7 +167,7 @@ class ModsPage extends Page
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['installed', 'browse', 'upload', 'links'], true) ? $tab : 'browse';
+        $this->tab = in_array($tab, ['installed', 'browse', 'upload', 'links', 'configs'], true) ? $tab : 'browse';
 
         if (in_array($this->tab, ['upload', 'links'], true)) {
             $this->addTab = $this->tab;
@@ -180,7 +182,7 @@ class ModsPage extends Page
     public function setSection(string $section): void
     {
         $this->tab = 'installed';
-        $this->section = in_array($section, ['mods', 'plugins', 'maps', 'configs'], true) ? $section : 'mods';
+        $this->section = in_array($section, ['mods', 'plugins', 'maps'], true) ? $section : 'mods';
         $this->remember();
     }
 

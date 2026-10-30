@@ -7,6 +7,7 @@ return [
         'installed' => 'Instalados',
         'browse' => 'Explorar',
         'upload' => 'Subir',
+        'upload_maps' => 'Subir mapas',
         'links' => 'Por enlace',
         'add' => 'Añadir',
         'browse_from' => ':what de :source',

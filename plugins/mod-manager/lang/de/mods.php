@@ -7,6 +7,7 @@ return [
         'installed' => 'Installiert',
         'browse' => 'Durchsuchen',
         'upload' => 'Hochladen',
+        'upload_maps' => 'Maps hochladen',
         'links' => 'Per Link',
         'add' => 'Hinzufügen',
         'browse_from' => ':source :what',

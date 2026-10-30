@@ -12,7 +12,8 @@
     // the installed tab shows one section at a time and only asks Wings for that one's files
     $section = $onInstalled ? $this->section : null;
     $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
-    $configs = $section === 'configs' ? $this->configs() : [];
+    $configs = $tab === 'configs' ? $this->configs() : [];
+    $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
     $relations = $tab === 'installed' ? $this->relations() : [];
@@ -84,7 +85,7 @@
         // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
         $addTabs = collect($this->browseTabs())->map(fn ($label, $key) => ['browse', $key, $label, 'tabler-search']);
         if ($canInstall && $this->canUpload()) {
-            $addTabs->put('upload', ['upload', null, trans('mod-manager::mods.tabs.upload'), 'tabler-upload']);
+            $addTabs->put('upload', ['upload', null, trans($this->goldsrc() ? 'mod-manager::mods.tabs.upload_maps' : 'mod-manager::mods.tabs.upload'), 'tabler-upload']);
         }
         if ($canInstall && $this->canLink()) {
             $addTabs->put('links', ['links', null, trans('mod-manager::mods.tabs.links'), 'tabler-link']);
@@ -100,16 +101,20 @@
             {{ trans('mod-manager::mods.tabs.installed') }}
         </x-filament::tabs.item>
         @if ($addTabs->isNotEmpty())
-            <x-filament::tabs.item icon="tabler-plus" :active="!$onInstalled" wire:click="{{ $openAdd($addFirst) }}">
+            <x-filament::tabs.item icon="tabler-plus" :active="$onAdd" wire:click="{{ $openAdd($addFirst) }}">
                 {{ trans('mod-manager::mods.tabs.add') }}
             </x-filament::tabs.item>
         @endif
+        <x-filament::tabs.item icon="tabler-settings" :active="$tab === 'configs'" wire:click="setTab('configs')">
+            {{ trans('mod-manager::mods.config.heading') }}
+        </x-filament::tabs.item>
     </x-filament::tabs>
 
     {{-- the second level: small pills, so it does not look like a second set of the tabs --}}
+    @unless ($tab === 'configs')
     <nav class="mod-pills">
         @if ($onInstalled)
-            @foreach (['mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'], 'plugins' => ['mod-manager::mods.tabs.plugins', 'tabler-plug'], 'maps' => ['mod-manager::mods.tabs.maps', 'tabler-map'], 'configs' => ['mod-manager::mods.config.heading', 'tabler-settings']] as $key => [$label, $icon])
+            @foreach (['mods' => ['mod-manager::mods.tabs.mods', 'tabler-puzzle'], 'plugins' => ['mod-manager::mods.tabs.plugins', 'tabler-plug'], 'maps' => ['mod-manager::mods.tabs.maps', 'tabler-map']] as $key => [$label, $icon])
                 <button type="button" @class(['mod-pill', 'mod-pill-on' => $section === $key]) wire:click="setSection('{{ $key }}')"><x-filament::icon :icon="$icon" />{{ trans($label) }}</button>
             @endforeach
         @else
@@ -118,6 +123,7 @@
             @endforeach
         @endif
     </nav>
+    @endunless
     {{-- on every tab, at the far right of the menu --}}
     <div style="margin-left:auto"><x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
     </div>
@@ -130,20 +136,17 @@
             $empty = match ($section) {
                 'mods' => $installed->isEmpty() && !$loaderInstall && !$loader,
                 'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
-                'maps' => $installed->isEmpty(),
-                default => !$configs,
+                default => $installed->isEmpty(),
             };
         @endphp
-        @if ($section !== 'configs')
-            @include('mod-manager::pages.mods.installed-table')
-        @endif
+        @include('mod-manager::pages.mods.installed-table')
 
         @if ($empty)
             <x-filament::section>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
                     <x-filament::icon icon="tabler-package-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans($section === 'configs' ? 'mod-manager::mods.config.hint' : 'mod-manager::mods.nothing_installed') }}</span>
-                    @if ($section !== 'configs' && $addTabs->isNotEmpty())
+                    <span style="opacity:.7">{{ trans('mod-manager::mods.nothing_installed') }}</span>
+                    @if ($addTabs->isNotEmpty())
                         <x-filament::button color="gray" icon="tabler-plus" wire:click="{{ $openAdd($addFirst) }}">{{ trans('mod-manager::mods.tabs.add') }}</x-filament::button>
                     @endif
                 </div>
@@ -152,7 +155,16 @@
 
         @include('mod-manager::pages.mods.unmanaged')
         @include('mod-manager::pages.mods.loader-plugins')
+    @elseif ($tab === 'configs')
         @include('mod-manager::pages.mods.configs')
+        @unless ($configs)
+            <x-filament::section>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
+                    <x-filament::icon icon="tabler-settings-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
+                    <span style="opacity:.7">{{ trans('mod-manager::mods.config.hint') }}</span>
+                </div>
+            </x-filament::section>
+        @endunless
     @elseif ($tab === 'upload')
         <x-filament::section>
             @include('mod-manager::pages.mods.upload-button')

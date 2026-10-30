@@ -8,6 +8,7 @@ return [
         'browse' => 'Browse',
         // the browse tab names where its tiles come from and what they are
         'upload' => 'Upload',
+        'upload_maps' => 'Upload maps',
         'links' => 'By link',
         'add' => 'Add',
         'browse_from' => ':source :what',
