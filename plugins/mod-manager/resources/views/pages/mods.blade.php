@@ -12,7 +12,8 @@
     // the installed tab shows one section at a time and only asks Wings for that one's files
     // the pill picked if this game has it, else its first one
     $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : array_key_first($this->sections())) : null;
-    $unmanaged = $section === 'plugins' ? $this->unmanaged() : [];
+    // what was put on the server by hand: plugins on Counter-Strike and Paper, mods elsewhere (Valheim)
+    $unmanaged = $section === ($this->archiveLoader() || $this->jarMods() ? 'plugins' : 'mods') ? $this->unmanaged() : [];
     $configTab = $tab === 'configs' ? $this->configTab() : null;
     $configs = $configTab === 'mods' ? $this->configs() : [];
     $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
@@ -138,7 +139,7 @@
             // mods: the loader, the engine and everything but plugins and maps; plugins: what was uploaded or linked, plus the loader's own
             $installed = $installed->filter(fn ($install) => $this->sectionOf($install->package) === $section)->values();
             $empty = match ($section) {
-                'mods' => $installed->isEmpty() && !$loaderInstall && !$loader,
+                'mods' => $installed->isEmpty() && !$loaderInstall && !$loader && !$unmanaged,
                 'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
                 default => $installed->isEmpty(),
             };
