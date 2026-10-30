@@ -54,6 +54,9 @@ class AccessListEditor extends Component implements HasForms
     /** Whether the file existed when it was read - deciding whether saving creates it. */
     private bool $fileExisted = false;
 
+    /** shown above the form: the file is not there yet, saving creates it */
+    public bool $missing = false;
+
     public function mount(): void
     {
         abort_unless(user()?->can(SubuserPermission::FileReadContent, $this->server), 403);
@@ -288,9 +291,7 @@ class AccessListEditor extends Component implements HasForms
             'text' => $content ?? '',
         ]);
 
-        if (!$this->fileExisted) {
-            Notification::make()->title(trans('mod-manager::lists.messages.missing_file'))->warning()->send();
-        }
+        $this->missing = !$this->fileExisted;
     }
 
     /** Null when the file does not exist yet, which is normal for a list nobody has used. */
