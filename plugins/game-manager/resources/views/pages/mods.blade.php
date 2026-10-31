@@ -28,6 +28,8 @@
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
     $canEngine = $section === 'mods' && $this->goldsrc();
     $engineInstall = $canEngine ? $this->engineInstall() : null;
+    // and YaPB's bots, a Metamod plugin with a row of its own as well
+    $botsInstall = $canEngine ? $this->botsInstall() : null;
     // without a running loader no mod loads, switched on or not
     $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
     $card = 'display:flex;flex-direction:column;gap:.75rem;padding:1rem;border:1px solid rgba(127,127,127,.2);border-radius:.75rem';

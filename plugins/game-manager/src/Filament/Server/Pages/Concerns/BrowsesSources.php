@@ -195,7 +195,7 @@ trait BrowsesSources
         $profile = $this->profile();
 
         return match (true) {
-            $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE => new GoldSrc(),
+            $id === GoldSrc::PACKAGE, $id === GoldSrc::ENGINE, $id === GoldSrc::BOTS => new GoldSrc(),
             $id === Source1::PACKAGE => new Source1(),
             $id === Source2::PACKAGE => new Source2(),
             str_starts_with($id, Workshop::PREFIX), str_starts_with($id, Workshop::COLLECTION) => new Workshop($this->steamKey()),

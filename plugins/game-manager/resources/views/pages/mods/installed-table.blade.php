@@ -4,7 +4,7 @@
         $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
         // filter by type, in the browser, loader and engine rows count too
         $installedTypes = $installed->map(fn ($install) => $this->type($install->package)[0]);
-        $types = collect([$withLoader && $loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
+        $types = collect([$withLoader && $loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null, $canEngine ? 'plugin' : null])
             ->concat($installedTypes->sort())
             ->filter()->unique()->values();
         // the filter only where the section mixes types; without it or an update note the header goes
@@ -71,10 +71,14 @@
                     @if ($withLoader)
                         @include('game-manager::pages.mods.loader-missing-row')
                     @endif
-                    {{-- what the profile offers comes first: loader, then engine, installed or not --}}
-                    @foreach (collect($withLoader ? [$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null)] : [])->filter()->concat($installed) as $install)
+                    {{-- what the profile offers comes first: loader, then engine and bots, installed or not --}}
+                    @foreach (collect($withLoader ? [$loaderInstall, $engineInstall ?? ($canEngine ? 'engine' : null), $botsInstall ?? ($canEngine ? 'bots' : null)] : [])->filter()->concat($installed) as $install)
                         @if ($install === 'engine')
-                            @include('game-manager::pages.mods.engine-row')
+                            @include('game-manager::pages.mods.offer-row', ['offer' => ['key' => 'engine', 'name' => 'ReHLDS + ReGameDLL + ReAPI', 'type' => 'engine', 'icon' => 'tabler-engine', 'action' => 'installEngine']])
+                            @continue
+                        @endif
+                        @if ($install === 'bots')
+                            @include('game-manager::pages.mods.offer-row', ['offer' => ['key' => 'bots', 'name' => 'YaPB', 'type' => 'plugin', 'icon' => 'tabler-robot', 'action' => 'installBots']])
                             @continue
                         @endif
                         @include('game-manager::pages.mods.install-row')

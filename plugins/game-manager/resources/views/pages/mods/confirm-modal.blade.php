@@ -9,8 +9,8 @@
             <div style="font-size:.875rem">{{ trans_choice('game-manager::mods.confirm.loader_body', $confirm['mods'], ['name' => $confirm['name']]) }}</div>
         @endif
 
-        @if ($confirm['type'] === 'remove_engine')
-            <div style="font-size:.875rem">{{ trans('game-manager::mods.engine.remove_body') }}</div>
+        @if (in_array($confirm['type'], ['remove_engine', 'remove_bots'], true))
+            <div style="font-size:.875rem">{{ trans($confirm['type'] === 'remove_engine' ? 'game-manager::mods.engine.remove_body' : 'game-manager::mods.bots.remove_body') }}</div>
         @endif
 
         @if ($confirm['packages'])
@@ -68,6 +68,8 @@
                 <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveLoader">{{ trans('game-manager::mods.remove') }}</x-filament::button>
             @elseif ($confirm['type'] === 'remove_engine')
                 <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveEngine">{{ trans('game-manager::mods.remove') }}</x-filament::button>
+            @elseif ($confirm['type'] === 'remove_bots')
+                <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemoveBots">{{ trans('game-manager::mods.remove') }}</x-filament::button>
             @else
                 <x-filament::button color="danger" icon="tabler-trash" wire:click="confirmRemove">{{ trans('game-manager::mods.remove') }}</x-filament::button>
             @endif

@@ -144,6 +144,11 @@ return [
         'remove_body' => 'The engine and game library of Valve come back, the server runs as steamcmd installed it again. Plugins that need ReAPI no longer load.',
     ],
 
+    'bots' => [
+        'hint' => 'Optional, computer players. How many and how good: yapb.cfg.',
+        'remove_body' => 'YaPB is deleted with its configs and the waypoints it worked out, and taken out of Metamod\'s plugins.ini.',
+    ],
+
     'loader_plugins' => [
         'heading' => 'Plugins of AMX Mod X',
         'hint' => 'The plugins in plugins.ini - those AMX Mod X comes with, and any put there by hand. Switched off, the line is commented out.',

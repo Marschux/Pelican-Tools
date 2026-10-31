@@ -10,13 +10,18 @@ use RuntimeException;
 /**
  * What GoldSrc games get on top: the loader - Metamod-R from its GitHub releases and AMX Mod X
  * 1.10 from the AlliedModders build drop, one package "goldsrc:loader" - and, optionally, the
- * engine - ReHLDS, ReGameDLL and the ReAPI module, "goldsrc:engine".
+ * engine - ReHLDS, ReGameDLL and the ReAPI module, "goldsrc:engine" - and the YaPB bots, a
+ * Metamod plugin, "goldsrc:bots".
  */
 class GoldSrc
 {
     public const PACKAGE = 'goldsrc:loader';
 
     public const ENGINE = 'goldsrc:engine';
+
+    public const BOTS = 'goldsrc:bots';
+
+    private const YAPB = 'https://api.github.com/repos/yapb/yapb/releases/latest';
 
     private const METAMOD = 'https://api.github.com/repos/rehlds/Metamod-R/releases/latest';
 
@@ -100,14 +105,64 @@ class GoldSrc
         });
     }
 
-    public function latestVersion(string $id, ?string $gameVersion = null): string
+    /**
+     * YaPB, newest release: one tar.xz with addons/yapb - the bot library, its configs and
+     * the waypoints of the standard maps.
+     *
+     * @return array{id: string, name: string, version: string, icon: ?string, parts: array<int, array{name: string, url: string}>}
+     */
+    public function botsRelease(): array
     {
-        return $id === self::ENGINE ? $this->engineRelease()['version'] : $this->release()['version'];
+        return Cache::remember('game-manager:goldsrc:bots', now()->addHour(), function () {
+            $release = $this->http()->get(self::YAPB)->json();
+            $asset = collect($release['assets'] ?? [])->first(fn (array $asset) => str_ends_with($asset['name'], '-linux.tar.xz'))
+                ?? throw new RuntimeException('YaPB: no Linux release');
+
+            return [
+                'id' => self::BOTS,
+                'name' => 'YaPB',
+                'version' => ltrim((string) $release['tag_name'], 'v'),
+                'icon' => null,
+                'parts' => [['name' => 'yapb', 'url' => (string) $asset['browser_download_url']]],
+            ];
+        });
     }
 
-    /** What the detail modal shows for the loader and the engine rows: there is no page to read, only links. */
+    public function latestVersion(string $id, ?string $gameVersion = null): string
+    {
+        return match ($id) {
+            self::ENGINE => $this->engineRelease()['version'],
+            self::BOTS => $this->botsRelease()['version'],
+            default => $this->release()['version'],
+        };
+    }
+
+    /** What the detail modal shows for the loader, engine and bots rows: there is no page to read, only links. */
     public function details(string $id, ?string $gameVersion = null): array
     {
+        if ($id === self::BOTS) {
+            $release = $this->botsRelease();
+
+            return [
+                'id' => self::BOTS,
+                'name' => $release['name'],
+                'author' => 'YaPB team',
+                'summary' => '',
+                'icon' => null,
+                'downloads' => 0,
+                'rating' => 0,
+                'url' => 'https://github.com/yapb/yapb',
+                'version' => $release['version'],
+                'website' => 'https://yapb.jeefo.net',
+                'size' => 0,
+                'dependants' => null,
+                'dependencies' => [],
+                'versions' => [['number' => $release['version'], 'date' => now()->toIso8601String(), 'downloads' => 0]],
+                'readme' => '<p>YaPB adds bots, loaded by Metamod-R through <code>addons/metamod/plugins.ini</code>. How many join and how good they are is set in <code>addons/yapb/conf/yapb.cfg</code> (<code>yb_quota</code>, <code>yb_difficulty</code>); maps without waypoints get them worked out on the fly.</p>',
+                'changelog' => null,
+            ];
+        }
+
         $engine = $id === self::ENGINE;
         $release = $engine ? $this->engineRelease() : $this->release();
 

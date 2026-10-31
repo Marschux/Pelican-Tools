@@ -95,6 +95,12 @@ class ServerFiles
             ->throw();
     }
 
+    /** A new folder - Wings refuses one that is there already. */
+    public function mkdir(string $path): void
+    {
+        $this->repository->createDirectory(basename($path), dirname($path) === '.' ? '/' : dirname($path));
+    }
+
     public function write(string $path, string $content): void
     {
         $this->repository->putContent($path, $content);

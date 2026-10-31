@@ -3,6 +3,8 @@
     $isLoader = $install->is($loaderInstall);
     // the engine: no switch and no config, removing it brings Valve's files back
     $isEngine = $engineInstall && $install->is($engineInstall);
+    // the bots: removing takes their line out of Metamod's plugins.ini, their config is yapb.cfg
+    $isBots = $botsInstall && $install->is($botsInstall);
     $relation = $relations[$install->package] ?? ['requires' => [], 'missing' => [], 'needed_by' => []];
     // only plugins and mods write configs, packs do not
     // maps from GameBanana have none either
@@ -12,7 +14,7 @@
     $isMap = $isWorkshop || \Marschux\GameManager\Installer::mapPackage($install->package);
     $cycle = $isWorkshop ? 'workshop' : ($this->mapgroups() ? 'mapgroup' : 'mapcycle');
     $hasConfigs = \Marschux\GameManager\Installer::kind($install->package) === 'plugin' && !$isMap && !$isEngine;
-    $config = $hasConfigs ? \Marschux\GameManager\Installer::configFor($install->name, $configs) : null;
+    $config = $isBots ? $this->botsConfig() : ($hasConfigs ? \Marschux\GameManager\Installer::configFor($install->name, $configs) : null);
     // the GoldSrc loader's settings are AMX Mod X's main config
     if ($isLoader && $this->archiveLoader()) {
         $config = collect($configs)->first(fn ($path) => str_ends_with($path, $this->goldsrc() ? '/amxx.cfg' : '/core.json'));
@@ -24,7 +26,7 @@
         <div style="display:flex;gap:.75rem;align-items:center;min-width:12rem;{{ $install->enabled ? '' : 'opacity:.5' }}">
             @if ($install->icon)
                 <img src="{{ $install->icon }}" alt="" loading="lazy" style="{{ $icon }};width:2.25rem;height:2.25rem">
-            @elseif ($isLoader || $isEngine)
+            @elseif ($isLoader || $isEngine || $isBots)
                 <div style="{{ $icon }};width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center">
                     <x-filament::icon :icon="$typeIcon" style="width:1.25rem;height:1.25rem;opacity:.6" />
                 </div>
@@ -116,7 +118,7 @@
                         $updateLabel = trans('game-manager::mods.update_from_to', ['from' => $install->version, 'to' => $updates[$install->package]]);
                     @endphp
                     {{-- grey while the version is pinned, still there to update on purpose --}}
-                    <button type="button" @class(['mod-action', 'mod-update' => !$install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : 'updateMod(' . $install->id . ')') }}" wire:loading.attr="disabled" @disabled(!($isLoader ? $canLoader : $canUpdate)) title="{{ $updateLabel }}" aria-label="{{ $updateLabel }}">
+                    <button type="button" @class(['mod-action', 'mod-update' => !$install->pinned]) wire:click="{{ $isLoader ? 'installLoader' : ($isEngine ? 'installEngine' : ($isBots ? 'installBots' : 'updateMod(' . $install->id . ')')) }}" wire:loading.attr="disabled" @disabled(!($isLoader ? $canLoader : $canUpdate)) title="{{ $updateLabel }}" aria-label="{{ $updateLabel }}">
                         <x-filament::icon icon="tabler-arrow-up" />
                     </button>
                 @endif
@@ -128,7 +130,7 @@
                         ? trans($install->enabled ? "game-manager::mods.$cycle.remove" : "game-manager::mods.$cycle.add")
                         : trans($install->enabled ? 'game-manager::mods.disable' : 'game-manager::mods.enable');
                 @endphp
-                @if (!$isLoader && !$isEngine && $canUpdate)
+                @if (!$isLoader && !$isEngine && !$isBots && $canUpdate)
                     <button type="button" @class(['mod-action', 'mod-on' => $install->enabled]) wire:click="toggle({{ $install->id }})" title="{{ $switchLabel }}" aria-label="{{ $switchLabel }}" aria-pressed="{{ $install->enabled ? 'true' : 'false' }}">
                         <x-filament::icon :icon="$install->enabled ? 'tabler-toggle-right' : 'tabler-toggle-left'" />
                     </button>
@@ -148,7 +150,7 @@
             </span>
             <span class="mod-slot">
                 @if ($isLoader ? $canRemoveLoader : $canDelete)
-                    <button type="button" class="mod-action mod-danger" wire:click="{{ $isLoader ? 'removeLoader' : ($isEngine ? 'removeEngine' : 'remove(' . $install->id . ')') }}" title="{{ trans('game-manager::mods.remove') }}" aria-label="{{ trans('game-manager::mods.remove') }}">
+                    <button type="button" class="mod-action mod-danger" wire:click="{{ $isLoader ? 'removeLoader' : ($isEngine ? 'removeEngine' : ($isBots ? 'removeBots' : 'remove(' . $install->id . ')')) }}" title="{{ trans('game-manager::mods.remove') }}" aria-label="{{ trans('game-manager::mods.remove') }}">
                         <x-filament::icon icon="tabler-trash" />
                     </button>
                 @endif

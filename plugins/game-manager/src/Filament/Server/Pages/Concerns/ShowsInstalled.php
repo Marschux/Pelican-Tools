@@ -71,6 +71,7 @@ trait ShowsInstalled
         return match (true) {
             $id === GoldSrc::PACKAGE => 'AMX Mod X',
             $id === GoldSrc::ENGINE => 'ReHLDS',
+            $id === GoldSrc::BOTS => 'GitHub',
             str_starts_with($id, GitHub::PREFIX) => 'GitHub',
             $id === Source1::PACKAGE => 'SourceMod',
             $id === Source2::PACKAGE => 'CounterStrikeSharp',
@@ -88,6 +89,7 @@ trait ShowsInstalled
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('game-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
             $package === GoldSrc::ENGINE => trans('game-manager::mods.by', ['author' => 'ReHLDS team']),
+            $package === GoldSrc::BOTS => trans('game-manager::mods.by', ['author' => 'YaPB team']),
             $package === Source1::PACKAGE => trans('game-manager::mods.by', ['author' => 'AlliedModders']),
             $package === Source2::PACKAGE => trans('game-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
             Installer::uploaded($package), str_starts_with($package, Installer::MAP_UPLOAD) => trans('game-manager::mods.upload.origin'),
@@ -107,6 +109,7 @@ trait ShowsInstalled
     {
         return match (true) {
             $package === GoldSrc::ENGINE => ['engine', 'tabler-engine'],
+            $package === GoldSrc::BOTS => ['plugin', 'tabler-robot'],
             $isLoader => ['loader', 'tabler-plug'],
             Installer::mapPackage($package), str_starts_with($package, Workshop::PREFIX) => ['map', 'tabler-map'],
             Modrinth::kindOf($package) === 'datapack' => ['datapack', 'tabler-package'],
@@ -150,8 +153,8 @@ trait ShowsInstalled
     /** @return Collection<int, ModInstall> the mods, without the loader */
     public function installed(): Collection
     {
-        // the GoldSrc engine has a row of its own, like the loader
-        $hidden = [...(array) $this->profile()->setting('hidden_packages', []), GoldSrc::ENGINE];
+        // the GoldSrc engine and bots have a row of their own, like the loader
+        $hidden = [...(array) $this->profile()->setting('hidden_packages', []), GoldSrc::ENGINE, GoldSrc::BOTS];
         $installs = $this->installer()->installs()->reject(fn (ModInstall $install) => in_array($install->package, $hidden, true))->values();
 
         $this->installer()->fillSizes($installs);

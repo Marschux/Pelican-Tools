@@ -126,6 +126,62 @@ trait ManagesLoader
         $this->closeConfirm();
     }
 
+    /** YaPB's row, null until it is in. */
+    public function botsInstall(): ?ModInstall
+    {
+        $bots = $this->goldsrc() ? $this->installer()->installs()->firstWhere('package', GoldSrc::BOTS) : null;
+
+        if ($bots) {
+            $this->installer()->fillSizes(new Collection([$bots]));
+        }
+
+        return $bots;
+    }
+
+    /** What the gear of YaPB's row opens. */
+    public function botsConfig(): string
+    {
+        return trim((string) $this->profile()->setting('game_dir'), '/') . '/addons/yapb/conf/yapb.cfg';
+    }
+
+    /** Installs or updates YaPB and hooks it into Metamod. */
+    public function installBots(): void
+    {
+        $this->requirePermission(SubuserPermission::FileCreate);
+        $this->requirePermission(SubuserPermission::FileUpdate);
+
+        try {
+            $bots = $this->installer()->installBots();
+        } catch (Throwable $exception) {
+            $this->fail($exception);
+
+            return;
+        }
+
+        $this->markRestart();
+
+        Notification::make()->title(trans('game-manager::mods.messages.installed', ['name' => "$bots->name $bots->version"]))->body(trans('game-manager::mods.messages.restart'))->success()->send();
+    }
+
+    public function removeBots(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        $this->confirm = ['type' => 'remove_bots', 'name' => 'YaPB', 'packages' => []];
+        $this->dispatch('open-modal', id: 'mod-confirm');
+    }
+
+    public function confirmRemoveBots(): void
+    {
+        $this->requirePermission(SubuserPermission::FileDelete);
+
+        if (($this->confirm['type'] ?? null) === 'remove_bots') {
+            $this->attempt(fn () => $this->installer()->uninstallBots(), trans('game-manager::mods.messages.removed', ['name' => $this->confirm['name']]));
+        }
+
+        $this->closeConfirm();
+    }
+
     public function removeLoader(): void
     {
         $this->requirePermission(SubuserPermission::FileDelete);

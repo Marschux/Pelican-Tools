@@ -104,6 +104,8 @@ assert(Installer::withMetamodPlugin('', $amxx) === "linux $amxx\n");
 assert(Installer::withMetamodPlugin("linux addons/x.so\n", $amxx) === "linux addons/x.so\nlinux $amxx\n");
 assert(Installer::withMetamodPlugin("linux $amxx\r\n", $amxx) === "linux $amxx\r\n", 'there already');
 assert(Installer::withMetamodPlugin("; linux $amxx\n", $amxx) === "; linux $amxx\nlinux $amxx\n", 'commented out is not there');
+assert(Installer::withoutMetamodPlugin("linux $amxx\nlinux addons/yapb/bin/yapb.so\n", 'addons/yapb/bin/yapb.so') === "linux $amxx\n");
+assert(Installer::withoutMetamodPlugin("linux $amxx\r\n", 'addons/yapb/bin/yapb.so') === "linux $amxx\n", 'others stay');
 
 assert(Installer::goldsrcFile('addons/metamod/metamod_i386.so') && !Installer::goldsrcFile('addons/metamod/metamod.dll'));
 assert(Installer::goldsrcFile('addons/amxmodx/plugins/admin.amxx') && !Installer::goldsrcFile('addons/amxmodx/scripting/admin.sma'));

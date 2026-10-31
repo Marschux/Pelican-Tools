@@ -120,6 +120,91 @@ trait HandlesGoldSrc
     }
 
     /**
+     * YaPB into the game folder's addons/yapb and into Metamod's plugins.ini. Its configs
+     * already there are kept through an update, the waypoints it worked out stay too.
+     */
+    public function installBots(): ModInstall
+    {
+        $release = (new GoldSrc())->botsRelease();
+        $game = $this->gameDir();
+        $scratch = '.game-manager/bots';
+        $ours = $this->installs()->firstWhere('package', GoldSrc::BOTS)?->files ?? [];
+        $moves = [];
+        $kept = [];
+
+        $this->files->delete($this->files->exists($scratch) ? [$scratch] : []);
+
+        try {
+            $url = $release['parts'][0]['url'];
+            $file = basename((string) parse_url($url, PHP_URL_PATH));
+
+            $this->files->pull($url, $scratch, $file);
+            $this->files->decompress($scratch, $file);
+
+            foreach ($this->files->walk("$scratch/addons/yapb") as $path) {
+                $to = "$game/addons/yapb/$path";
+
+                if (in_array(substr($path, strlen('data/')), self::YAPB_FOLDERS, true)) {
+                    continue;
+                }
+
+                if (in_array($to, $ours, true) && self::keptOnUpdate($to)) {
+                    $kept[] = $to;
+
+                    continue;
+                }
+
+                $moves[] = ['from' => "$scratch/addons/yapb/$path", 'to' => $to];
+            }
+
+            // Wings will not move onto a file
+            $this->files->delete(array_values(array_intersect($ours, array_column($moves, 'to'))));
+            $this->files->move($moves);
+        } finally {
+            $this->files->delete([$scratch]);
+        }
+
+        // where YaPB writes its logs and what it learns: empty folders in the archive, which Wings
+        // unpacks as empty files - one left by an earlier install makes way
+        $data = $this->files->list("$game/addons/yapb/data");
+        $this->files->delete(array_map(fn (string $folder) => "$game/addons/yapb/data/$folder", array_keys(array_filter($data, fn (bool $isDirectory, string $name) => !$isDirectory && in_array($name, self::YAPB_FOLDERS, true), ARRAY_FILTER_USE_BOTH))));
+
+        foreach (self::YAPB_FOLDERS as $folder) {
+            if (!($data[$folder] ?? false)) {
+                $this->files->mkdir("$game/addons/yapb/data/$folder");
+            }
+        }
+
+        $plugins = "$game/addons/metamod/plugins.ini";
+        $this->files->write($plugins, self::withMetamodPlugin((string) $this->files->read($plugins), self::YAPB_DLL));
+
+        return ModInstall::query()->updateOrCreate(
+            ['server_id' => $this->server->id, 'package' => GoldSrc::BOTS],
+            [
+                'name' => $release['name'],
+                'version' => $release['version'],
+                'icon' => null,
+                'dependency' => false,
+                'requires' => [],
+                'files' => array_values(array_unique([...array_column($moves, 'to'), ...$kept])),
+                'size' => null,
+            ],
+        );
+    }
+
+    /** YaPB gone: its whole folder, with what it wrote, and its line in plugins.ini. */
+    public function uninstallBots(): void
+    {
+        $game = $this->gameDir();
+        $plugins = "$game/addons/metamod/plugins.ini";
+
+        $this->files->write($plugins, self::withoutMetamodPlugin((string) $this->files->read($plugins), self::YAPB_DLL));
+        $this->files->delete($this->files->exists("$game/addons/yapb") ? ["$game/addons/yapb"] : []);
+
+        $this->installs()->firstWhere('package', GoldSrc::BOTS)?->delete();
+    }
+
+    /**
      * Where a file of the engine's archives goes, from the server root - null to leave it out.
      * ReHLDS: its Linux build to the root. ReGameDLL: its cstrike folder to the game folder (it
      * serves Condition Zero as well). ReAPI: only the module, AMX Mod X loads it.
@@ -177,6 +262,14 @@ trait HandlesGoldSrc
         }
 
         return ($ini === '' ? '' : rtrim($ini, "\r\n") . "\n") . "linux $dll\n";
+    }
+
+    /** Metamod's plugins.ini without the lines loading $dll. */
+    public static function withoutMetamodPlugin(string $ini, string $dll): string
+    {
+        $lines = array_filter(preg_split('/\r?\n/', $ini), fn (string $line) => !preg_match('/^\s*linux\s+(\S+)/', $line, $match) || $match[1] !== $dll);
+
+        return implode("\n", $lines);
     }
 
     /**

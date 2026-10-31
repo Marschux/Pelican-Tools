@@ -143,6 +143,11 @@ return [
         'remove_body' => 'Vuelven el motor y la biblioteca del juego de Valve, el servidor funciona de nuevo como lo instaló steamcmd. Los plugins que necesitan ReAPI dejan de cargarse.',
     ],
 
+    'bots' => [
+        'hint' => 'Opcional, jugadores controlados por el ordenador. Cuántos y qué tan buenos: yapb.cfg.',
+        'remove_body' => 'YaPB se borra con sus configs y los waypoints que generó, y se quita del plugins.ini de Metamod.',
+    ],
+
     'loader_plugins' => [
         'heading' => 'Plugins de AMX Mod X',
         'hint' => 'Los plugins de plugins.ini: los que trae AMX Mod X y los añadidos a mano. Desactivado, la línea queda comentada.',

@@ -61,6 +61,12 @@ class Installer
 
     private const AMXX_DLL = 'addons/amxmodx/dlls/amxmodx_mm_i386.so';
 
+    /** YaPB's library, as Metamod's plugins.ini loads it */
+    private const YAPB_DLL = 'addons/yapb/bin/yapb.so';
+
+    /** the folders below addons/yapb/data it writes to */
+    private const YAPB_FOLDERS = ['logs', 'pwf', 'train'];
+
     /** AMX Mod X's own configs: an uploaded zip that brings one along never gets it, nor deletes it */
     private const AMXX_CONFIGS = ['amxx.cfg', 'sql.cfg', 'custommenuitems.cfg', 'plugins.ini', 'modules.ini', 'users.ini', 'core.ini', 'configs.ini', 'cmdaccess.ini', 'clcmds.ini', 'cmds.ini', 'cvars.ini', 'maps.ini', 'speech.ini', 'stats.ini', 'miscstats.ini'];
 
@@ -387,7 +393,7 @@ class Installer
 
             // thunderstore numbers are plain semver, plugin versions are anything ("v5.5.71-bukkit"):
             // there the newest for the game version simply differs from what is installed
-            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE, Source1::PACKAGE, Source2::PACKAGE], true) || str_starts_with($install->package, GitHub::PREFIX) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
+            if (self::jarPackage($install->package) || in_array($install->package, [GoldSrc::PACKAGE, GoldSrc::ENGINE, GoldSrc::BOTS, Source1::PACKAGE, Source2::PACKAGE], true) || str_starts_with($install->package, GitHub::PREFIX) ? $latest !== $install->version : version_compare($latest, $install->version, '>')) {
                 $updates[$install->package] = $latest;
             }
         }
@@ -648,7 +654,7 @@ class Installer
     private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|Source1|Source2|GitHub|GameBanana
     {
         return match (true) {
-            $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE => new GoldSrc(),
+            $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE, $package === GoldSrc::BOTS => new GoldSrc(),
             $package === Source1::PACKAGE => new Source1(),
             $package === Source2::PACKAGE => new Source2(),
             str_starts_with($package, GitHub::PREFIX) => new GitHub(),

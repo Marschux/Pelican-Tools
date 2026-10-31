@@ -4,6 +4,7 @@ namespace Marschux\GameManager\Concerns;
 
 use Illuminate\Database\Eloquent\Collection;
 use Marschux\GameManager\Models\ModInstall;
+use Marschux\GameManager\Sources\GoldSrc;
 use RuntimeException;
 
 /** Configs: which belong to a mod, and reading, writing and deleting them from the page. Part of Installer. */
@@ -153,10 +154,14 @@ trait HandlesConfigs
             ->keys()
             ->flatMap(fn (string $folder) => collect($this->files->list("$cfg/$folder"))->reject()->keys()->map(fn (string $file) => "$cfg/$folder/$file"))
             ->all();
+        // GoldSrc: YaPB keeps its configs beside itself, not in AMX Mod X's folder
+        $bots = $this->goldsrc() && $this->installs()->contains('package', GoldSrc::BOTS) ? $this->gameDir() . '/addons/yapb/conf' : null;
+        $yapb = $bots === null ? [] : collect($this->files->list($bots))->reject()->keys()->map(fn (string $file) => "$bots/$file")->all();
 
         return collect($this->files->walk($directory))
             ->map(fn (string $path) => "$directory/$path")
             ->concat($metamod)
+            ->concat($yapb)
             ->filter(fn (string $path) => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), self::CONFIG_TYPES, true))
             ->sort()
             ->values()
