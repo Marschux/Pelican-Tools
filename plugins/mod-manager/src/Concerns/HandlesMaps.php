@@ -24,7 +24,7 @@ trait HandlesMaps
 
         $folder = $this->gameDir() . '/maps';
         $extension = $this->source2() ? '.vpk' : '.bsp';
-        $known = $this->installs()->pluck('files')->flatten()->all();
+        $known = $this->knownFiles();
         $found = [];
 
         foreach ($this->files->list($folder) as $name => $isDirectory) {

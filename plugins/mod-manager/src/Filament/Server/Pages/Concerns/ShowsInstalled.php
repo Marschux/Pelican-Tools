@@ -20,23 +20,32 @@ use Marschux\ModManager\Sources\Workshop;
 trait ShowsInstalled
 {
     /**
-     * The installed tab's pills, key => [label, icon], each only on a game that has such things or
-     * where some are installed already. Paper has no mods: plugins, datapacks, resource packs.
+     * The installed tab's pills, key => [label, icon, empty icon, empty text], each only on a game
+     * that has such things or where some are installed already. Paper has no mods: plugins,
+     * datapacks, resource packs.
      *
-     * @return array<string, array{0: string, 1: string}>
+     * @return array<string, array{0: string, 1: string, 2: string, 3: string}>
      */
     public function sections(): array
     {
-        $kinds = $this->installer()->installs()->map(fn ($install) => $this->type($install->package)[0]);
-        $jars = $this->jarMods();
+        return once(function () {
+            $kinds = $this->installer()->installs()->map(fn ($install) => $this->type($install->package)[0]);
+            $jars = $this->jarMods();
 
-        return array_filter([
-            'mods' => !$jars || $kinds->contains('mod') ? ['mod-manager::mods.tabs.mods', 'tabler-puzzle'] : null,
-            'plugins' => $this->archiveLoader() || $jars || $kinds->contains('plugin') ? ['mod-manager::mods.tabs.plugins', 'tabler-plug'] : null,
-            'datapacks' => $jars || $kinds->contains('datapack') ? ['mod-manager::mods.kinds.datapack', 'tabler-package'] : null,
-            'resourcepacks' => $jars || $kinds->contains('resourcepack') ? ['mod-manager::mods.kinds.resourcepack', 'tabler-photo'] : null,
-            'maps' => $this->archiveLoader() || $kinds->contains('map') ? ['mod-manager::mods.tabs.maps', 'tabler-map'] : null,
-        ]);
+            return array_filter([
+                'mods' => !$jars || $kinds->contains('mod') ? ['mod-manager::mods.tabs.mods', 'tabler-puzzle', 'tabler-package-off', 'mod-manager::mods.nothing_installed'] : null,
+                'plugins' => $this->archiveLoader() || $jars || $kinds->contains('plugin') ? ['mod-manager::mods.tabs.plugins', 'tabler-plug', 'tabler-plug-off', 'mod-manager::mods.nothing_plugins'] : null,
+                'datapacks' => $jars || $kinds->contains('datapack') ? ['mod-manager::mods.kinds.datapack', 'tabler-package', 'tabler-package-off', 'mod-manager::mods.nothing_yet'] : null,
+                'resourcepacks' => $jars || $kinds->contains('resourcepack') ? ['mod-manager::mods.kinds.resourcepack', 'tabler-photo', 'tabler-photo-off', 'mod-manager::mods.nothing_yet'] : null,
+                'maps' => $this->archiveLoader() || $kinds->contains('map') ? ['mod-manager::mods.tabs.maps', 'tabler-map', 'tabler-map-off', 'mod-manager::mods.nothing_maps'] : null,
+            ]);
+        });
+    }
+
+    /** The pill shown: the one picked if this game has it, else its first. */
+    public function section(): string
+    {
+        return isset($this->sections()[$this->section]) ? $this->section : (string) array_key_first($this->sections());
     }
 
     /** The pill an install shows under, see sections(). */
@@ -51,9 +60,9 @@ trait ShowsInstalled
         };
     }
 
-    public function playerList(): string
+    public function loadPlayerList(): void
     {
-        return $this->installer()->playerList();
+        $this->playerList = $this->installer()->playerList();
     }
 
     /** The site a package comes from, by its id. */

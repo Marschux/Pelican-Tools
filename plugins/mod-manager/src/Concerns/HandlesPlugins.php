@@ -253,16 +253,6 @@ trait HandlesPlugins
         return $install;
     }
 
-    /** A zip of a GitHub release, e.g. a CounterStrikeSharp plugin, or an AMX Mod X .amxx: pulled by Wings, then like an upload. */
-    public function installGitHub(string $repository, string $asset): ModInstall
-    {
-        $release = (new GitHub())->release($repository);
-        $picked = collect($release['assets'])->firstWhere('name', $asset)
-            ?? throw new RuntimeException(trans('mod-manager::mods.messages.github_none', ['repository' => $repository]));
-
-        return $this->installGitHubAsset(GitHub::package($repository, $picked['name']), $picked, $release['tag']);
-    }
-
     /** @param  array{name: string, url: string}  $asset */
     private function installGitHubAsset(string $package, array $asset, string $tag): ModInstall
     {

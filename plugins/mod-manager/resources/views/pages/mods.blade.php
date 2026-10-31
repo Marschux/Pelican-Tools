@@ -10,8 +10,7 @@
     $versions = $this->installedVersions();
     $updates = $onInstalled ? $this->updates() : [];
     // the installed tab shows one section at a time and only asks Wings for that one's files
-    // the pill picked if this game has it, else its first one
-    $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : array_key_first($this->sections())) : null;
+    $section = $onInstalled ? $this->section() : null;
     // what was put on the server by hand: plugins on Counter-Strike and Paper, mods elsewhere (Valheim)
     $unmanaged = match ($section) {
         $this->archiveLoader() || $this->jarMods() ? 'plugins' : 'mods' => $this->unmanaged(),
@@ -23,8 +22,9 @@
     $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
-    $relations = $tab === 'installed' ? $this->relations() : [];
-    $loaderInstall = $tab === 'installed' ? $this->loaderInstall() : null;
+    $relations = $onInstalled ? $this->relations() : [];
+    // the loader's row is in the mods section only
+    $loaderInstall = $section === 'mods' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own
     $canEngine = $section === 'mods' && $this->goldsrc();
     $engineInstall = $canEngine ? $this->engineInstall() : null;
@@ -135,32 +135,20 @@
             {{-- amber like the restart note while a change waits for it --}}
             <x-filament::button size="sm" :color="$this->needsRestart() ? 'warning' : 'gray'" icon="tabler-refresh" :tooltip="trans('mod-manager::mods.restart.header')" label-sr-only wire:click="restart" wire:confirm="{{ trans('mod-manager::mods.restart.confirm') }}">{{ trans('mod-manager::mods.restart.header') }}</x-filament::button>
         @endif
-        <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' })">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
+        <x-filament::button size="sm" color="gray" icon="tabler-users" x-on:click="$dispatch('open-modal', { id: 'mod-players' }); $wire.loadPlayerList()">{{ trans('mod-manager::mods.players.button') }}</x-filament::button></div>
     </div>
 
     @if ($onInstalled)
         @php
             // mods: the loader, the engine and everything but plugins and maps; plugins: what was uploaded or linked, plus the loader's own
             $installed = $installed->filter(fn ($install) => $this->sectionOf($install->package) === $section)->values();
-            $empty = match ($section) {
-                'mods' => $installed->isEmpty() && !$loaderInstall && !$loader && !$unmanaged,
-                'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
-                'maps' => $installed->isEmpty() && !$unmanaged,
-                default => $installed->isEmpty(),
-            };
+            // what a section does not show is empty already
+            $empty = $installed->isEmpty() && !$unmanaged && !$loaderPlugins && !($section === 'mods' && ($loaderInstall || $loader));
         @endphp
         @include('mod-manager::pages.mods.installed-table')
 
         @if ($empty)
-            <x-filament::section>
-                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                    <x-filament::icon :icon="['plugins' => 'tabler-plug-off', 'maps' => 'tabler-map-off', 'resourcepacks' => 'tabler-photo-off'][$section] ?? 'tabler-package-off'" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans(['mods' => 'mod-manager::mods.nothing_installed', 'plugins' => 'mod-manager::mods.nothing_plugins', 'maps' => 'mod-manager::mods.nothing_maps'][$section] ?? 'mod-manager::mods.nothing_yet') }}</span>
-                    @if ($addTabs->isNotEmpty())
-                        <x-filament::button color="gray" icon="tabler-plus" wire:click="{{ $openAdd($addFirst) }}">{{ trans('mod-manager::mods.tabs.add') }}</x-filament::button>
-                    @endif
-                </div>
-            </x-filament::section>
+            @include('mod-manager::pages.mods.empty', ['icon' => $this->sections()[$section][2], 'text' => trans($this->sections()[$section][3]), 'action' => $addTabs->isNotEmpty() ? $openAdd($addFirst) : null])
         @endif
 
         @include('mod-manager::pages.mods.unmanaged')
@@ -173,12 +161,7 @@
     @elseif ($tab === 'configs')
         @include('mod-manager::pages.mods.configs')
         @unless ($configs)
-            <x-filament::section>
-                <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 0;text-align:center">
-                    <x-filament::icon icon="tabler-settings-off" style="width:2.5rem;height:2.5rem;opacity:.5" />
-                    <span style="opacity:.7">{{ trans('mod-manager::mods.config.hint') }}</span>
-                </div>
-            </x-filament::section>
+            @include('mod-manager::pages.mods.empty', ['icon' => 'tabler-settings-off', 'text' => trans('mod-manager::mods.config.hint')])
         @endunless
     @elseif ($tab === 'upload')
         <x-filament::section>
@@ -215,9 +198,6 @@
             default => 'mod-manager::mods.players.hint',
         }) }}</x-slot>
 
-        @php
-            $playerList = $this->playerList();
-        @endphp
         <div x-data="{ copied: false }">
             <textarea readonly x-ref="list" rows="12" style="width:100%;font-family:monospace;font-size:.8rem;padding:.75rem;border-radius:.5rem;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:inherit">{{ $playerList }}</textarea>
             <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem">

@@ -5,7 +5,6 @@ return [
 
     'tabs' => [
         'installed' => 'Installiert',
-        'browse' => 'Durchsuchen',
         'upload_maps' => 'Maps hochladen',
         'links' => 'Per Link',
         'add' => 'Hinzufügen',

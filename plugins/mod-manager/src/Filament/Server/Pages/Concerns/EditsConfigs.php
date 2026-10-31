@@ -26,7 +26,7 @@ trait EditsConfigs
             $folders = [];
             $missing = [];
 
-            foreach (AccessList::definitionsFor($this->server()) as $key => $definition) {
+            foreach ($this->accessLists() as $key => $definition) {
                 $folder = dirname($definition->path) === '.' ? '' : dirname($definition->path);
                 $folders[$folder] ??= $files->list($folder);
 
@@ -37,6 +37,12 @@ trait EditsConfigs
 
             return $missing;
         });
+    }
+
+    /** @return array<string, ListDefinition> the egg's access list files, one query per request */
+    private function accessLists(): array
+    {
+        return once(fn () => AccessList::definitionsFor($this->server()));
     }
 
     /** The editor saved a list: a file it created loses its dashed pill. */
@@ -50,7 +56,7 @@ trait EditsConfigs
             return [];
         }
 
-        return once(fn () => array_map(fn (ListDefinition $definition) => $definition->label, AccessList::definitionsFor($this->server())));
+        return array_map(fn (ListDefinition $definition) => $definition->label, $this->accessLists());
     }
 
     /** The pill shown: the one picked if this server still has it, else the first list, else the mods' configs. */

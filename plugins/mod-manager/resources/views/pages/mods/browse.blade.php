@@ -1,11 +1,6 @@
 @if ($this->needsSteamKey())
     {{-- no key, no browsing: what to do instead of an empty grid --}}
-    <x-filament::section>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:2rem 1rem;text-align:center">
-            <x-filament::icon icon="tabler-key" style="width:2.5rem;height:2.5rem;opacity:.5" />
-            <span style="opacity:.8;max-width:40rem">{{ trans('mod-manager::mods.workshop.key_hint') }}</span>
-        </div>
-    </x-filament::section>
+    @include('mod-manager::pages.mods.empty', ['icon' => 'tabler-key', 'text' => trans('mod-manager::mods.workshop.key_hint')])
 @else
 @php
     $gameVersion = $this->gameVersion();

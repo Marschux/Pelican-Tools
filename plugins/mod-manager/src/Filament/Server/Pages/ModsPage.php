@@ -53,6 +53,9 @@ class ModsPage extends Page
     /** what the installed tab shows: mods | plugins | datapacks | resourcepacks | maps, see sections() */
     public string $section = 'mods';
 
+    /** the player list's text, loaded when its modal opens */
+    public string $playerList = '';
+
     /** the sub tab "add" opened last: a browse key, upload or links */
     public string $addTab = '';
 
@@ -147,7 +150,7 @@ class ModsPage extends Page
         // a cold source API costs up to a second
         $this->tab = 'installed';
         // a pill this game does not have (configs was one, before it became a tab)
-        $this->section = in_array($this->section, array_keys($this->sections()), true) ? $this->section : (string) array_key_first($this->sections());
+        $this->section = $this->section();
     }
 
     private function remember(): void
@@ -185,7 +188,8 @@ class ModsPage extends Page
     public function setSection(string $section): void
     {
         $this->tab = 'installed';
-        $this->section = in_array($section, array_keys($this->sections()), true) ? $section : (string) array_key_first($this->sections());
+        $this->section = $section;
+        $this->section = $this->section();
         $this->remember();
     }
 

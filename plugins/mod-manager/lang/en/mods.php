@@ -5,7 +5,6 @@ return [
 
     'tabs' => [
         'installed' => 'Installed',
-        'browse' => 'Browse',
         // the browse tab names where its tiles come from and what they are
         'upload_maps' => 'Upload maps',
         'links' => 'By link',

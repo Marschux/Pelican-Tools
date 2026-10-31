@@ -3,9 +3,7 @@
 namespace Marschux\ModManager\Livewire;
 
 use App\Enums\SubuserPermission;
-use App\Facades\Activity;
 use App\Models\Server;
-use App\Repositories\Daemon\DaemonFileRepository;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -15,7 +13,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -25,6 +22,7 @@ use Marschux\ModManager\Lists\ListFile;
 use Marschux\ModManager\Lists\MinecraftUuid;
 use Marschux\ModManager\Lists\Presets;
 use Marschux\ModManager\Models\AccessList;
+use Marschux\ModManager\ServerFiles;
 use Throwable;
 
 /**
@@ -37,9 +35,6 @@ use Throwable;
 class AccessListEditor extends Component implements HasForms
 {
     use InteractsWithForms;
-
-    /** Far above any real list file, only there to refuse something absurd. */
-    private const MAX_FILE_BYTES = 1048576;
 
     #[Locked]
     public Server $server;
@@ -129,7 +124,7 @@ class AccessListEditor extends Component implements HasForms
             $content = match (true) {
                 (bool) ($state['raw'] ?? false) => $this->rawContent($definition, (string) ($state['text'] ?? '')),
                 $definition->isPairs() => ListFile::buildPairs(
-                    $this->readFile($definition->path) ?? '',
+                    $this->files()->read($definition->path) ?? '',
                     // the editor's blank row is no setting
                     array_filter(array_map(strval(...), $state['pairs'] ?? []), fn (string $value, int|string $key) => trim((string) $key) !== '', ARRAY_FILTER_USE_BOTH),
                     $definition->pairTemplate(),
@@ -143,7 +138,7 @@ class AccessListEditor extends Component implements HasForms
         }
 
         try {
-            $this->files()->putContent($definition->path, $content);
+            $this->files()->write($definition->path, $content);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -152,14 +147,13 @@ class AccessListEditor extends Component implements HasForms
             return;
         }
 
-        Activity::event('server:file.write')->property('file', $definition->path)->log();
-
         // a page showing the file as missing redraws its pill
         $this->dispatch('mod-manager-list-saved');
 
         Notification::make()->title(trans('mod-manager::lists.messages.saved'))->success()->send();
 
-        $this->read();
+        // what was just written, no need to ask Wings again
+        $this->read($content);
     }
 
     /** Text mode writes the file as typed; json at least has to parse, or the game cannot read it. */
@@ -175,7 +169,7 @@ class AccessListEditor extends Component implements HasForms
     /** @param  string[]  $entries */
     private function builtContent(ListDefinition $definition, array $entries): string
     {
-        $current = $this->readFile($definition->path);
+        $current = $this->files()->read($definition->path);
 
         if (!$definition->isJson()) {
             $template = $definition->lineTemplate();
@@ -194,7 +188,7 @@ class AccessListEditor extends Component implements HasForms
             throw new ListEditException(trans('mod-manager::lists.messages.unreadable'));
         }
 
-        $offline = $definition->needsUuid() && MinecraftUuid::isOfflineMode($this->readFile('server.properties'));
+        $offline = $definition->needsUuid() && MinecraftUuid::isOfflineMode($this->files()->read('server.properties'));
 
         return ListFile::encodeJson(ListFile::buildJson(
             $existing,
@@ -263,8 +257,8 @@ class AccessListEditor extends Component implements HasForms
         return $uuid;
     }
 
-    /** Reads the file and refills the form from it. */
-    private function read(): void
+    /** Reads the file - or takes what was just saved - and refills the form from it. */
+    private function read(?string $saved = null): void
     {
         $definition = $this->definition();
 
@@ -272,7 +266,8 @@ class AccessListEditor extends Component implements HasForms
             return;
         }
 
-        $content = $this->readFile($definition->path);
+        // null when the file does not exist yet, normal for a list nobody has used
+        $content = $saved ?? $this->files()->read($definition->path);
         $this->fileExisted = $content !== null;
 
         $entries = $definition->isJson()
@@ -298,28 +293,14 @@ class AccessListEditor extends Component implements HasForms
         $this->missing = !$this->fileExisted;
     }
 
-    /** Null when the file does not exist yet, which is normal for a list nobody has used. */
-    private function readFile(string $path): ?string
-    {
-        try {
-            return (string) $this->files()->getContent($path, self::MAX_FILE_BYTES);
-        } catch (FileNotFoundException) {
-            return null;
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return null;
-        }
-    }
-
     /** Only a file configured for this server's egg - the key comes from the embedding page. */
     private function definition(): ?ListDefinition
     {
         return once(fn () => AccessList::definitionsFor($this->server)[$this->file] ?? null);
     }
 
-    private function files(): DaemonFileRepository
+    private function files(): ServerFiles
     {
-        return app(DaemonFileRepository::class)->setServer($this->server);
+        return new ServerFiles($this->server);
     }
 }

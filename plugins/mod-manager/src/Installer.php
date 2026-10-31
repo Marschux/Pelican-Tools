@@ -266,6 +266,12 @@ class Installer
         return $this->installs()->where('package', '!=', $package)->pluck('files')->flatten()->all();
     }
 
+    /** @return string[] every file the page put on the server */
+    private function knownFiles(): array
+    {
+        return $this->installs()->pluck('files')->flatten()->all();
+    }
+
     private function goldsrc(): bool
     {
         return $this->profile->setting('loader_type') === 'goldsrc';

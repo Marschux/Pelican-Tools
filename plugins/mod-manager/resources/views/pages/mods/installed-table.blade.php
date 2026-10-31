@@ -3,11 +3,12 @@
     @php
         $updatable = $installed->filter(fn ($install) => isset($updates[$install->package]) && !$install->pinned)->count();
         // filter by type, in the browser, loader and engine rows count too
+        $installedTypes = $installed->map(fn ($install) => $this->type($install->package)[0]);
         $types = collect([$withLoader && $loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null])
-            ->concat($installed->map(fn ($install) => $this->type($install->package)[0])->sort())
+            ->concat($installedTypes->sort())
             ->filter()->unique()->values();
         // the filter only where the section mixes types; without it or an update note the header goes
-        $hasFilter = $installed->map(fn ($install) => $this->type($install->package)[0])->unique()->count() > 1;
+        $hasFilter = $installedTypes->unique()->count() > 1;
         $hasHeader = $hasFilter || !$this->updatesChecked || ($updatable && $canUpdate);
     @endphp
     {{-- the section brings an x-data of its own, so the filter state lives around it --}}

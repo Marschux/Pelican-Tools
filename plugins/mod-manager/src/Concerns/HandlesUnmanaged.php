@@ -16,7 +16,7 @@ trait HandlesUnmanaged
      */
     public function unmanaged(): array
     {
-        $known = $this->installs()->pluck('files')->flatten()->all();
+        $known = $this->knownFiles();
 
         if ($this->goldsrc()) {
             return $this->unmanagedAmxx($known);
@@ -142,7 +142,7 @@ trait HandlesUnmanaged
     /** Deletes something hand-installed - only what unmanaged() lists, nothing else. */
     public function removeUnmanaged(string $path): void
     {
-        if (collect($this->unmanagedMaps())->contains('path', $path)) {
+        if (preg_match('/\.(bsp|vpk)\z/i', $path) && collect($this->unmanagedMaps())->contains('path', $path)) {
             // the map's companions beside it go along: navigation mesh, resources, overview text
             $base = substr(basename($path), 0, -4);
             $folder = dirname($path);
