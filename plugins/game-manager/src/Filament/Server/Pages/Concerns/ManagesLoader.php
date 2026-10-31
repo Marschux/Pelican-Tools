@@ -138,6 +138,12 @@ trait ManagesLoader
         return $bots;
     }
 
+    /** YaPB is offered for Counter-Strike 1.6 only - Condition Zero has bots of its own. */
+    public function canBots(): bool
+    {
+        return $this->goldsrc() && trim((string) $this->profile()->setting('game_dir'), '/') === 'cstrike';
+    }
+
     /** What the gear of YaPB's row opens. */
     public function botsConfig(): string
     {

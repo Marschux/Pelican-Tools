@@ -29,6 +29,7 @@
     $canEngine = $section === 'mods' && $this->goldsrc();
     $engineInstall = $canEngine ? $this->engineInstall() : null;
     // and YaPB's bots, a Metamod plugin with a row of its own as well
+    $canBots = $canEngine && $this->canBots();
     $botsInstall = $canEngine ? $this->botsInstall() : null;
     // without a running loader no mod loads, switched on or not
     $loaderRuns = !$loader || ($loader['installed'] && $loader['started']);
