@@ -11,42 +11,29 @@ use RuntimeException;
 trait HandlesMaps
 {
     /**
-     * The maps a game ships with, per loader and game folder: they are in maps/ from the start,
-     * so they are no map put there by hand. Space separated, without .bsp.
-     */
-    private const STOCK_MAPS = [
-        'goldsrc:cstrike' => 'as_oilrig cs_747 cs_assault cs_backalley cs_estate cs_havana cs_italy cs_militia cs_office cs_siege de_airstrip de_aztec de_cbble de_chateau de_dust de_dust2 de_inferno de_nuke de_piranesi de_prodigy de_storm de_survivor de_torn de_train de_vertigo',
-        'goldsrc:czero' => 'cs_downed_cz cs_havana_cz cs_italy_cz cs_militia_cz cs_office_cz de_airstrip_cz de_aztec_cz de_cbble_cz de_chateau_cz de_corruption_cz de_dust2_cz de_dust_cz de_fastline_cz de_inferno_cz de_piranesi_cz de_prodigy_cz de_sienna_cz de_stadium_cz de_tides_cz de_torn_cz de_truth_cz de_vostok_cz',
-        'source1:cstrike' => 'cs_assault cs_compound cs_havana cs_italy cs_militia cs_office de_aztec de_cbble de_chateau de_dust de_dust2 de_inferno de_nuke de_piranesi de_port de_prodigy de_tides de_train test_hardware test_speakers',
-        'source1:csgo' => 'ar_baggage ar_dizzy ar_lunacy ar_monastery ar_shoots coop_cementplant coop_kasbah cs_agency cs_assault cs_climb cs_insertion2 cs_italy cs_militia cs_office de_ancient de_anubis de_bank de_basalt de_blagai de_boyard de_cache de_canals de_chalice de_dust2 de_extraction de_inferno de_lake de_mirage de_nuke de_overpass de_ravine de_safehouse de_shortdust de_shortnuke de_stmarc de_sugarcane de_train de_tuscan de_vertigo dz_blacksite dz_county dz_ember dz_frostbite dz_sirocco dz_vineyard gd_cbble gd_crashsite gd_lake gd_rialto lobby_mapveto training1',
-    ];
-
-    /**
-     * Maps put into maps/ by hand: a .bsp that neither came with the game nor through this page.
-     * Not on Counter-Strike 2, its maps come from the workshop.
+     * Every map in maps/ that did not come through this page - the game's own included, so one
+     * can go with a click. A .bsp, on Counter-Strike 2 a .vpk.
      *
      * @return array<int, array{path: string, name: string, version: null, package: null}>
      */
     public function unmanagedMaps(): array
     {
-        if (!$this->goldsrc() && !$this->source1()) {
+        if (!$this->goldsrc() && !$this->source1() && !$this->source2()) {
             return [];
         }
 
-        $game = $this->gameDir();
-        $stock = explode(' ', self::STOCK_MAPS[($this->goldsrc() ? 'goldsrc:' : 'source1:') . $game] ?? '');
+        $folder = $this->gameDir() . '/maps';
+        $extension = $this->source2() ? '.vpk' : '.bsp';
         $known = $this->installs()->pluck('files')->flatten()->all();
         $found = [];
 
-        foreach ($this->files->list("$game/maps") as $name => $isDirectory) {
-            $map = substr($name, 0, -4);
-
-            if (!$isDirectory && str_ends_with(strtolower($name), '.bsp') && !in_array($map, $stock, true) && !in_array("$game/maps/$name", $known, true)) {
-                $found[] = ['path' => "$game/maps/$name", 'name' => $map, 'version' => null, 'package' => null];
+        foreach ($this->files->list($folder) as $name => $isDirectory) {
+            if (!$isDirectory && str_ends_with(strtolower($name), $extension) && !in_array("$folder/$name", $known, true)) {
+                $found[] = ['path' => "$folder/$name", 'name' => substr($name, 0, -4), 'version' => null, 'package' => null];
             }
         }
 
-        return $found;
+        return collect($found)->sortBy('name')->values()->all();
     }
 
     /** Counter-Strike 2: a workshop map by id or link - nothing to download, the game fetches it. */

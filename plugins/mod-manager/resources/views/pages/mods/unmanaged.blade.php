@@ -1,6 +1,6 @@
 @if ($unmanaged)
     <x-filament::section>
-        <x-slot name="heading">{{ trans('mod-manager::mods.unmanaged.heading') }}</x-slot>
+        <x-slot name="heading">{{ trans($section === 'maps' ? 'mod-manager::mods.unmanaged.heading_maps' : 'mod-manager::mods.unmanaged.heading') }} ({{ count($unmanaged) }})</x-slot>
         <x-slot name="description">{{ trans(match (true) { $section === 'maps' => 'mod-manager::mods.unmanaged.hint_maps', $this->goldsrc() => 'mod-manager::mods.unmanaged.hint_amxx', default => 'mod-manager::mods.unmanaged.hint' }) }}</x-slot>
 
         @foreach ($unmanaged as $entry)
