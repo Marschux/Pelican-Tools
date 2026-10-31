@@ -46,7 +46,7 @@ return [
     'no_versions' => 'Ninguna versión para la versión del juego de este servidor. Marca "También para otras versiones" para ver todas.',
     'optional' => 'Opcional',
     'loader_dependency' => 'Cargador de mods',
-    'show_client_side' => 'Mostrar mods solo de cliente',
+    'show_client_side' => 'Mostrar también mods de cliente',
     'show_deprecated' => 'Mostrar obsoletos',
     'show_all_versions' => 'También para otras versiones que :version',
     'used_by' => '{0} no lo usa ningún otro mod|{1} usado por 1 mod|[2,*] usado por :count mods',

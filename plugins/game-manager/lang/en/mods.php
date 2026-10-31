@@ -47,7 +47,7 @@ return [
     'no_versions' => 'No version for the game version of this server. Tick "Also for other versions" to see all.',
     'optional' => 'Optional',
     'loader_dependency' => 'Mod loader',
-    'show_client_side' => 'Show client-only mods',
+    'show_client_side' => 'Also show client-side mods',
     'show_deprecated' => 'Show deprecated',
     'show_all_versions' => 'Also for other versions than :version',
     'used_by' => '{0} used by no other mod|{1} used by 1 mod|[2,*] used by :count mods',

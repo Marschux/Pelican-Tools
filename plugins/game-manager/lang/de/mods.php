@@ -46,7 +46,7 @@ return [
     'no_versions' => 'Keine Version für die Spielversion dieses Servers. Mit „Auch für andere Versionen“ werden alle gezeigt.',
     'optional' => 'Optional',
     'loader_dependency' => 'Mod-Loader',
-    'show_client_side' => 'Nur-Client-Mods zeigen',
+    'show_client_side' => 'Auch reine Client-Mods zeigen',
     'show_deprecated' => 'Veraltete zeigen',
     'show_all_versions' => 'Auch für andere Versionen als :version',
     'used_by' => '{0} von keinem anderen Mod benutzt|{1} von 1 Mod benutzt|[2,*] von :count Mods benutzt',

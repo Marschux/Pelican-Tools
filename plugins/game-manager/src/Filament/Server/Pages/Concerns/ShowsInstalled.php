@@ -75,6 +75,7 @@ trait ShowsInstalled
             str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
             str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
+            str_starts_with($id, Workshop::PREFIX), str_starts_with($id, Workshop::COLLECTION) => Presets::SOURCES['workshop'],
             default => Presets::SOURCES['thunderstore'],
         };
     }
