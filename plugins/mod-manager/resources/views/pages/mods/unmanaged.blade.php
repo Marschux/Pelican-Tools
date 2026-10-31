@@ -1,5 +1,6 @@
 @if ($unmanaged)
-    <x-filament::section>
+    {{-- folds away; the maps list holds the game's own maps too, so it starts folded --}}
+    <x-filament::section collapsible :collapsed="$section === 'maps'">
         <x-slot name="heading">{{ trans($section === 'maps' ? 'mod-manager::mods.unmanaged.heading_maps' : 'mod-manager::mods.unmanaged.heading') }} ({{ count($unmanaged) }})</x-slot>
         <x-slot name="description">{{ trans(match (true) { $section === 'maps' => 'mod-manager::mods.unmanaged.hint_maps', $this->goldsrc() => 'mod-manager::mods.unmanaged.hint_amxx', default => 'mod-manager::mods.unmanaged.hint' }) }}</x-slot>
 
