@@ -207,7 +207,7 @@
         {
             "sort": 13,
             "name": "Workshop API Key",
-            "description": "Steam Web API key from https://steamcommunity.com/dev/apikey (-authkey). The Mod Manager browses the workshop with it. Downloading workshop maps needs the GSLT (STEAM_ACC), not this key.",
+            "description": "Steam Web API key from https://steamcommunity.com/dev/apikey (-authkey). The Game Manager browses the workshop with it. Downloading workshop maps needs the GSLT (STEAM_ACC), not this key.",
             "env_variable": "WORKSHOP_AUTHKEY",
             "default_value": "",
             "user_viewable": true,

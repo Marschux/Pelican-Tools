@@ -50,13 +50,13 @@ with sync_playwright() as p:
         print('saved', name)
 
     shot('server-resources', f'{BASE}/admin', hide=['Your Panel is up to date', 'Support Pelican', 'Need Help?'])
-    shot('mod-manager-installed', f'{BASE}/server/{SERVER}/mods')
+    shot('game-manager-installed', f'{BASE}/server/{SERVER}/mods')
 
     def browse():
         page.locator('.fi-tabs-item').nth(1).click()
         page.wait_for_timeout(2500)
 
-    shot('mod-manager-browse', f'{BASE}/server/{SERVER}/mods', browse)
+    shot('game-manager-browse', f'{BASE}/server/{SERVER}/mods', browse)
 
 
     def entries():
@@ -68,6 +68,6 @@ with sync_playwright() as p:
             field.fill(entry)
             field.press('Enter')
 
-    shot('mod-manager-configs', f'{BASE}/server/{SERVER}/mods', entries)
+    shot('game-manager-configs', f'{BASE}/server/{SERVER}/mods', entries)
 
     browser.close()

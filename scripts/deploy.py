@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Copies plugins/<name>/ to the testbench panel, clears caches and runs the plugin's self-check.
 
-    python scripts/deploy.py mod-manager
+    python scripts/deploy.py game-manager
 
 plugin.json stays untouched: overwriting it resets the plugin to "not installed".
 """

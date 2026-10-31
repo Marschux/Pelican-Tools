@@ -19,7 +19,7 @@ auth()->login($user);
 Filament::setTenant($server);
 
 $t = microtime(true);
-$test = Livewire::actingAs($user)->test(Marschux\ModManager\Filament\Server\Pages\ModsPage::class);
+$test = Livewire::actingAs($user)->test(Marschux\GameManager\Filament\Server\Pages\ModsPage::class);
 printf("mount+render: %.0f ms\n", (microtime(true) - $t) * 1000);
 echo implode("\n", $calls), "\n";
 
