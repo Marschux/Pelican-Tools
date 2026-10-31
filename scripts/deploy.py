@@ -3,9 +3,10 @@
 
     python scripts/deploy.py game-manager
 
-plugin.json stays untouched: overwriting it resets the plugin to "not installed".
+plugin.json only gets the new version: overwriting it resets the plugin to "not installed".
 """
 import io
+import json
 import pathlib
 import subprocess
 import sys
@@ -44,9 +45,12 @@ def deploy(name: str) -> None:
             tar.addfile(info, io.BytesIO(data))
 
     target = f'{VOLUME}/{name}'
+    version = json.loads((source / 'plugin.json').read_text())['version']
     # the docker volume is root-only, so everything runs under sudo
+    # only the version is carried into plugin.json, its "meta" holds the install status
     ssh(f'sudo sh -c \'test -f {target}/plugin.json || {{ echo "{name} is not installed on the panel"; exit 1; }}'
-        f' && cd {target} && rm -rf {" ".join(tops)}'
+        f' && cd {target} && sed -i "s/\\"version\\": \\"[^\\"]*\\"/\\"version\\": \\"{version}\\"/" plugin.json'
+        f' && rm -rf {" ".join(tops)}'
         f' && tar xzf - --no-same-owner && chown -R 82:82 .\'', buffer.getvalue())
     print(f'{name}: copied {", ".join(tops)}')
 
