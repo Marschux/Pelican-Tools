@@ -2,7 +2,7 @@
     "id": "game-manager",
     "name": "Game Manager",
     "author": "Marschux",
-    "version": "2.0.0",
+    "version": "2.1.1",
     "description": "Mods, maps, plugins, configs and access lists of a game server, set up per egg",
     "category": "plugin",
     "url": "https://github.com/Marschux/Pelican-Tools/tree/master/plugins/game-manager",

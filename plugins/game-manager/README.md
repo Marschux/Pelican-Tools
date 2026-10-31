@@ -12,6 +12,8 @@ whitelists, server.cfg). Wings does the downloading and unpacking; eggs are not 
 | Counter-Strike: Source, Global Offensive | Metamod:Source + SourceMod | GameBanana maps, maps uploaded |
 | Counter-Strike 2 | Metamod:Source + CounterStrikeSharp | Steam Workshop maps |
 
+GoldSrc games can also get ReHLDS + ReGameDLL + ReAPI in place of Valve's engine, and Counter-Strike 1.6 the YaPB bots (how many and how good: `yapb.cfg`, behind the gear).
+
 ![Game Manager, installed mods](../../assets/screenshots/game-manager-installed.png)
 
 ![Game Manager, browsing Thunderstore](../../assets/screenshots/game-manager-browse.png)
