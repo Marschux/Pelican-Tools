@@ -70,6 +70,8 @@ trait ShowsInstalled
     {
         return match (true) {
             $id === GoldSrc::PACKAGE => 'AMX Mod X',
+            $id === GoldSrc::ENGINE => 'ReHLDS',
+            str_starts_with($id, GitHub::PREFIX) => 'GitHub',
             $id === Source1::PACKAGE => 'SourceMod',
             $id === Source2::PACKAGE => 'CounterStrikeSharp',
             str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
