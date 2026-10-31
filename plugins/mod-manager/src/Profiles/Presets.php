@@ -31,12 +31,14 @@ class Presets
     /** Loaders made of archives unpacked into a game folder, not a package of a site. */
     public const ARCHIVE_LOADERS = ['goldsrc', 'source1', 'source2'];
 
-    /** @return array<string, array{name: string, settings: array<string, mixed>}> */
+    /** @return array<string, array{name: string, lists: string, settings: array<string, mixed>}> */
     public static function all(): array
     {
         return [
             'valheim' => [
                 'name' => 'Valheim',
+                // the access list files, see Lists\Presets
+                'lists' => 'valheim',
                 'settings' => [
                     'sources' => ['thunderstore'],
                     'community' => 'valheim',
@@ -52,6 +54,8 @@ class Presets
             ],
             'minecraft-paper' => [
                 'name' => 'Minecraft Paper',
+                // the access list files, see Lists\Presets
+                'lists' => 'minecraft',
                 'settings' => [
                     'sources' => ['modrinth', 'hangar'],
                     // plugins for Spigot and Bukkit run on Paper too
@@ -66,6 +70,8 @@ class Presets
             ],
             'counter-strike-16' => [
                 'name' => 'Counter-Strike 1.6',
+                // the access list files, see Lists\Presets
+                'lists' => 'cs16',
                 'settings' => [
                     // maps; AMX Mod X plugins have no site to browse, they are uploaded
                     'sources' => ['gamebanana'],
@@ -88,6 +94,8 @@ class Presets
             // the same as 1.6 in its own game folder; AMX Mod X's cstrike addon covers both
             'counter-strike-cz' => [
                 'name' => 'Counter-Strike: Condition Zero',
+                // the access list files, see Lists\Presets
+                'lists' => 'cscz',
                 'settings' => [
                     'sources' => ['gamebanana'],
                     // Counter-Strike: Condition Zero, its category Maps
@@ -106,6 +114,8 @@ class Presets
             ],
             'counter-strike-source' => [
                 'name' => 'Counter-Strike: Source',
+                // the access list files, see Lists\Presets
+                'lists' => 'css',
                 'settings' => [
                     // maps; SourceMod plugins are uploaded or come from a GitHub release
                     'sources' => ['gamebanana'],
@@ -126,6 +136,8 @@ class Presets
             ],
             'counter-strike-global-offensive' => [
                 'name' => 'Counter-Strike: Global Offensive',
+                // the access list files, see Lists\Presets
+                'lists' => 'csgo',
                 'settings' => [
                     // maps; SourceMod plugins are uploaded or come from a GitHub release
                     'sources' => ['gamebanana'],
@@ -146,6 +158,8 @@ class Presets
             ],
             'counter-strike-2' => [
                 'name' => 'Counter-Strike 2',
+                // the access list files, see Lists\Presets
+                'lists' => 'cs2',
                 'settings' => [
                     // maps; plugins are uploaded or come from a GitHub release. Browsing the
                     // workshop needs the server's Steam Web API key (WORKSHOP_AUTHKEY), without one maps go in by id
@@ -160,6 +174,12 @@ class Presets
                     'loader_check' => 'game/csgo/addons/metamod/bin/linuxsteamrt64/metamod.2.cs2.so',
                     'hidden_packages' => ['cs2:loader'],
                 ],
+            ],
+            // no mods, only its access lists - the server gets a lists page instead of Mods & Configs
+            'teamspeak' => [
+                'name' => 'TeamSpeak',
+                'lists' => 'teamspeak',
+                'settings' => [],
             ],
         ];
     }

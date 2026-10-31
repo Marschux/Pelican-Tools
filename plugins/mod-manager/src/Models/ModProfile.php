@@ -7,6 +7,7 @@ use App\Models\Server;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Marschux\ModManager\Lists\ListDefinition;
 use Marschux\ModManager\Sources\GoldSrc;
 use Marschux\ModManager\Sources\Source1;
 use Marschux\ModManager\Sources\Source2;
@@ -67,5 +68,33 @@ class ModProfile extends Model
     public function sources(): array
     {
         return array_values((array) $this->setting('sources', []));
+    }
+
+    /** A profile without a mods folder holds only access lists (TeamSpeak). */
+    public function hasMods(): bool
+    {
+        return (string) $this->setting('mods_dir') !== '';
+    }
+
+    /**
+     * The access list files of this server's egg, keyed by "<profile id>:<index>" - what the
+     * configs tab offers to pick from. Each entry comes from the admin form and is checked on the way in.
+     *
+     * @return array<string, ListDefinition>
+     */
+    public static function listsFor(Server $server): array
+    {
+        $profile = static::forServer($server);
+        $definitions = [];
+
+        foreach (array_values((array) $profile?->setting('lists', [])) as $index => $file) {
+            $definition = is_array($file) ? ListDefinition::fromArray("$profile->id:$index", $file) : null;
+
+            if ($definition) {
+                $definitions[$definition->key] = $definition;
+            }
+        }
+
+        return $definitions;
     }
 }

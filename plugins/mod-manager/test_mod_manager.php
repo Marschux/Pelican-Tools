@@ -38,6 +38,13 @@ foreach (Presets::all() as $key => $preset) {
     $settings = $preset['settings'];
 
     assert(Presets::options()[$key] === $preset['name']);
+    assert(isset(ListPresets::all()[$preset['lists']]), "$key: unknown list preset");
+
+    // TeamSpeak: only access lists
+    if ($settings === []) {
+        continue;
+    }
+
     // Counter-Strike 2 has no site to browse yet: plugins are uploaded
     assert(($settings['sources'] !== [] || $settings['loader_type'] === 'source2') && array_diff($settings['sources'], array_keys(Presets::SOURCES)) === [], "$key: unknown source");
     assert(($settings['mods_dir'] ?? '') !== '', "$key: mods_dir is needed");

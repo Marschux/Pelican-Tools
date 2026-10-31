@@ -9,12 +9,11 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Marschux\ModManager\Lists\ListDefinition;
-use Marschux\ModManager\Models\AccessList;
 use Marschux\ModManager\Models\ModProfile;
 
 /**
- * The access lists of a game without mods (TeamSpeak). A game with a mod profile has them in the
- * Configs tab of the server management page instead.
+ * The access lists of a game without mods (TeamSpeak): a profile holding only lists. A game with
+ * mods has them in the Configs tab of the Mods & Configs page instead.
  */
 class AccessListsPage extends Page
 {
@@ -39,8 +38,8 @@ class AccessListsPage extends Page
 
         return parent::canAccess()
             && user()?->can(SubuserPermission::FileReadContent, $server)
-            && ModProfile::forServer($server) === null
-            && AccessList::definitionsFor($server) !== [];
+            && !ModProfile::forServer($server)?->hasMods()
+            && ModProfile::listsFor($server) !== [];
     }
 
     public static function getNavigationLabel(): string
@@ -63,7 +62,7 @@ class AccessListsPage extends Page
     /** @return array<string, string> key => label, one tab per file */
     public function fileTabs(): array
     {
-        return array_map(fn (ListDefinition $definition) => $definition->label, AccessList::definitionsFor($this->server()));
+        return array_map(fn (ListDefinition $definition) => $definition->label, ModProfile::listsFor($this->server()));
     }
 
     public function switchFile(string $key): void

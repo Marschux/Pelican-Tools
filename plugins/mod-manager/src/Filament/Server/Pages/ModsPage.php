@@ -120,7 +120,7 @@ class ModsPage extends Page
 
         return parent::canAccess()
             && user()?->can(SubuserPermission::FileRead, $server)
-            && ModProfile::forServer($server) !== null;
+            && (bool) ModProfile::forServer($server)?->hasMods();
     }
 
     public static function getNavigationLabel(): string

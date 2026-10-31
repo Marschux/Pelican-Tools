@@ -30,12 +30,12 @@ sudo -u www-data php artisan p:plugin:install mod-manager
 **Admin → Mod profiles → Create**, pick a preset and assign the eggs. Servers with those eggs get
 the Mods & Configs page.
 
-**Admin → Access Lists → Create** does the same for the files of the Configs tab: a file path, plain
-text lines, `key = value` settings or JSON. A game without a mod profile (TeamSpeak) gets an
-Access Lists page of its own.
+The profile's **Access lists** section holds the files of the Configs tab: a file path, plain text
+lines, `key = value` settings or JSON; the preset fills it. A profile with access lists only
+(the TeamSpeak preset) needs no source and no mods folder - its servers get an Access Lists page.
 
-Coming from the Access Lists plugin: update Mod Manager first - it copies the lists over - then
-uninstall Access Lists. Uninstalling it first deletes its lists.
+Coming from the Access Lists plugin: update Mod Manager first - it moves the lists into the
+profiles of their eggs - then uninstall Access Lists. Uninstalling it first deletes its lists.
 
 - Counter-Strike: Global Offensive and 2 need the eggs of this repository.
 - Counter-Strike 2: workshop maps need a Game Server Login Token (`STEAM_ACC`); browsing them needs

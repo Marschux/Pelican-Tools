@@ -21,7 +21,7 @@ use Marschux\ModManager\Lists\ListEditException;
 use Marschux\ModManager\Lists\ListFile;
 use Marschux\ModManager\Lists\MinecraftUuid;
 use Marschux\ModManager\Lists\Presets;
-use Marschux\ModManager\Models\AccessList;
+use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\ServerFiles;
 use Throwable;
 
@@ -39,7 +39,7 @@ class AccessListEditor extends Component implements HasForms
     #[Locked]
     public Server $server;
 
-    /** "<list id>:<index>", see AccessList::definitionsFor() */
+    /** "<profile id>:<index>", see ModProfile::listsFor() */
     #[Locked]
     public string $file;
 
@@ -296,7 +296,7 @@ class AccessListEditor extends Component implements HasForms
     /** Only a file configured for this server's egg - the key comes from the embedding page. */
     private function definition(): ?ListDefinition
     {
-        return once(fn () => AccessList::definitionsFor($this->server)[$this->file] ?? null);
+        return once(fn () => ModProfile::listsFor($this->server)[$this->file] ?? null);
     }
 
     private function files(): ServerFiles

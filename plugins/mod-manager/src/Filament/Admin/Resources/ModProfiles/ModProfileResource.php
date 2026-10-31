@@ -6,6 +6,7 @@ use App\Enums\CustomizationKey;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -19,6 +20,9 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Marschux\ModManager\Lists\ListDefinition;
+use Marschux\ModManager\Lists\Presets as ListPresets;
 use Marschux\ModManager\Filament\Admin\Resources\ModProfiles\Pages\ManageModProfiles;
 use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\Profiles\Presets;
@@ -29,7 +33,7 @@ class ModProfileResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'tabler-puzzle';
 
-    /** Next to Eggs and Servers, the same way access lists do it. */
+    /** Next to Eggs and Servers. */
     public static function getNavigationGroup(): ?string
     {
         if (user()?->getCustomization(CustomizationKey::TopNavigation) === 'topbar') {
@@ -76,7 +80,10 @@ class ModProfileResource extends Resource
                         return;
                     }
 
-                    $set('settings', Presets::all()[$state]['settings']);
+                    $set('settings', Presets::all()[$state]['settings'] + ['lists' => collect(ListPresets::formFiles(Presets::all()[$state]['lists']))
+                        ->map(fn (array $file) => ['hint' => $file['hint'] === null ? null : trans("mod-manager::lists.preset_hints.{$file['hint']}")] + $file)
+                        ->keyBy(fn () => (string) Str::uuid())
+                        ->all()]);
 
                     if (blank($get('name'))) {
                         $set('name', Presets::options()[$state]);
@@ -108,7 +115,7 @@ class ModProfileResource extends Resource
                         ->options(Presets::SOURCES)
                         ->multiple()
                         ->live()
-                        ->required(),
+                        ->required(fn (Get $get) => blank($get('settings.lists'))),
                     TextInput::make('settings.community')
                         ->label(trans($field('community')))
                         ->helperText(trans($field('community_hint')))
@@ -132,7 +139,8 @@ class ModProfileResource extends Resource
                         ->required(fn (Get $get) => in_array('gamebanana', (array) $get('settings.sources'), true)),
                     TextInput::make('settings.mods_dir')
                         ->label(trans($field('mods_dir')))
-                        ->required(),
+                        ->helperText(trans($field('mods_dir_hint')))
+                        ->required(fn (Get $get) => filled($get('settings.sources'))),
                     TextInput::make('settings.config_dir')
                         ->label(trans($field('config_dir'))),
                     TextInput::make('settings.version_file')
@@ -177,7 +185,91 @@ class ModProfileResource extends Resource
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
+            Section::make(trans($field('lists_section')))
+                ->description(trans($field('lists_section_hint')))
+                ->columnSpanFull()
+                ->collapsible()
+                ->schema([self::listFiles()]),
         ]);
+    }
+
+    /** The access list files: admins, bans, whitelists, settings - each a pill in the configs tab. */
+    private static function listFiles(): Repeater
+    {
+        return Repeater::make('settings.lists')
+            ->hiddenLabel()
+            ->addActionLabel(trans('mod-manager::lists.fields.add_file'))
+            ->itemLabel(fn (array $state) => filled($state['path'] ?? null)
+                ? trim(($state['label'] ?? '') . ' - ' . $state['path'], ' -')
+                : null)
+            ->collapsed()
+            ->defaultItems(0)
+            ->reorderable()
+            ->columns(2)
+            ->schema([
+                TextInput::make('label')
+                    ->label(trans('mod-manager::lists.fields.label'))
+                    ->placeholder(trans('mod-manager::lists.fields.label_placeholder'))
+                    ->required()
+                    ->maxLength(191),
+                TextInput::make('path')
+                    ->label(trans('mod-manager::lists.fields.path'))
+                    ->placeholder('savegames/adminlist.txt')
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('mod-manager::lists.fields.path_hint'))
+                    ->required()
+                    ->maxLength(191),
+                Textarea::make('hint')
+                    ->label(trans('mod-manager::lists.fields.hint'))
+                    ->placeholder(trans('mod-manager::lists.fields.hint_placeholder'))
+                    ->helperText(trans('mod-manager::lists.fields.hint_help'))
+                    ->rows(2)
+                    ->maxLength(1000)
+                    ->columnSpanFull(),
+                Select::make('format')
+                    ->label(trans('mod-manager::lists.fields.format'))
+                    ->options([
+                        ListDefinition::FORMAT_LINES => trans('mod-manager::lists.formats.lines'),
+                        ListDefinition::FORMAT_JSON => trans('mod-manager::lists.formats.json'),
+                        ListDefinition::FORMAT_PAIRS => trans('mod-manager::lists.formats.pairs'),
+                    ])
+                    ->default(ListDefinition::FORMAT_LINES)
+                    // presets and older lists leave plain lines out
+                    ->afterStateHydrated(fn (Select $component, ?string $state) => $component->state($state ?? ListDefinition::FORMAT_LINES))
+                    ->selectablePlaceholder(false)
+                    ->live()
+                    ->required(),
+                TextInput::make('key_field')
+                    ->label(trans('mod-manager::lists.fields.key_field'))
+                    ->placeholder('uuid')
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('mod-manager::lists.fields.key_field_hint'))
+                    ->visible(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
+                    ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON),
+                TextInput::make('display_field')
+                    ->label(trans('mod-manager::lists.fields.display_field'))
+                    ->placeholder('name')
+                    ->hintIcon('tabler-question-mark')
+                    ->hintIconTooltip(trans('mod-manager::lists.fields.display_field_hint'))
+                    ->visible(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
+                    ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON),
+                Textarea::make('entry_template')
+                    ->label(trans('mod-manager::lists.fields.entry_template'))
+                    ->placeholder(fn (Get $get) => match ($get('format')) {
+                        ListDefinition::FORMAT_JSON => '{"uuid": "{uuid}", "name": "{name}"}',
+                        ListDefinition::FORMAT_PAIRS => ListDefinition::DEFAULT_PAIR_TEMPLATE,
+                        default => 'banid 0 {value}',
+                    })
+                    ->helperText(fn (Get $get) => trans(match ($get('format')) {
+                        ListDefinition::FORMAT_JSON => 'mod-manager::lists.fields.entry_template_hint',
+                        ListDefinition::FORMAT_PAIRS => 'mod-manager::lists.fields.entry_template_pairs_hint',
+                        default => 'mod-manager::lists.fields.entry_template_lines_hint',
+                    }))
+                    ->rows(3)
+                    ->required(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON)
+                    ->rule(fn (Get $get) => $get('format') === ListDefinition::FORMAT_JSON ? 'json' : null)
+                    ->columnSpanFull(),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -197,6 +289,11 @@ class ModProfileResource extends Resource
                     ->label(trans('mod-manager::mods.profile.fields.sources'))
                     ->badge()
                     ->state(fn (ModProfile $record) => array_map(fn (string $source) => Presets::SOURCES[$source] ?? $source, $record->sources())),
+                TextColumn::make('lists')
+                    ->label(trans('mod-manager::mods.profile.fields.lists_section'))
+                    ->badge()
+                    ->color('gray')
+                    ->state(fn (ModProfile $record) => array_column(array_values((array) $record->setting('lists', [])), 'label')),
                 TextColumn::make('eggs_count')
                     ->label(trans('mod-manager::mods.profile.fields.eggs'))
                     ->counts('eggs')

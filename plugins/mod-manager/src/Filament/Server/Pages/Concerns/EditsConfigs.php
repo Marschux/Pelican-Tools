@@ -6,7 +6,7 @@ use App\Enums\SubuserPermission;
 use Livewire\Attributes\On;
 use Marschux\ModManager\Installer;
 use Marschux\ModManager\Lists\ListDefinition;
-use Marschux\ModManager\Models\AccessList;
+use Marschux\ModManager\Models\ModProfile;
 use Marschux\ModManager\ServerFiles;
 use Throwable;
 
@@ -42,7 +42,7 @@ trait EditsConfigs
     /** @return array<string, ListDefinition> the egg's access list files, one query per request */
     private function accessLists(): array
     {
-        return once(fn () => AccessList::definitionsFor($this->server()));
+        return once(fn () => ModProfile::listsFor($this->server()));
     }
 
     /** The editor saved a list: a file it created loses its dashed pill. */
