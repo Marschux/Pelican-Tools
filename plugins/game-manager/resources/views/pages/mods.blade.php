@@ -18,7 +18,8 @@
         default => [],
     };
     $configTab = $tab === 'configs' ? $this->configTab() : null;
-    $configs = $configTab === 'mods' ? $this->configs() : [];
+    // the config tab lists them, the gears of the installed mods and plugins point into them
+    $configs = $configTab === 'mods' || in_array($section, ['mods', 'plugins'], true) ? $this->configs() : [];
     $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
