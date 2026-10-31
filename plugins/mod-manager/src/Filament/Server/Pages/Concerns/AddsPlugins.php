@@ -139,6 +139,12 @@ trait AddsPlugins
     }
 
     /** @return array<int, array<string, mixed>> */
+    public function unmanagedMaps(): array
+    {
+        return $this->installer()->unmanagedMaps();
+    }
+
+    /** @return array<int, array<string, mixed>> */
     public function unmanaged(): array
     {
         return $this->installer()->unmanaged();

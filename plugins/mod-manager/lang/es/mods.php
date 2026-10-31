@@ -113,6 +113,7 @@ return [
         'heading' => 'Instalado a mano',
         'hint' => 'Está en la carpeta de mods, pero no se instaló desde esta página. Un paquete se puede adoptar para recibir avisos de actualización.',
         'hint_amxx' => 'Plugins compilados en la carpeta plugins que ningún plugins.ini nombra: AMX Mod X no los carga. Al adoptarlos se activan aquí.',
+        'hint_maps' => 'Está en la carpeta de mapas, pero no viene con el juego ni se instaló desde esta página. Al borrar un mapa se borran también los archivos del mismo nombre a su lado (.nav, .res, .txt).',
         'adopt' => 'Adoptar',
         'confirm_delete' => '¿Borrar :path del servidor?',
     ],

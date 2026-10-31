@@ -13,7 +13,11 @@
     // the pill picked if this game has it, else its first one
     $section = $onInstalled ? (isset($this->sections()[$this->section]) ? $this->section : array_key_first($this->sections())) : null;
     // what was put on the server by hand: plugins on Counter-Strike and Paper, mods elsewhere (Valheim)
-    $unmanaged = $section === ($this->archiveLoader() || $this->jarMods() ? 'plugins' : 'mods') ? $this->unmanaged() : [];
+    $unmanaged = match ($section) {
+        $this->archiveLoader() || $this->jarMods() ? 'plugins' : 'mods' => $this->unmanaged(),
+        'maps' => $this->unmanagedMaps(),
+        default => [],
+    };
     $configTab = $tab === 'configs' ? $this->configTab() : null;
     $configs = $configTab === 'mods' ? $this->configs() : [];
     $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
@@ -141,6 +145,7 @@
             $empty = match ($section) {
                 'mods' => $installed->isEmpty() && !$loaderInstall && !$loader && !$unmanaged,
                 'plugins' => $installed->isEmpty() && !$unmanaged && !$loaderPlugins,
+                'maps' => $installed->isEmpty() && !$unmanaged,
                 default => $installed->isEmpty(),
             };
         @endphp

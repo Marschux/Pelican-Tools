@@ -142,6 +142,21 @@ trait HandlesUnmanaged
     /** Deletes something hand-installed - only what unmanaged() lists, nothing else. */
     public function removeUnmanaged(string $path): void
     {
+        if (collect($this->unmanagedMaps())->contains('path', $path)) {
+            // the map's companions beside it go along: navigation mesh, resources, overview text
+            $base = substr(basename($path), 0, -4);
+            $folder = dirname($path);
+            $this->files->delete(collect($this->files->list($folder))
+                ->reject()
+                ->keys()
+                ->filter(fn (string $name) => pathinfo($name, PATHINFO_FILENAME) === $base)
+                ->map(fn (string $name) => "$folder/$name")
+                ->values()
+                ->all());
+
+            return;
+        }
+
         if (!collect($this->unmanaged())->contains('path', $path)) {
             throw new RuntimeException(trans('mod-manager::mods.messages.not_adoptable'));
         }

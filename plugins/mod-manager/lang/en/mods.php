@@ -114,6 +114,7 @@ return [
         'heading' => 'Installed by hand',
         'hint' => 'In the mods folder, but not installed through this page. A package can be taken over to get update hints.',
         'hint_amxx' => 'Compiled plugins in the plugins folder that no plugins.ini names - AMX Mod X does not load them. Take one over to switch it on here.',
+        'hint_maps' => 'In the maps folder, but neither part of the game nor installed through this page. Deleting a map takes the files of the same name beside it (.nav, .res, .txt) along.',
         'adopt' => 'Take over',
         'confirm_delete' => 'Delete :path from the server?',
     ],

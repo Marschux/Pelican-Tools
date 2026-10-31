@@ -1,7 +1,7 @@
 @if ($unmanaged)
     <x-filament::section>
         <x-slot name="heading">{{ trans('mod-manager::mods.unmanaged.heading') }}</x-slot>
-        <x-slot name="description">{{ trans($this->goldsrc() ? 'mod-manager::mods.unmanaged.hint_amxx' : 'mod-manager::mods.unmanaged.hint') }}</x-slot>
+        <x-slot name="description">{{ trans(match (true) { $section === 'maps' => 'mod-manager::mods.unmanaged.hint_maps', $this->goldsrc() => 'mod-manager::mods.unmanaged.hint_amxx', default => 'mod-manager::mods.unmanaged.hint' }) }}</x-slot>
 
         @foreach ($unmanaged as $entry)
             <div wire:key="unmanaged-{{ md5($entry['path']) }}" style="display:flex;gap:.75rem;align-items:center;padding:.5rem 0;{{ $loop->first ? '' : 'border-top:1px solid rgba(127,127,127,.15)' }}">
