@@ -22,12 +22,13 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ModInstall extends Model
 {
-    protected $fillable = ['server_id', 'package', 'name', 'version', 'icon', 'dependency', 'requires', 'files', 'pinned', 'enabled', 'size'];
+    protected $fillable = ['server_id', 'package', 'name', 'version', 'icon', 'dependency', 'requires', 'files', 'pinned', 'enabled', 'size', 'adopted'];
 
     protected $casts = [
         'dependency' => 'boolean',
         'pinned' => 'boolean',
         'enabled' => 'boolean',
+        'adopted' => 'boolean',
         'requires' => 'array',
         'files' => 'array',
     ];

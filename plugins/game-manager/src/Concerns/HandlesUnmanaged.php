@@ -2,7 +2,9 @@
 
 namespace Marschux\GameManager\Concerns;
 
+use Illuminate\Http\Client\RequestException;
 use Marschux\GameManager\Models\ModInstall;
+use Marschux\GameManager\Sources\Hexium;
 use RuntimeException;
 
 /** What sits in the mods folder without the plugin having put it there: listed, taken over or deleted. Part of Installer. */
@@ -80,6 +82,7 @@ trait HandlesUnmanaged
                 'version' => '-',
                 'icon' => null,
                 'dependency' => false,
+                'adopted' => true,
                 'requires' => [],
                 'files' => [$path],
                 'size' => $this->files->usage($path),
@@ -97,6 +100,7 @@ trait HandlesUnmanaged
                 'version' => '-',
                 'icon' => null,
                 'dependency' => false,
+                'adopted' => true,
                 'requires' => [],
                 'files' => [$path],
                 'size' => $this->files->size($path),
@@ -116,23 +120,34 @@ trait HandlesUnmanaged
                 'version' => (string) ($entry['version'] ?? '0'),
                 'icon' => $entry['icon'],
                 'dependency' => false,
+                'adopted' => true,
                 'requires' => $entry['requires'],
                 'files' => [$path],
                 'size' => $this->files->size($path),
             ]);
         }
 
-        // asks the source, so only packages that really exist there are taken over
-        $latest = $this->source->latest($entry['package']);
+        // asks the source, so only packages that really exist there are taken over -
+        // one only on Hexium (Valheim) is taken over as Hexium's
+        try {
+            $latest = $this->source->latest($entry['package']);
+        } catch (RequestException $exception) {
+            if (!in_array('hexium', $this->profile->sources(), true)) {
+                throw $exception;
+            }
+
+            $latest = (new Hexium((string) $this->profile->setting('community'), $this->hidden()))->latest($entry['package']);
+        }
         $manifest = $this->manifest($path) ?? [];
 
         return ModInstall::query()->create([
             'server_id' => $this->server->id,
-            'package' => $entry['package'],
+            'package' => $latest['id'],
             'name' => $latest['name'],
             'version' => (string) ($entry['version'] ?? '0'),
             'icon' => $latest['icon'],
             'dependency' => false,
+            'adopted' => true,
             'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), (array) ($manifest['dependencies'] ?? []))),
             'files' => [$path],
             'size' => $this->files->usage($path),

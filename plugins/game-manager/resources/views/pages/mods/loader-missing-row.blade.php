@@ -15,6 +15,8 @@
         <td style="padding:.6rem .5rem">
             <x-filament::badge :color="$this->typeColor('loader')" size="sm" icon="tabler-plug" style="width:max-content">{{ trans('game-manager::mods.types.loader') }}</x-filament::badge>
         </td>
+        {{-- one that is there but was not installed here came from outside --}}
+        <td style="padding:.6rem .5rem;white-space:nowrap">{{ $loader['installed'] ? trans('game-manager::mods.columns.external') : '–' }}</td>
         <td style="padding:.6rem .5rem">–</td>
         <td style="padding:.6rem .5rem;text-align:right">–</td>
         <td style="padding:.6rem .5rem;{{ $muted }}">–</td>

@@ -85,8 +85,26 @@ trait ShowsInstalled
         };
     }
 
-    /** The line below a name in the installed table: a mod's author, a plugin's source, a pack's kind. */
-    public function origin(string $package): string
+    /**
+     * The source column: the site a row came from, "Uploaded" for an upload. Something put on
+     * the server from outside and taken over says so - as its site's below it, if it has one.
+     *
+     * @return array{0: string, 1: ?string} the source and the line below it
+     */
+    public function sourceOf(ModInstall $install): array
+    {
+        $own = Installer::uploaded($install->package) || str_starts_with($install->package, Installer::MAP_UPLOAD);
+        $external = trans('game-manager::mods.columns.external');
+
+        return match (true) {
+            $own && $install->adopted => [$external, null],
+            $own => [trans('game-manager::mods.upload.origin'), null],
+            default => [$this->sourceName($install->package), $install->adopted ? $external : null],
+        };
+    }
+
+    /** The line below a name in the installed table: who made it - null where only the source is known, that has a column of its own. */
+    public function origin(string $package): ?string
     {
         return match (true) {
             $package === GoldSrc::PACKAGE => trans('game-manager::mods.by', ['author' => 'ReHLDS team, AlliedModders']),
@@ -94,10 +112,9 @@ trait ShowsInstalled
             $package === GoldSrc::BOTS => trans('game-manager::mods.by', ['author' => 'YaPB team']),
             $package === Source1::PACKAGE => trans('game-manager::mods.by', ['author' => 'AlliedModders']),
             $package === Source2::PACKAGE => trans('game-manager::mods.by', ['author' => 'AlliedModders, roflmuffin']),
-            Installer::uploaded($package), str_starts_with($package, Installer::MAP_UPLOAD) => trans('game-manager::mods.upload.origin'),
+            Installer::uploaded($package), str_starts_with($package, Installer::MAP_UPLOAD), str_starts_with($package, Workshop::PREFIX),
+            str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => null,
             str_starts_with($package, GitHub::PREFIX) => trans('game-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
-            str_starts_with($package, Workshop::PREFIX) => 'Steam Workshop',
-            str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
             default => trans('game-manager::mods.by', ['author' => strtok(Hexium::bare($package), '-')]),
         };
     }

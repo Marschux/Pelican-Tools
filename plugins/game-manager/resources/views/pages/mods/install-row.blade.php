@@ -40,13 +40,24 @@
                 @else
                     <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
                 @endif
-                <div style="{{ $muted }}">{{ $this->origin($install->package) }}</div>
+                @if ($origin = $this->origin($install->package))
+                    <div style="{{ $muted }}">{{ $origin }}</div>
+                @endif
             </div>
         </div>
     </td>
     <td style="padding:.6rem .5rem">
         {{-- one badge per row, a colour per type: what kind of thing it is --}}
         <x-filament::badge :color="$this->typeColor($type)" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("game-manager::mods.types.$type") }}</x-filament::badge>
+    </td>
+    <td style="padding:.6rem .5rem">
+        @php
+            [$source, $sourceNote] = $this->sourceOf($install);
+        @endphp
+        <div>{{ $source }}</div>
+        @if ($sourceNote)
+            <div style="{{ $muted }}">{{ $sourceNote }}</div>
+        @endif
     </td>
     <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
         {{-- a loader's or engine's version is several: one per line --}}

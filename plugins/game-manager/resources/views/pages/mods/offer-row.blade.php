@@ -15,6 +15,7 @@
         <x-filament::badge :color="$this->typeColor($offer['type'])" size="sm" :icon="$offer['icon']" style="width:max-content">{{ trans("game-manager::mods.types.{$offer['type']}") }}</x-filament::badge>
     </td>
     <td style="padding:.6rem .5rem">–</td>
+    <td style="padding:.6rem .5rem">–</td>
     <td style="padding:.6rem .5rem;text-align:right">–</td>
     <td style="padding:.6rem .5rem;{{ $muted }}">–</td>
     <td style="padding:.6rem .5rem;min-width:8rem">

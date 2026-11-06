@@ -91,6 +91,8 @@ return [
     'columns' => [
         'mod' => 'Mod',
         'type' => 'Tipo',
+        'source' => 'Origen',
+        'external' => 'Añadido externamente',
         'version' => 'Versión',
         'size' => 'Tamaño',
         'dependencies' => 'Dependencias',

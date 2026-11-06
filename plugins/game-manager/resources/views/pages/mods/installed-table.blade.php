@@ -48,18 +48,20 @@
             {{-- fixed column widths, the same for every game; below 60rem the table scrolls --}}
             <table style="width:100%;min-width:60rem;table-layout:fixed;border-collapse:collapse;font-size:.875rem">
                 <colgroup>
-                    <col style="width:22%">
+                    <col style="width:20%">
                     <col style="width:9%">
+                    <col style="width:11%">
                     <col style="width:10%">
                     <col style="width:7%">
-                    <col style="width:20%">
+                    <col style="width:16%">
                     <col style="width:12%">
-                    <col style="width:20%">
+                    <col style="width:15%">
                 </colgroup>
                 <thead>
                     <tr style="text-align:left;{{ $muted }}">
                         <th style="padding:.4rem .5rem .4rem 0;font-weight:500">{{ trans('game-manager::mods.columns.mod') }}</th>
                         <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.type') }}</th>
+                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.source') }}</th>
                         <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.version') }}</th>
                         <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('game-manager::mods.columns.size') }}</th>
                         <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.dependencies') }}</th>

@@ -92,6 +92,8 @@ return [
     'columns' => [
         'mod' => 'Mod',
         'type' => 'Type',
+        'source' => 'Source',
+        'external' => 'Added externally',
         'version' => 'Version',
         'size' => 'Size',
         'dependencies' => 'Dependencies',
