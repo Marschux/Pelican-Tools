@@ -59,13 +59,15 @@
                 </colgroup>
                 <thead>
                     <tr style="text-align:left;{{ $muted }}">
-                        <th style="padding:.4rem .5rem .4rem 0;font-weight:500">{{ trans('game-manager::mods.columns.mod') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.type') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.source') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.version') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500;text-align:right">{{ trans('game-manager::mods.columns.size') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.dependencies') }}</th>
-                        <th style="padding:.4rem .5rem;font-weight:500">{{ trans('game-manager::mods.columns.status') }}</th>
+                        {{-- a click sorts by the column, a second one turns it around; loader, engine and bots stay on top --}}
+                        @foreach (['name' => 'mod', 'type' => 'type', 'source' => 'source', 'version' => 'version', 'size' => 'size', 'dependencies' => 'dependencies', 'status' => 'status'] as $column => $label)
+                            <th style="padding:.4rem {{ $loop->first ? '.5rem .4rem 0' : '.5rem' }};font-weight:500;{{ $column === 'size' ? 'text-align:right' : '' }}">
+                                <button type="button" wire:click="sortInstalled('{{ $column }}')" style="display:inline-flex;gap:.25rem;align-items:center;cursor:pointer;font-weight:inherit;{{ $this->sortColumn === $column ? 'color:inherit;filter:brightness(1.6)' : '' }}">
+                                    {{ trans("game-manager::mods.columns.$label") }}
+                                    <x-filament::icon :icon="$this->sortColumn !== $column ? 'tabler-selector' : ($this->sortDesc ? 'tabler-chevron-down' : 'tabler-chevron-up')" style="width:.9rem;height:.9rem;opacity:{{ $this->sortColumn === $column ? '1' : '.4' }}" />
+                                </button>
+                            </th>
+                        @endforeach
                         <th></th>
                     </tr>
                 </thead>

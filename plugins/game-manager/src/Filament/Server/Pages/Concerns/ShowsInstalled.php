@@ -170,7 +170,31 @@ trait ShowsInstalled
 
         $this->installer()->fillSizes($installs);
 
-        return $installs;
+        $key = match ($this->sortColumn) {
+            'type' => fn (ModInstall $install) => trans('game-manager::mods.types.' . $this->type($install->package)[0]),
+            'source' => fn (ModInstall $install) => $this->sourceOf($install),
+            'version' => fn (ModInstall $install) => $install->version,
+            'size' => fn (ModInstall $install) => (int) $install->size,
+            'dependencies' => fn (ModInstall $install) => count($install->requires),
+            // switched on first
+            'status' => fn (ModInstall $install) => $install->enabled ? 0 : 1,
+            default => fn (ModInstall $install) => $install->name,
+        };
+
+        // natural: version 1.10 after 1.9
+        return $installs->sortBy($key, SORT_NATURAL | SORT_FLAG_CASE, $this->sortDesc)->values();
+    }
+
+    /** A click on a column header: sorts by it, a second click turns the order around. */
+    public function sortInstalled(string $column): void
+    {
+        if (!in_array($column, ['name', 'type', 'source', 'version', 'size', 'dependencies', 'status'], true)) {
+            return;
+        }
+
+        $this->sortDesc = $this->sortColumn === $column && !$this->sortDesc;
+        $this->sortColumn = $column;
+        $this->remember();
     }
 
     /**

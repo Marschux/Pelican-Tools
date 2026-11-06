@@ -83,6 +83,11 @@ class ModsPage extends Page
     /** also mods made for other game versions than the server runs */
     public bool $showAll = false;
 
+    /** the installed table's order: a column (see sortInstalled()) and its direction */
+    public string $sortColumn = 'name';
+
+    public bool $sortDesc = false;
+
     /** @var array<int, array<string, mixed>> */
     public array $items = [];
 
@@ -134,7 +139,7 @@ class ModsPage extends Page
     }
 
     /** the browse filters kept between visits, per server: a category id only means something in one game */
-    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll', 'section', 'addTab', 'configTab'];
+    private const REMEMBERED = ['source', 'kind', 'query', 'category', 'ordering', 'page', 'showClientSide', 'showDeprecated', 'showAll', 'section', 'addTab', 'configTab', 'sortColumn', 'sortDesc'];
 
     public function mount(): void
     {
