@@ -86,20 +86,20 @@ trait ShowsInstalled
     }
 
     /**
-     * The source column: the site a row came from, "Uploaded" for an upload. Something put on
-     * the server from outside and taken over says so - as its site's below it, if it has one.
+     * The source column: the site a row came from, "Uploaded" for an upload, "Added externally"
+     * for what was put on the server from outside and taken over - the site it was recognised
+     * on, where its updates come from, only on hover.
      *
-     * @return array{0: string, 1: ?string} the source and the line below it
+     * @return array{0: string, 1: ?string} the source and its hover text
      */
     public function sourceOf(ModInstall $install): array
     {
         $own = Installer::uploaded($install->package) || str_starts_with($install->package, Installer::MAP_UPLOAD);
-        $external = trans('game-manager::mods.columns.external');
 
         return match (true) {
-            $own && $install->adopted => [$external, null],
+            $install->adopted => [trans('game-manager::mods.columns.external'), $own ? null : trans('game-manager::mods.columns.updates_from', ['source' => $this->sourceName($install->package)])],
             $own => [trans('game-manager::mods.upload.origin'), null],
-            default => [$this->sourceName($install->package), $install->adopted ? $external : null],
+            default => [$this->sourceName($install->package), null],
         };
     }
 

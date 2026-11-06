@@ -94,6 +94,7 @@ return [
         'type' => 'Type',
         'source' => 'Source',
         'external' => 'Added externally',
+        'updates_from' => 'Updates from :source',
         'version' => 'Version',
         'size' => 'Size',
         'dependencies' => 'Dependencies',

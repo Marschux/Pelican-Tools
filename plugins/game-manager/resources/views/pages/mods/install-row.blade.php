@@ -52,12 +52,9 @@
     </td>
     <td style="padding:.6rem .5rem">
         @php
-            [$source, $sourceNote] = $this->sourceOf($install);
+            [$source, $sourceHint] = $this->sourceOf($install);
         @endphp
-        <div>{{ $source }}</div>
-        @if ($sourceNote)
-            <div style="{{ $muted }}">{{ $sourceNote }}</div>
-        @endif
+        <span @if ($sourceHint) title="{{ $sourceHint }}" style="cursor:help;text-decoration:underline dotted" @endif>{{ $source }}</span>
     </td>
     <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
         {{-- a loader's or engine's version is several: one per line --}}
