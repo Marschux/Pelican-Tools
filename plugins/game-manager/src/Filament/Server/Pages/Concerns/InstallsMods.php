@@ -6,6 +6,7 @@ use App\Enums\SubuserPermission;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Marschux\GameManager\Models\ModInstall;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Workshop;
 use Throwable;
 
@@ -87,7 +88,7 @@ trait InstallsMods
             'name' => $install->name,
             'packages' => [],
             // mods that stop loading without it
-            'needed_by' => $this->installed()->filter(fn (ModInstall $other) => $other->enabled && in_array($install->package, $other->requires, true))->pluck('name')->all(),
+            'needed_by' => $this->installed()->filter(fn (ModInstall $other) => $other->enabled && in_array(Hexium::bare($install->package), array_map([Hexium::class, 'bare'], $other->requires), true))->pluck('name')->all(),
             // only shown - what gets deleted is worked out again on confirm
             'configs' => $this->installer()->runtimeConfigs(new Collection([$install])),
             // plugins keep data folders rather than configs

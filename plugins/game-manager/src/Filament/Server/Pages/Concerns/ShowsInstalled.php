@@ -173,22 +173,24 @@ trait ShowsInstalled
     public function relations(): array
     {
         $installs = $this->installed();
-        $names = $installs->pluck('name', 'package')->all();
+        // by the bare name: a Hexium package and its Thunderstore twin are one and the same mod
+        $names = $installs->mapWithKeys(fn (ModInstall $install) => [Hexium::bare($install->package) => $install->name])->all();
         $hidden = (array) $this->profile()->setting('hidden_packages', []);
         $relations = [];
 
         foreach ($installs as $install) {
+            $requires = array_diff(array_map([Hexium::class, 'bare'], $install->requires), $hidden);
             $relations[$install->package]['requires'] = array_values(array_map(
                 fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
-                array_diff($install->requires, $hidden),
+                $requires,
             ));
             // required, but not there or switched off - the mod will not load
             $relations[$install->package]['missing'] = array_values(array_map(
                 fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
-                array_filter(array_diff($install->requires, $hidden), fn (string $package) => !$installs->contains(fn (ModInstall $other) => $other->package === $package && $other->enabled)),
+                array_filter($requires, fn (string $package) => !$installs->contains(fn (ModInstall $other) => Hexium::bare($other->package) === $package && $other->enabled)),
             ));
             $relations[$install->package]['needed_by'] = $installs
-                ->filter(fn (ModInstall $other) => in_array($install->package, $other->requires, true))
+                ->filter(fn (ModInstall $other) => in_array(Hexium::bare($install->package), array_map([Hexium::class, 'bare'], $other->requires), true))
                 ->pluck('name')
                 ->all();
         }
