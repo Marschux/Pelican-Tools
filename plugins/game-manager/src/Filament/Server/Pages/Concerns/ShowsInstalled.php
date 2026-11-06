@@ -174,29 +174,27 @@ trait ShowsInstalled
     }
 
     /**
-     * Who needs whom, in names: what a mod requires and which mods require it. The loader is
-     * left out - every mod needs it.
+     * Who needs whom, in names: what a row requires and which rows require it - the loader too.
      *
      * @return array<string, array{requires: string[], missing: string[], needed_by: string[]}> package => names
      */
     public function relations(): array
     {
-        $installs = $this->installed();
+        // the loader's row included, it is what nearly everything requires
+        $installs = $this->installer()->installs();
         // by the bare name: a Hexium package and its Thunderstore twin are one and the same mod
         $names = $installs->mapWithKeys(fn (ModInstall $install) => [Hexium::bare($install->package) => $install->name])->all();
         $hidden = (array) $this->profile()->setting('hidden_packages', []);
+        $name = fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1));
         $relations = [];
 
         foreach ($installs as $install) {
-            $requires = array_diff(array_map([Hexium::class, 'bare'], $install->requires), $hidden);
-            $relations[$install->package]['requires'] = array_values(array_map(
-                fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
-                $requires,
-            ));
-            // required, but not there or switched off - the mod will not load
+            $requires = array_values(array_unique(array_map([Hexium::class, 'bare'], $install->requires)));
+            $relations[$install->package]['requires'] = array_map($name, $requires);
+            // required, but not there or switched off - the mod will not load; a missing loader has a row of its own saying so
             $relations[$install->package]['missing'] = array_values(array_map(
-                fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1)),
-                array_filter($requires, fn (string $package) => !$installs->contains(fn (ModInstall $other) => Hexium::bare($other->package) === $package && $other->enabled)),
+                $name,
+                array_filter(array_diff($requires, $hidden), fn (string $package) => !$installs->contains(fn (ModInstall $other) => Hexium::bare($other->package) === $package && $other->enabled)),
             ));
             $relations[$install->package]['needed_by'] = $installs
                 ->filter(fn (ModInstall $other) => in_array(Hexium::bare($install->package), array_map([Hexium::class, 'bare'], $other->requires), true))
