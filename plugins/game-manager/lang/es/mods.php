@@ -93,7 +93,6 @@ return [
         'type' => 'Tipo',
         'source' => 'Origen',
         'external' => 'Añadido externamente',
-        'updates_from' => 'Actualizaciones de :source',
         'version' => 'Versión',
         'size' => 'Tamaño',
         'dependencies' => 'Dependencias',

@@ -51,10 +51,7 @@
         <x-filament::badge :color="$this->typeColor($type)" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("game-manager::mods.types.$type") }}</x-filament::badge>
     </td>
     <td style="padding:.6rem .5rem">
-        @php
-            [$source, $sourceHint] = $this->sourceOf($install);
-        @endphp
-        <span @if ($sourceHint) title="{{ $sourceHint }}" style="cursor:help;text-decoration:underline dotted" @endif>{{ $source }}</span>
+        {{ $this->sourceOf($install) }}
     </td>
     <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
         {{-- a loader's or engine's version is several: one per line --}}
