@@ -6,15 +6,14 @@ use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Collection;
 use Marschux\GameManager\Installer;
 use Marschux\GameManager\Models\ModInstall;
-use Marschux\GameManager\Profiles\Presets;
 use Marschux\GameManager\Sources\GameBanana;
 use Marschux\GameManager\Sources\GitHub;
 use Marschux\GameManager\Sources\GoldSrc;
-use Marschux\GameManager\Sources\Hangar;
 use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Modrinth;
 use Marschux\GameManager\Sources\Source1;
 use Marschux\GameManager\Sources\Source2;
+use Marschux\GameManager\Sources\Thunderstore;
 use Marschux\GameManager\Sources\Workshop;
 
 /** What the installed table shows: origin, type, versions, dependencies, the list for players. Part of ModsPage. */
@@ -66,58 +65,24 @@ trait ShowsInstalled
         $this->playerList = $this->installer()->playerList();
     }
 
-    /** The site a package comes from, by its id. */
+    /** The site a package comes from, by its id - the external links name it. */
     public function sourceName(string $id): string
     {
-        return match (true) {
-            $id === GoldSrc::PACKAGE => 'AMX Mod X',
-            $id === GoldSrc::ENGINE => 'ReHLDS',
-            $id === GoldSrc::BOTS => 'GitHub',
-            str_starts_with($id, GitHub::PREFIX) => 'GitHub',
-            $id === Source1::PACKAGE => 'SourceMod',
-            $id === Source2::PACKAGE => 'CounterStrikeSharp',
-            str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
-            Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
-            str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
-            str_starts_with($id, Hexium::PREFIX) => Presets::SOURCES['hexium'],
-            str_starts_with($id, Workshop::PREFIX), str_starts_with($id, Workshop::COLLECTION) => Presets::SOURCES['workshop'],
-            default => Presets::SOURCES['thunderstore'],
-        };
+        return Installer::SITES[Installer::sourceKey($id)][0] ?? trans('game-manager::mods.upload.origin');
     }
 
     /** The source column: the site a row came from, "Uploaded", or "Added externally" for what was put on the server from outside and taken over. */
     public function sourceOf(ModInstall $install): string
     {
-        return match (true) {
-            $install->adopted => trans('game-manager::mods.columns.external'),
-            Installer::uploaded($install->package), str_starts_with($install->package, Installer::MAP_UPLOAD) => trans('game-manager::mods.upload.origin'),
-            default => $this->sourceName($install->package),
-        };
+        return $install->adopted ? trans('game-manager::mods.columns.external') : $this->sourceName($install->package);
     }
 
     /** The front page of the site in the source column - the site, not the mod's page; null for uploads and what came from outside. */
     public function sourceUrl(ModInstall $install): ?string
     {
-        if ($install->adopted || Installer::uploaded($install->package) || str_starts_with($install->package, Installer::MAP_UPLOAD)) {
-            return null;
-        }
+        $site = Installer::SITES[Installer::sourceKey($install->package)] ?? null;
 
-        $community = (string) $this->profile()->setting('community');
-
-        return match ($this->sourceName($install->package)) {
-            Presets::SOURCES['thunderstore'] => "https://thunderstore.io/c/$community/",
-            Presets::SOURCES['hexium'] => "https://$community.hexium.gg/",
-            Presets::SOURCES['modrinth'] => 'https://modrinth.com/',
-            Presets::SOURCES['hangar'] => 'https://hangar.papermc.io/',
-            Presets::SOURCES['gamebanana'] => 'https://gamebanana.com/',
-            Presets::SOURCES['workshop'] => 'https://steamcommunity.com/workshop/',
-            'GitHub' => 'https://github.com/',
-            'AMX Mod X' => 'https://www.amxmodx.org/',
-            'SourceMod' => 'https://www.sourcemod.net/',
-            'CounterStrikeSharp' => 'https://docs.cssharp.dev/',
-            'ReHLDS' => 'https://github.com/rehlds/',
-            default => null,
-        };
+        return $install->adopted || $site === null ? null : str_replace('{community}', (string) $this->profile()->setting('community'), $site[1]);
     }
 
     /** The line below a name in the installed table: who made it - null where only the source is known, that has a column of its own. */
@@ -213,7 +178,7 @@ trait ShowsInstalled
     /** A click on a column header: sorts by it, a second click turns the order around. */
     public function sortInstalled(string $column): void
     {
-        if (!in_array($column, ['name', 'type', 'source', 'version', 'size', 'dependencies', 'status'], true)) {
+        if (!isset(static::SORTABLE[$column])) {
             return;
         }
 
@@ -231,24 +196,27 @@ trait ShowsInstalled
     {
         // the loader's row included, it is what nearly everything requires
         $installs = $this->installer()->installs();
-        // by the bare name: a Hexium package and its Thunderstore twin are one and the same mod
-        $names = $installs->mapWithKeys(fn (ModInstall $install) => [Hexium::bare($install->package) => $install->name])->all();
+        // by identity: a Hexium package and its Thunderstore twin are one and the same mod
+        $names = $installs->mapWithKeys(fn (ModInstall $install) => [$install->identity() => $install->name])->all();
+        $enabled = $installs->filter->enabled->mapWithKeys(fn (ModInstall $install) => [$install->identity() => true])->all();
         $hidden = (array) $this->profile()->setting('hidden_packages', []);
-        $name = fn (string $package) => $names[$package] ?? str_replace('_', ' ', substr($package, strpos($package, '-') + 1));
+        $name = fn (string $package) => $names[$package] ?? Thunderstore::displayName($package);
         $relations = [];
+        $neededBy = [];
 
         foreach ($installs as $install) {
-            $requires = array_values(array_unique(array_map([Hexium::class, 'bare'], $install->requires)));
+            $requires = $install->requiredIdentities();
             $relations[$install->package]['requires'] = array_map($name, $requires);
             // required, but not there or switched off - the mod will not load; a missing loader has a row of its own saying so
-            $relations[$install->package]['missing'] = array_values(array_map(
-                $name,
-                array_filter(array_diff($requires, $hidden), fn (string $package) => !$installs->contains(fn (ModInstall $other) => Hexium::bare($other->package) === $package && $other->enabled)),
-            ));
-            $relations[$install->package]['needed_by'] = $installs
-                ->filter(fn (ModInstall $other) => in_array(Hexium::bare($install->package), array_map([Hexium::class, 'bare'], $other->requires), true))
-                ->pluck('name')
-                ->all();
+            $relations[$install->package]['missing'] = array_values(array_map($name, array_filter(array_diff($requires, $hidden), fn (string $package) => !isset($enabled[$package]))));
+
+            foreach ($requires as $required) {
+                $neededBy[$required][] = $install->name;
+            }
+        }
+
+        foreach ($installs as $install) {
+            $relations[$install->package]['needed_by'] = $neededBy[$install->identity()] ?? [];
         }
 
         return $relations;

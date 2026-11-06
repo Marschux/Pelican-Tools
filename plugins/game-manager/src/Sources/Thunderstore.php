@@ -218,8 +218,7 @@ class Thunderstore
             'version' => $latest['version_number'],
             'icon' => $latest['icon'] ?? null,
             'download' => $latest['download_url'],
-            // "Namespace-Name-1.2.3" - the version is dropped, the newest is installed anyway
-            'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $latest['dependencies'] ?? [])),
+            'requires' => self::withoutVersions($latest['dependencies'] ?? []),
             // thunderstore knows no optional dependencies
             'optional' => [],
         ];
@@ -243,6 +242,23 @@ class Thunderstore
         return Cache::remember("game-manager:thunderstore:$this->community:categories", now()->addDay(), fn () => $this->http()
             ->get(self::SITE . "/api/cyberstorm/community/$this->community/filters/")
             ->json('package_categories', []));
+    }
+
+    /**
+     * "Namespace-Name-1.2.3" without the version - the newest is installed anyway.
+     *
+     * @param  string[]  $dependencies
+     * @return string[]
+     */
+    public static function withoutVersions(array $dependencies): array
+    {
+        return array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $dependencies));
+    }
+
+    /** "Namespace-Some_Name" as "Some Name", for a package nothing better is known of. */
+    public static function displayName(string $id): string
+    {
+        return str_replace('_', ' ', substr($id, strpos($id, '-') + 1));
     }
 
     /** @return array{0: string, 1: string} namespace and name */

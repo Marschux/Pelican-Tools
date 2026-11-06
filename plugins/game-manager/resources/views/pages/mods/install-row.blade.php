@@ -75,7 +75,7 @@
         @else
             {{-- two lines at most, as tall as the name and author beside it: what is longer shows one line and "more" --}}
             <div x-data="{ open: false, long: false }" x-init="$nextTick(() => long = $refs.text.scrollHeight > $refs.text.clientHeight + 1)">
-                <div x-ref="text" :style="open ? '' : (long ? 'max-height:1.25rem;overflow:hidden' : 'max-height:2.5rem;overflow:hidden')" style="line-height:1.25rem;max-height:2.5rem;overflow:hidden">
+                <div x-ref="text" :style="open ? '' : 'overflow:hidden;max-height:' + (long ? '1.25rem' : '2.5rem')" style="line-height:1.25rem;overflow:hidden;max-height:2.5rem">
                     @if ($relation['requires'])
                         <div>{{ trans('game-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
                     @endif

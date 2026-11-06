@@ -5,6 +5,7 @@ namespace Marschux\GameManager\Concerns;
 use Illuminate\Http\Client\RequestException;
 use Marschux\GameManager\Models\ModInstall;
 use Marschux\GameManager\Sources\Hexium;
+use Marschux\GameManager\Sources\Thunderstore;
 use RuntimeException;
 
 /** What sits in the mods folder without the plugin having put it there: listed, taken over or deleted. Part of Installer. */
@@ -52,7 +53,7 @@ trait HandlesUnmanaged
             }
 
             $manifest = $isDirectory ? $this->manifest($path) : null;
-            $package = $isDirectory && preg_match('/^\w+-\w+$/', $name) && is_array($manifest) ? $name : null;
+            $package = $isDirectory && self::thunderstorePackage($name) && is_array($manifest) ? $name : null;
 
             $found[] = [
                 'path' => $path,
@@ -136,7 +137,7 @@ trait HandlesUnmanaged
                 throw $exception;
             }
 
-            $latest = (new Hexium((string) $this->profile->setting('community'), $this->hidden()))->latest($entry['package']);
+            $latest = $this->sourceFor(Hexium::PREFIX . $entry['package'])->release(Hexium::PREFIX . $entry['package']);
         }
         $manifest = $this->manifest($path) ?? [];
 
@@ -148,7 +149,7 @@ trait HandlesUnmanaged
             'icon' => $latest['icon'],
             'dependency' => false,
             'adopted' => true,
-            'requires' => array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), (array) ($manifest['dependencies'] ?? []))),
+            'requires' => Thunderstore::withoutVersions((array) ($manifest['dependencies'] ?? [])),
             'files' => [$path],
             'size' => $this->files->usage($path),
         ]);

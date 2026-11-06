@@ -60,7 +60,7 @@
                 <thead>
                     <tr style="text-align:left;{{ $muted }}">
                         {{-- a click sorts by the column, a second one turns it around; loader, engine and bots stay on top --}}
-                        @foreach (['name' => 'mod', 'type' => 'type', 'source' => 'source', 'version' => 'version', 'size' => 'size', 'dependencies' => 'dependencies', 'status' => 'status'] as $column => $label)
+                        @foreach ($this::SORTABLE as $column => $label)
                             <th style="padding:.4rem {{ $loop->first ? '.5rem .4rem 0' : '.5rem' }};font-weight:500;{{ $column === 'size' ? 'text-align:right' : '' }}">
                                 <button type="button" wire:click="sortInstalled('{{ $column }}')" style="display:inline-flex;gap:.25rem;align-items:center;cursor:pointer;font-weight:inherit;{{ $this->sortColumn === $column ? 'color:inherit;filter:brightness(1.6)' : '' }}">
                                     {{ trans("game-manager::mods.columns.$label") }}

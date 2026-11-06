@@ -7,6 +7,7 @@ use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Marschux\GameManager\Models\ModProfile;
 use RuntimeException;
 
 /**
@@ -23,6 +24,9 @@ class Hexium
 
     private const AGENT = 'Marschux/pelican-game-manager';
 
+    /** raised whenever what listing() keeps changes, so an update never reads the old shape from the cache */
+    private const SHAPE = 2;
+
     /** mods per page in the browser: four rows of three */
     private const PER_PAGE = 12;
 
@@ -31,6 +35,20 @@ class Hexium
 
     /** @param  string[]  $hidden  packages never shown, as "Namespace-Name" */
     public function __construct(private string $community, private array $hidden = []) {}
+
+    /** Hexium for the game of a profile, its hidden packages left out. */
+    public static function of(ModProfile $profile): self
+    {
+        return new self((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', []));
+    }
+
+    /** The page of a package on Hexium. */
+    public static function url(string $community, string $id): string
+    {
+        [$namespace, $name] = Thunderstore::split(self::bare($id));
+
+        return "https://$community.hexium.gg/mods/$namespace/$name";
+    }
 
     /** "hexium:Namespace-Name" without its prefix - the package's folder and its Thunderstore name. */
     public static function bare(string $id): string
@@ -68,12 +86,13 @@ class Hexium
      */
     public static function filter(array $listing, array $hidden, string $query, ?string $category, string $ordering, bool $showClientSide, bool $showDeprecated): array
     {
+        $query = mb_strtolower($query);
         $found = array_filter($listing, fn (array $package) => !in_array($package['id'], $hidden, true)
             && ($showDeprecated || !$package['deprecated'])
             // client-only mods do nothing on a server
             && ($showClientSide || !in_array('Client-only', $package['categories'], true))
             && ($category === null || in_array($category, $package['categories'], true))
-            && ($query === '' || str_contains(mb_strtolower("{$package['name']} {$package['author']} {$package['summary']}"), mb_strtolower($query))));
+            && ($query === '' || str_contains($package['haystack'], $query)));
 
         $key = match ($ordering) {
             'top-rated' => 'rating',
@@ -115,22 +134,16 @@ class Hexium
                 'dependants' => count(array_filter($listing, fn (array $other) => in_array($package['id'], $other['requires'], true))),
                 'dependencies' => array_map(fn (string $dependency) => [
                     'id' => self::PREFIX . $dependency,
-                    'name' => str_replace('_', ' ', $listing[$dependency]['name'] ?? substr($dependency, strpos($dependency, '-') + 1)),
+                    'name' => isset($listing[$dependency]) ? str_replace('_', ' ', $listing[$dependency]['name']) : Thunderstore::displayName($dependency),
                     'version' => $listing[$dependency]['version'] ?? '',
                     'icon' => $listing[$dependency]['icon'] ?? null,
                     'hidden' => in_array($dependency, $this->hidden, true),
                 ], $package['requires']),
-                'versions' => $package['versions'],
+                'versions' => $this->versions()[$package['id']] ?? [],
                 'readme' => Thunderstore::markdown($readme),
                 'changelog' => filled($changelog) ? Thunderstore::markdown($changelog) : null,
             ];
         });
-    }
-
-    /** @return array{id: string, name: string, version: string, icon: ?string, download: string, requires: string[]} */
-    public function latest(string $id): array
-    {
-        return $this->release($id);
     }
 
     /**
@@ -157,7 +170,7 @@ class Hexium
             'version' => $release['version_number'],
             'icon' => $release['icon'] ?? null,
             'download' => $release['download_url'],
-            'requires' => array_map(fn (string $dependency) => self::PREFIX . $dependency, self::withoutVersions($release['dependencies'] ?? [])),
+            'requires' => array_map(fn (string $dependency) => self::PREFIX . $dependency, Thunderstore::withoutVersions($release['dependencies'] ?? [])),
             'optional' => [],
         ];
     }
@@ -175,14 +188,16 @@ class Hexium
     }
 
     /**
-     * Every package of the community, by "Namespace-Name", newest version first. Hexium sends
-     * them all in one gzipped file of about 16 MB; what is kept of it is a tenth of that.
+     * Every package of the community, by "Namespace-Name". Hexium sends them all in one gzipped
+     * file of about 16 MB; what is kept of it is a tenth of that. Their versions are kept apart:
+     * only the detail view needs them, and every search reads the listing.
      *
      * @return array<string, array<string, mixed>>
      */
     private function listing(): array
     {
-        return self::$listings[$this->community] ??= Cache::remember("game-manager:hexium:$this->community:listing", now()->addHour(), function () {
+        return self::$listings[$this->community] ??= Cache::remember("game-manager:hexium:$this->community:listing:" . self::SHAPE, now()->addHour(), function () {
+            $versions = [];
             $index = json_decode((string) gzdecode($this->http()->get("https://$this->community.hexium.gg/api/v1/package-listing-index/")->body()), true);
             $listing = [];
 
@@ -200,6 +215,8 @@ class Hexium
                         'name' => $package['name'],
                         'author' => $package['owner'],
                         'summary' => (string) $latest['description'],
+                        // what a search looks through, lowercased once here instead of on every search
+                        'haystack' => mb_strtolower("{$package['name']} {$package['owner']} {$latest['description']}"),
                         'icon' => $latest['icon'] ?? null,
                         'downloads' => array_sum(array_column($package['versions'], 'downloads')),
                         'rating' => (int) $package['rating_score'],
@@ -210,36 +227,41 @@ class Hexium
                         'version' => $latest['version_number'],
                         'website' => $latest['website_url'] ?: null,
                         'size' => (int) ($latest['file_size'] ?? 0),
-                        'requires' => self::withoutVersions($latest['dependencies'] ?? []),
-                        'versions' => array_map(fn (array $version) => [
-                            'number' => $version['version_number'],
-                            'date' => $version['date_created'],
-                            'downloads' => $version['downloads'],
-                        ], $package['versions']),
+                        'requires' => Thunderstore::withoutVersions($latest['dependencies'] ?? []),
                     ];
+                    $versions[$package['full_name']] = array_map(fn (array $version) => [
+                        'number' => $version['version_number'],
+                        'date' => $version['date_created'],
+                        'downloads' => $version['downloads'],
+                    ], $package['versions']);
                 }
             }
+
+            Cache::put("game-manager:hexium:$this->community:versions:" . self::SHAPE, $versions, now()->addHour());
 
             return $listing;
         });
     }
 
-    /**
-     * "Namespace-Name-1.2.3" without the version - the newest is installed anyway.
-     *
-     * @param  string[]  $dependencies
-     * @return string[]
-     */
-    private static function withoutVersions(array $dependencies): array
+    /** @return array<string, array<int, array{number: string, date: string, downloads: int}>> package => versions, newest first */
+    private function versions(): array
     {
-        return array_values(array_map(fn (string $dependency) => preg_replace('/-[^-]+$/', '', $dependency), $dependencies));
+        $versions = Cache::get("game-manager:hexium:$this->community:versions:" . self::SHAPE);
+
+        if ($versions === null) {
+            // gone from the cache before the listing: both are read again
+            Cache::forget("game-manager:hexium:$this->community:listing:" . self::SHAPE);
+            unset(self::$listings[$this->community]);
+            $this->listing();
+            $versions = (array) Cache::get("game-manager:hexium:$this->community:versions:" . self::SHAPE, []);
+        }
+
+        return $versions;
     }
 
     /** @return array<string, mixed> */
     private function item(array $package): array
     {
-        [$namespace, $name] = Thunderstore::split($package['id']);
-
         return [
             'id' => self::PREFIX . $package['id'],
             'name' => str_replace('_', ' ', $package['name']),
@@ -256,7 +278,7 @@ class Hexium
                 default => null,
             },
             'deprecated' => $package['deprecated'],
-            'url' => "https://$this->community.hexium.gg/mods/$namespace/$name",
+            'url' => self::url($this->community, $package['id']),
         ];
     }
 

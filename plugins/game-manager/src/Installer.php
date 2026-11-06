@@ -136,12 +136,7 @@ class Installer
             // the same plugin from the other source: Paper would load neither of the two jars
             if ($twin = $this->twin($package, $latest['name'])) {
                 if ($root) {
-                    throw new RuntimeException(trans('game-manager::mods.messages.twin', ['name' => $twin->name, 'source' => match (true) {
-                        str_starts_with($twin->package, Hangar::PREFIX) => 'Hangar',
-                        str_starts_with($twin->package, Hexium::PREFIX) => 'Hexium',
-                        Modrinth::kindOf($twin->package) !== null => 'Modrinth',
-                        default => 'Thunderstore',
-                    }]));
+                    throw new RuntimeException(trans('game-manager::mods.messages.twin', ['name' => $twin->name, 'source' => self::SITES[self::sourceKey($twin->package)][0]]));
                 }
 
                 // as a dependency it is there already
@@ -165,6 +160,40 @@ class Installer
         return array_values($plan);
     }
 
+    /** The site of each source key: its name and front page ("{community}" is the profile's game). */
+    public const SITES = [
+        'thunderstore' => ['Thunderstore', 'https://thunderstore.io/c/{community}/'],
+        'hexium' => ['Hexium', 'https://{community}.hexium.gg/'],
+        'modrinth' => ['Modrinth', 'https://modrinth.com/'],
+        'hangar' => ['Hangar', 'https://hangar.papermc.io/'],
+        'gamebanana' => ['GameBanana', 'https://gamebanana.com/'],
+        'workshop' => ['Steam Workshop', 'https://steamcommunity.com/workshop/'],
+        'github' => ['GitHub', 'https://github.com/'],
+        'goldsrc' => ['AMX Mod X', 'https://www.amxmodx.org/'],
+        'rehlds' => ['ReHLDS', 'https://github.com/rehlds/'],
+        'source1' => ['SourceMod', 'https://www.sourcemod.net/'],
+        'source2' => ['CounterStrikeSharp', 'https://docs.cssharp.dev/'],
+    ];
+
+    /** Where a package comes from, by its id: a key of SITES, or "upload". */
+    public static function sourceKey(string $package): string
+    {
+        return match (true) {
+            self::uploaded($package), str_starts_with($package, self::MAP_UPLOAD) => 'upload',
+            $package === GoldSrc::PACKAGE => 'goldsrc',
+            $package === GoldSrc::ENGINE => 'rehlds',
+            $package === GoldSrc::BOTS, str_starts_with($package, GitHub::PREFIX) => 'github',
+            $package === Source1::PACKAGE => 'source1',
+            $package === Source2::PACKAGE => 'source2',
+            str_starts_with($package, GameBanana::PREFIX) => 'gamebanana',
+            Modrinth::kindOf($package) !== null => 'modrinth',
+            str_starts_with($package, Hangar::PREFIX) => 'hangar',
+            str_starts_with($package, Hexium::PREFIX) => 'hexium',
+            str_starts_with($package, Workshop::PREFIX), str_starts_with($package, Workshop::COLLECTION) => 'workshop',
+            default => 'thunderstore',
+        };
+    }
+
     /**
      * An installed plugin of another source with the same name - Modrinth's and Hangar's ViaVersion.
      * Or the same package from Thunderstore and Hexium: both would unpack into one folder.
@@ -172,9 +201,7 @@ class Installer
     private function twin(string $package, string $name): ?ModInstall
     {
         if (self::thunderstorePackage($package)) {
-            return $this->installs()->first(fn (ModInstall $other) => $other->package !== $package
-                && self::thunderstorePackage($other->package)
-                && Hexium::bare($other->package) === Hexium::bare($package));
+            return $this->installs()->first(fn (ModInstall $other) => $other->package !== $package && $other->identity() === Hexium::bare($package));
         }
 
         if (!self::jarPackage($package) || self::kind($package) !== 'plugin') {
@@ -530,13 +557,11 @@ class Installer
                 }
 
                 if (str_starts_with($install->package, Hexium::PREFIX)) {
-                    [$namespace, $name] = Thunderstore::split(Hexium::bare($install->package));
-
-                    return "$install->name $install->version - https://$community.hexium.gg/mods/$namespace/$name";
+                    return "$install->name $install->version - " . Hexium::url($community, $install->package);
                 }
 
                 // e.g. the GoldSrc loader: nothing to link to
-                if (!preg_match('/^\w+-\w+$/', $install->package)) {
+                if (!self::thunderstorePackage($install->package)) {
                     return "$install->name $install->version";
                 }
 
@@ -684,7 +709,7 @@ class Installer
             str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),
-            str_starts_with($package, Hexium::PREFIX) => new Hexium((string) $this->profile->setting('community'), $this->hidden()),
+            str_starts_with($package, Hexium::PREFIX) => Hexium::of($this->profile),
             default => $this->source,
         };
     }

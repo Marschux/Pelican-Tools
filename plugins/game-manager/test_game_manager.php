@@ -359,7 +359,7 @@ assert(Hexium::bare('Azumatt-AzuCraftyBoxes') === 'Azumatt-AzuCraftyBoxes');
 assert(Installer::thunderstorePackage('hexium:Azumatt-AzuCraftyBoxes') && Installer::thunderstorePackage('ValheimModding-Jotunn'));
 assert(!Installer::thunderstorePackage('goldsrc:loader') && !Installer::thunderstorePackage('upload-map:de_dust2') && !Installer::thunderstorePackage('modrinth:plugin:abc'));
 
-$hexium = fn (string $id, array $more) => $more + ['id' => $id, 'name' => $id, 'author' => 'Someone', 'summary' => '', 'categories' => [], 'deprecated' => false, 'downloads' => 0, 'rating' => 0, 'updated' => '2026-01-01', 'created' => '2026-01-01'];
+$hexium = fn (string $id, array $more) => $more + ['id' => $id, 'name' => $id, 'author' => 'Someone', 'summary' => '', 'haystack' => strtolower($id . ' ' . ($more['summary'] ?? '')), 'categories' => [], 'deprecated' => false, 'downloads' => 0, 'rating' => 0, 'updated' => '2026-01-01', 'created' => '2026-01-01'];
 $listing = [
     'a-Popular' => $hexium('a-Popular', ['downloads' => 900, 'summary' => 'Bigger chests']),
     'b-Client' => $hexium('b-Client', ['downloads' => 800, 'categories' => ['Client-only']]),

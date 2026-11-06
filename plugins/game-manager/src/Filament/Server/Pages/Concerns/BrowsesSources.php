@@ -176,7 +176,7 @@ trait BrowsesSources
 
         return match ($this->sourceKey()) {
             'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
-            'hexium' => new Hexium((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
+            'hexium' => Hexium::of($profile),
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             'gamebanana' => $this->gameBanana(),
@@ -204,7 +204,7 @@ trait BrowsesSources
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),
-            str_starts_with($id, Hexium::PREFIX) => new Hexium((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
+            str_starts_with($id, Hexium::PREFIX) => Hexium::of($profile),
             default => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
         };
     }

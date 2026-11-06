@@ -3,6 +3,7 @@
 namespace Marschux\GameManager\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Marschux\GameManager\Sources\Hexium;
 
 /**
  * A mod the plugin installed on a server.
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $pinned
  * @property bool $enabled
  * @property int|null $size  bytes on disk
+ * @property bool $adopted  put on the server from outside, then taken over
  */
 class ModInstall extends Model
 {
@@ -32,4 +34,16 @@ class ModInstall extends Model
         'requires' => 'array',
         'files' => 'array',
     ];
+
+    /** What the package is, whichever site it came from: a Hexium package and its Thunderstore twin are one mod. */
+    public function identity(): string
+    {
+        return Hexium::bare($this->package);
+    }
+
+    /** @return string[] what it requires, as identity() names them */
+    public function requiredIdentities(): array
+    {
+        return array_values(array_unique(array_map([Hexium::class, 'bare'], $this->requires)));
+    }
 }

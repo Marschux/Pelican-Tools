@@ -83,7 +83,10 @@ class ModsPage extends Page
     /** also mods made for other game versions than the server runs */
     public bool $showAll = false;
 
-    /** the installed table's order: a column (see sortInstalled()) and its direction */
+    /** the installed table's columns that sort, key => label in mods.columns */
+    public const SORTABLE = ['name' => 'mod', 'type' => 'type', 'source' => 'source', 'version' => 'version', 'size' => 'size', 'dependencies' => 'dependencies', 'status' => 'status'];
+
+    /** the installed table's order: a column of SORTABLE and its direction */
     public string $sortColumn = 'name';
 
     public bool $sortDesc = false;
