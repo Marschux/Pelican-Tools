@@ -85,6 +85,8 @@ return [
     'current' => 'Instalada',
     'requires' => 'Necesita: :names',
     'needed_by' => 'Lo necesita: :names',
+    'more' => 'más',
+    'less' => 'menos',
     'missing' => 'Falta: :names',
     'not_loaded' => 'No se carga',
     'active' => 'Activo',

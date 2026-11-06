@@ -66,14 +66,21 @@
         {{ $install->size !== null ? \Illuminate\Support\Number::fileSize($install->size, 1) : '–' }}
     </td>
     <td style="padding:.6rem .5rem;{{ $muted }};min-width:10rem">
-        @if ($relation['requires'])
-            <div>{{ trans('game-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
-        @endif
-        @if ($relation['needed_by'])
-            <div>{{ trans('game-manager::mods.needed_by', ['names' => implode(', ', $relation['needed_by'])]) }}</div>
-        @endif
         @if (!$relation['requires'] && !$relation['needed_by'])
             –
+        @else
+            {{-- two lines at most, as tall as the name and author beside it: what is longer shows one line and "more" --}}
+            <div x-data="{ open: false, long: false }" x-init="$nextTick(() => long = $refs.text.scrollHeight > $refs.text.clientHeight + 1)">
+                <div x-ref="text" :style="open ? '' : (long ? 'max-height:1.25rem;overflow:hidden' : 'max-height:2.5rem;overflow:hidden')" style="line-height:1.25rem;max-height:2.5rem;overflow:hidden">
+                    @if ($relation['requires'])
+                        <div>{{ trans('game-manager::mods.requires', ['names' => implode(', ', $relation['requires'])]) }}</div>
+                    @endif
+                    @if ($relation['needed_by'])
+                        <div>{{ trans('game-manager::mods.needed_by', ['names' => implode(', ', $relation['needed_by'])]) }}</div>
+                    @endif
+                </div>
+                <button type="button" x-show="long" x-cloak x-on:click="open = !open" x-text="open ? @js(trans('game-manager::mods.less')) : @js(trans('game-manager::mods.more'))" style="color:var(--primary-500, #3b82f6);font-size:.8rem;cursor:pointer"></button>
+            </div>
         @endif
     </td>
     <td style="padding:.6rem .5rem;min-width:8rem">
