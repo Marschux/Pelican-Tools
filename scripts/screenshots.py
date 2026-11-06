@@ -5,7 +5,7 @@ import sys
 
 from playwright.sync_api import sync_playwright
 
-BASE = 'http://192.168.2.73'
+BASE = 'http://192.168.2.74:9001'
 SERVER = 'ab740b72'
 ONLY = sys.argv[3:]
 # the chromium that is installed; this playwright version would want a newer build

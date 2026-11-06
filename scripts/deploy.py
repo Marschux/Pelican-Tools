@@ -14,7 +14,7 @@ import tarfile
 
 from build import SKIP_DIRS, SKIP_SUFFIX, TEXT_SUFFIX
 
-HOST = 'testbench_3'
+HOST = 'testbench_4'
 VOLUME = '/var/lib/docker/volumes/pelican_pelican-data/_data/plugins'
 PANEL = 'cd /opt/pelican && sudo docker compose'
 

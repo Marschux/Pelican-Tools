@@ -1,6 +1,6 @@
 import pathlib, sys
 from playwright.sync_api import sync_playwright
-BASE = 'http://192.168.2.73'
+BASE = 'http://192.168.2.74:9001'
 CHROME = pathlib.Path.home() / 'AppData/Local/ms-playwright/chromium-1234/chrome-win64/chrome.exe'
 JS = "() => [...document.querySelectorAll('tbody tr')].slice(0, 6).map(r => r.children[0].innerText.split('\\n')[0])"
 with sync_playwright() as p:
