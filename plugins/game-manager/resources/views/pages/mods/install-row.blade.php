@@ -51,7 +51,11 @@
         <x-filament::badge :color="$this->typeColor($type)" size="sm" :icon="$typeIcon" style="width:max-content">{{ trans("game-manager::mods.types.$type") }}</x-filament::badge>
     </td>
     <td style="padding:.6rem .5rem">
-        {{ $this->sourceOf($install) }}
+        @if ($sourceUrl = $this->sourceUrl($install))
+            <a href="{{ $sourceUrl }}" target="_blank" rel="noopener" style="text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(127,127,127,.5)">{{ $this->sourceOf($install) }}</a>
+        @else
+            {{ $this->sourceOf($install) }}
+        @endif
     </td>
     <td style="padding:.6rem .5rem;overflow-wrap:anywhere">
         {{-- a loader's or engine's version is several: one per line --}}

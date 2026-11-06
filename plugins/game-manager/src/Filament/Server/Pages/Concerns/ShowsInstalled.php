@@ -95,6 +95,31 @@ trait ShowsInstalled
         };
     }
 
+    /** The front page of the site in the source column - the site, not the mod's page; null for uploads and what came from outside. */
+    public function sourceUrl(ModInstall $install): ?string
+    {
+        if ($install->adopted || Installer::uploaded($install->package) || str_starts_with($install->package, Installer::MAP_UPLOAD)) {
+            return null;
+        }
+
+        $community = (string) $this->profile()->setting('community');
+
+        return match ($this->sourceName($install->package)) {
+            Presets::SOURCES['thunderstore'] => "https://thunderstore.io/c/$community/",
+            Presets::SOURCES['hexium'] => "https://$community.hexium.gg/",
+            Presets::SOURCES['modrinth'] => 'https://modrinth.com/',
+            Presets::SOURCES['hangar'] => 'https://hangar.papermc.io/',
+            Presets::SOURCES['gamebanana'] => 'https://gamebanana.com/',
+            Presets::SOURCES['workshop'] => 'https://steamcommunity.com/workshop/',
+            'GitHub' => 'https://github.com/',
+            'AMX Mod X' => 'https://www.amxmodx.org/',
+            'SourceMod' => 'https://www.sourcemod.net/',
+            'CounterStrikeSharp' => 'https://docs.cssharp.dev/',
+            'ReHLDS' => 'https://github.com/rehlds/',
+            default => null,
+        };
+    }
+
     /** The line below a name in the installed table: who made it - null where only the source is known, that has a column of its own. */
     public function origin(string $package): ?string
     {
