@@ -21,6 +21,7 @@ use Marschux\GameManager\Sources\GameBanana;
 use Marschux\GameManager\Sources\GitHub;
 use Marschux\GameManager\Sources\GoldSrc;
 use Marschux\GameManager\Sources\Hangar;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Modrinth;
 use Marschux\GameManager\Sources\Source1;
 use Marschux\GameManager\Sources\Source2;
@@ -123,7 +124,7 @@ class Installer
         $plan = [];
 
         $collect = function (string $package, bool $root) use (&$collect, &$plan, $installed, $version, $optional) {
-            if (array_key_exists($package, $plan) || in_array($package, $this->hidden(), true) || (!$root && in_array($package, $installed, true))) {
+            if (array_key_exists($package, $plan) || in_array(Hexium::bare($package), $this->hidden(), true) || (!$root && in_array($package, $installed, true))) {
                 return;
             }
 
@@ -135,7 +136,12 @@ class Installer
             // the same plugin from the other source: Paper would load neither of the two jars
             if ($twin = $this->twin($package, $latest['name'])) {
                 if ($root) {
-                    throw new RuntimeException(trans('game-manager::mods.messages.twin', ['name' => $twin->name, 'source' => str_starts_with($twin->package, Hangar::PREFIX) ? 'Hangar' : 'Modrinth']));
+                    throw new RuntimeException(trans('game-manager::mods.messages.twin', ['name' => $twin->name, 'source' => match (true) {
+                        str_starts_with($twin->package, Hangar::PREFIX) => 'Hangar',
+                        str_starts_with($twin->package, Hexium::PREFIX) => 'Hexium',
+                        Modrinth::kindOf($twin->package) !== null => 'Modrinth',
+                        default => 'Thunderstore',
+                    }]));
                 }
 
                 // as a dependency it is there already
@@ -159,9 +165,18 @@ class Installer
         return array_values($plan);
     }
 
-    /** An installed plugin of another source with the same name - Modrinth's and Hangar's ViaVersion. */
+    /**
+     * An installed plugin of another source with the same name - Modrinth's and Hangar's ViaVersion.
+     * Or the same package from Thunderstore and Hexium: both would unpack into one folder.
+     */
     private function twin(string $package, string $name): ?ModInstall
     {
+        if (self::thunderstorePackage($package)) {
+            return $this->installs()->first(fn (ModInstall $other) => $other->package !== $package
+                && self::thunderstorePackage($other->package)
+                && Hexium::bare($other->package) === Hexium::bare($package));
+        }
+
         if (!self::jarPackage($package) || self::kind($package) !== 'plugin') {
             return null;
         }
@@ -334,8 +349,8 @@ class Installer
 
         foreach ($packages as $package) {
             $source = get_class($this->sourceFor($package));
-            // one listing holds every Thunderstore package of the community
-            $tasks[$source === Thunderstore::class ? $source : $package] ??= $package;
+            // one listing holds every Thunderstore (or Hexium) package of the community
+            $tasks[in_array($source, [Thunderstore::class, Hexium::class], true) ? $source : $package] ??= $package;
         }
 
         if (count($tasks) < 2) {
@@ -514,6 +529,12 @@ class Installer
                     return "$install->name $install->version - https://github.com/" . GitHub::parse($install->package)[0];
                 }
 
+                if (str_starts_with($install->package, Hexium::PREFIX)) {
+                    [$namespace, $name] = Thunderstore::split(Hexium::bare($install->package));
+
+                    return "$install->name $install->version - https://$community.hexium.gg/mods/$namespace/$name";
+                }
+
                 // e.g. the GoldSrc loader: nothing to link to
                 if (!preg_match('/^\w+-\w+$/', $install->package)) {
                     return "$install->name $install->version";
@@ -595,7 +616,9 @@ class Installer
         $existing = $this->installs()->firstWhere('package', $package['id']);
         // a mod that is switched off stays off through an update
         $enabled = $existing?->enabled ?? true;
-        $directory = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $package['id'];
+        // a Hexium package goes where its Thunderstore twin would, without the prefix
+        $folder = Hexium::bare($package['id']);
+        $directory = ($enabled ? $this->modsDir() : $this->disabledDir()) . '/' . $folder;
         $configDir = $this->configDir();
         $isConfig = fn (string $path) => $configDir !== '' && (str_starts_with($path, "$configDir/") || str_starts_with($path, "{$configDir}_disabled/"));
 
@@ -612,7 +635,7 @@ class Installer
         $moves = [];
 
         foreach ($this->files->walk($directory) as $file) {
-            $place = self::placement($file, $package['id'], $this->rootDir(), $configDir);
+            $place = self::placement($file, $folder, $this->rootDir(), $configDir);
 
             if ($place === null) {
                 continue;
@@ -651,7 +674,7 @@ class Installer
         );
     }
 
-    private function sourceFor(string $package): Thunderstore|Modrinth|Hangar|GoldSrc|Source1|Source2|GitHub|GameBanana
+    private function sourceFor(string $package): Thunderstore|Hexium|Modrinth|Hangar|GoldSrc|Source1|Source2|GitHub|GameBanana
     {
         return match (true) {
             $package === GoldSrc::PACKAGE, $package === GoldSrc::ENGINE, $package === GoldSrc::BOTS => new GoldSrc(),
@@ -661,6 +684,7 @@ class Installer
             str_starts_with($package, GameBanana::PREFIX) => new GameBanana((int) $this->profile->setting('gamebanana_game'), (int) $this->profile->setting('gamebanana_category')),
             Modrinth::kindOf($package) !== null => new Modrinth((array) $this->profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($package)),
             str_starts_with($package, Hangar::PREFIX) => new Hangar(),
+            str_starts_with($package, Hexium::PREFIX) => new Hexium((string) $this->profile->setting('community'), $this->hidden()),
             default => $this->source,
         };
     }

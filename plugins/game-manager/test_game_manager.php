@@ -14,6 +14,7 @@ require __DIR__ . '/src/Lists/MinecraftUuid.php';
 require __DIR__ . '/src/Sources/Thunderstore.php';
 require __DIR__ . '/src/Sources/Modrinth.php';
 require __DIR__ . '/src/Sources/Hangar.php';
+require __DIR__ . '/src/Sources/Hexium.php';
 require __DIR__ . '/src/Sources/GameBanana.php';
 require __DIR__ . '/src/Sources/GitHub.php';
 require __DIR__ . '/src/Sources/Workshop.php';
@@ -30,6 +31,7 @@ use Marschux\GameManager\Lists\Presets as ListPresets;
 use Marschux\GameManager\GameVersion;
 use Marschux\GameManager\Installer;
 use Marschux\GameManager\Profiles\Presets;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Thunderstore;
 
 // --- presets -------------------------------------------------------------------------------------
@@ -349,6 +351,29 @@ assert(Thunderstore::sourceStart(2, [0, 3]) === 14, 'two hidden before it shift 
 assert(Thunderstore::sourceStart(2, [12, 13]) === 14, 'hidden right where it would start are skipped too');
 assert(Thunderstore::sourceStart(2, [15]) === 12, 'a hidden one after the start does not shift it');
 assert(Thunderstore::sourceStart(3, [1, 5]) === 26);
+
+// --- hexium ---------------------------------------------------------------------------------------
+
+assert(Hexium::bare('hexium:Azumatt-AzuCraftyBoxes') === 'Azumatt-AzuCraftyBoxes', 'the folder of a hexium package is its thunderstore name');
+assert(Hexium::bare('Azumatt-AzuCraftyBoxes') === 'Azumatt-AzuCraftyBoxes');
+assert(Installer::thunderstorePackage('hexium:Azumatt-AzuCraftyBoxes') && Installer::thunderstorePackage('ValheimModding-Jotunn'));
+assert(!Installer::thunderstorePackage('goldsrc:loader') && !Installer::thunderstorePackage('upload-map:de_dust2') && !Installer::thunderstorePackage('modrinth:plugin:abc'));
+
+$hexium = fn (string $id, array $more) => $more + ['id' => $id, 'name' => $id, 'author' => 'Someone', 'summary' => '', 'categories' => [], 'deprecated' => false, 'downloads' => 0, 'rating' => 0, 'updated' => '2026-01-01', 'created' => '2026-01-01'];
+$listing = [
+    'a-Popular' => $hexium('a-Popular', ['downloads' => 900, 'summary' => 'Bigger chests']),
+    'b-Client' => $hexium('b-Client', ['downloads' => 800, 'categories' => ['Client-only']]),
+    'c-Old' => $hexium('c-Old', ['downloads' => 700, 'deprecated' => true]),
+    'denikson-BepInExPack_Valheim' => $hexium('denikson-BepInExPack_Valheim', ['downloads' => 9999]),
+    'd-Fresh' => $hexium('d-Fresh', ['downloads' => 10, 'rating' => 50, 'updated' => '2026-11-01', 'categories' => ['Server-only']]),
+];
+$ids = fn (array $found) => array_column($found, 'id');
+$filter = fn (...$args) => $ids(Hexium::filter($listing, ['denikson-BepInExPack_Valheim'], ...$args));
+assert($filter('', null, 'most-downloaded', false, false) === ['a-Popular', 'd-Fresh'], 'hidden, client-only and deprecated left out');
+assert($filter('', null, 'most-downloaded', true, true) === ['a-Popular', 'b-Client', 'c-Old', 'd-Fresh']);
+assert($filter('CHESTS', null, 'most-downloaded', true, true) === ['a-Popular'], 'the query looks into the summary, any case');
+assert($filter('', 'Server-only', 'most-downloaded', true, true) === ['d-Fresh']);
+assert($filter('', null, 'top-rated', false, false)[0] === 'd-Fresh' && $filter('', null, 'last-updated', false, false)[0] === 'd-Fresh');
 
 // --- what removing the loader deletes ------------------------------------------------------------
 

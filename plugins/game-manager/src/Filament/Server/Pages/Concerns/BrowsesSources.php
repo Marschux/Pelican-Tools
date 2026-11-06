@@ -7,6 +7,7 @@ use Marschux\GameManager\Profiles\Presets;
 use Marschux\GameManager\Sources\GameBanana;
 use Marschux\GameManager\Sources\GoldSrc;
 use Marschux\GameManager\Sources\Hangar;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Modrinth;
 use Marschux\GameManager\Sources\Source1;
 use Marschux\GameManager\Sources\Source2;
@@ -169,12 +170,13 @@ trait BrowsesSources
         return $this->showAll ? null : ($this->gameVersion()['version'] ?? null);
     }
 
-    private function source(): Thunderstore|Modrinth|Hangar|GameBanana|Workshop|null
+    private function source(): Thunderstore|Hexium|Modrinth|Hangar|GameBanana|Workshop|null
     {
         $profile = $this->profile();
 
         return match ($this->sourceKey()) {
             'thunderstore' => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
+            'hexium' => new Hexium((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
             'modrinth' => new Modrinth((array) $profile->setting('modrinth_loaders', []), $this->kinds() ? $this->kind : 'plugin'),
             'hangar' => new Hangar(),
             'gamebanana' => $this->gameBanana(),
@@ -190,7 +192,7 @@ trait BrowsesSources
     }
 
     /** The source a package belongs to, by its id. */
-    private function sourceFor(string $id): Thunderstore|Modrinth|Hangar|GoldSrc|Source1|Source2|GameBanana|Workshop
+    private function sourceFor(string $id): Thunderstore|Hexium|Modrinth|Hangar|GoldSrc|Source1|Source2|GameBanana|Workshop
     {
         $profile = $this->profile();
 
@@ -202,6 +204,7 @@ trait BrowsesSources
             str_starts_with($id, GameBanana::PREFIX) => $this->gameBanana(),
             Modrinth::kindOf($id) !== null => new Modrinth((array) $profile->setting('modrinth_loaders', []), (string) Modrinth::kindOf($id)),
             str_starts_with($id, Hangar::PREFIX) => new Hangar(),
+            str_starts_with($id, Hexium::PREFIX) => new Hexium((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
             default => new Thunderstore((string) $profile->setting('community'), (array) $profile->setting('hidden_packages', [])),
         };
     }

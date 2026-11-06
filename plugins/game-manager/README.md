@@ -6,11 +6,13 @@ whitelists, server.cfg). Wings does the downloading and unpacking; eggs are not 
 
 | Game | Loader | Sources |
 |---|---|---|
-| Valheim | BepInEx | Thunderstore |
+| Valheim | BepInEx | Thunderstore, Hexium |
 | Minecraft Paper | - | Modrinth (plugins, datapacks, resource packs), Hangar |
 | Counter-Strike 1.6, Condition Zero | Metamod-R + AMX Mod X | GameBanana maps, maps uploaded |
 | Counter-Strike: Source, Global Offensive | Metamod:Source + SourceMod | GameBanana maps, maps uploaded |
 | Counter-Strike 2 | Metamod:Source + CounterStrikeSharp | Steam Workshop maps |
+
+A mod can come from Thunderstore or Hexium, not both: they unpack into the same folder. Existing Valheim profiles get Hexium by ticking it under **Sources**.
 
 GoldSrc games can also get ReHLDS + ReGameDLL + ReAPI in place of Valve's engine, and Counter-Strike 1.6 the YaPB bots (how many and how good: `yapb.cfg`, behind the gear).
 

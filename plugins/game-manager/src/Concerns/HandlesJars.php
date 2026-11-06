@@ -5,6 +5,7 @@ namespace Marschux\GameManager\Concerns;
 use Illuminate\Support\Facades\Cache;
 use Marschux\GameManager\Models\ModInstall;
 use Marschux\GameManager\Sources\Hangar;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Modrinth;
 use RuntimeException;
 
@@ -153,6 +154,12 @@ trait HandlesJars
     public static function jarPackage(string $package): bool
     {
         return Modrinth::kindOf($package) !== null || str_starts_with($package, Hangar::PREFIX);
+    }
+
+    /** A package of Thunderstore or Hexium: "Namespace-Name", Hexium's behind its prefix. */
+    public static function thunderstorePackage(string $package): bool
+    {
+        return (bool) preg_match('/^\w+-[\w.]+\z/', Hexium::bare($package));
     }
 
     /** Mods of this game are single jars: the profile gets them from Modrinth or Hangar. */

@@ -24,7 +24,7 @@ namespace Marschux\GameManager\Profiles;
  */
 class Presets
 {
-    public const SOURCES = ['thunderstore' => 'Thunderstore', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana', 'workshop' => 'Steam Workshop'];
+    public const SOURCES = ['thunderstore' => 'Thunderstore', 'hexium' => 'Hexium', 'modrinth' => 'Modrinth', 'hangar' => 'Hangar', 'gamebanana' => 'GameBanana', 'workshop' => 'Steam Workshop'];
 
     public const LOADER_TYPES = ['thunderstore' => 'Thunderstore', 'goldsrc' => 'Metamod-R + AMX Mod X', 'source1' => 'Metamod:Source + SourceMod', 'source2' => 'Metamod:Source + CounterStrikeSharp'];
 
@@ -40,7 +40,7 @@ class Presets
                 // the access list files, see Lists\Presets
                 'lists' => 'valheim',
                 'settings' => [
-                    'sources' => ['thunderstore'],
+                    'sources' => ['thunderstore', 'hexium'],
                     'community' => 'valheim',
                     'mods_dir' => 'BepInEx/plugins',
                     'config_dir' => 'BepInEx/config',

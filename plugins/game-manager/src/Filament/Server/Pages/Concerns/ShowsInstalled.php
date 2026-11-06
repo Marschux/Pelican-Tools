@@ -11,6 +11,7 @@ use Marschux\GameManager\Sources\GameBanana;
 use Marschux\GameManager\Sources\GitHub;
 use Marschux\GameManager\Sources\GoldSrc;
 use Marschux\GameManager\Sources\Hangar;
+use Marschux\GameManager\Sources\Hexium;
 use Marschux\GameManager\Sources\Modrinth;
 use Marschux\GameManager\Sources\Source1;
 use Marschux\GameManager\Sources\Source2;
@@ -78,6 +79,7 @@ trait ShowsInstalled
             str_starts_with($id, GameBanana::PREFIX) => Presets::SOURCES['gamebanana'],
             Modrinth::kindOf($id) !== null => Presets::SOURCES['modrinth'],
             str_starts_with($id, Hangar::PREFIX) => Presets::SOURCES['hangar'],
+            str_starts_with($id, Hexium::PREFIX) => Presets::SOURCES['hexium'],
             str_starts_with($id, Workshop::PREFIX), str_starts_with($id, Workshop::COLLECTION) => Presets::SOURCES['workshop'],
             default => Presets::SOURCES['thunderstore'],
         };
@@ -96,7 +98,7 @@ trait ShowsInstalled
             str_starts_with($package, GitHub::PREFIX) => trans('game-manager::mods.by', ['author' => strtok(GitHub::parse($package)[0], '/')]),
             str_starts_with($package, Workshop::PREFIX) => 'Steam Workshop',
             str_starts_with($package, GameBanana::PREFIX), Installer::jarPackage($package) => $this->sourceName($package),
-            default => trans('game-manager::mods.by', ['author' => strtok($package, '-')]),
+            default => trans('game-manager::mods.by', ['author' => strtok(Hexium::bare($package), '-')]),
         };
     }
 

@@ -119,7 +119,7 @@ class ModProfileResource extends Resource
                     TextInput::make('settings.community')
                         ->label(trans($field('community')))
                         ->helperText(trans($field('community_hint')))
-                        ->required(fn (Get $get) => in_array('thunderstore', (array) $get('settings.sources'), true)),
+                        ->required(fn (Get $get) => array_intersect(['thunderstore', 'hexium'], (array) $get('settings.sources')) !== []),
                     TagsInput::make('settings.modrinth_loaders')
                         ->label(trans($field('modrinth_loaders')))
                         ->helperText(trans($field('modrinth_loaders_hint')))

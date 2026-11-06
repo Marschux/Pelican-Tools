@@ -265,7 +265,7 @@ return [
             'sources' => 'Fuentes',
             'sources_hint' => 'De dónde vienen los mods. La primera se abre primero.',
             'community' => 'Comunidad',
-            'community_hint' => 'El juego en Thunderstore, p. ej. "valheim" en thunderstore.io/c/valheim. Solo para Thunderstore.',
+            'community_hint' => 'El juego en Thunderstore, p. ej. "valheim" en thunderstore.io/c/valheim. Hexium usa el mismo nombre (valheim.hexium.gg). Solo para Thunderstore y Hexium.',
             'modrinth_loaders' => 'Loaders de Modrinth',
             'modrinth_loaders_hint' => 'Un proyecto necesita uno de ellos, p. ej. paper, spigot, bukkit. Solo para Modrinth.',
             'gamebanana_game' => 'Juego en GameBanana',

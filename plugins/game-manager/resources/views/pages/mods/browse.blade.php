@@ -25,8 +25,8 @@
             @endforeach
         </x-filament::input.select>
     </x-filament::input.wrapper>
-    {{-- thunderstore tags client-only and deprecated packages, other sources do not --}}
-    @if ($this->sourceKey() === 'thunderstore')
+    {{-- thunderstore and hexium tag client-only and deprecated packages, other sources do not --}}
+    @if (in_array($this->sourceKey(), ['thunderstore', 'hexium'], true))
         <label style="display:flex;gap:.5rem;align-items:center;font-size:.875rem;cursor:pointer">
             <x-filament::input.checkbox wire:model.live="showClientSide" />
             {{ trans('game-manager::mods.show_client_side') }}
