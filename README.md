@@ -31,6 +31,7 @@ Source code lives in `plugins/<name>/`, the deploy artifact is `plugins/<name>.z
 
 | Plugin | Purpose | Panel |
 |---|---|---|
+| [Clear Cache](plugins/clear-cache/README.md) | A button in the plugin list that clears the panel's caches and PHP's code cache, no shell needed | Admin |
 | [Game Query](plugins/game-query/README.md) | Query players, map and server info | Admin + Server |
 | [Game Manager](plugins/game-manager/README.md) | Browse and install mods, edit configs and access lists (admins, bans, whitelists) per server, set up per egg (Valheim, Minecraft Paper, Counter-Strike 1.6, Condition Zero, Source, Global Offensive and 2) | Admin + Server |
 | [Server Navigation](plugins/server-navigation/README.md) | Order the server sidebar and fold entries into "More", right in the sidebar | Server |
