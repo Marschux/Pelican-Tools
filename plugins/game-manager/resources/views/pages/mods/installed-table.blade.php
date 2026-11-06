@@ -48,14 +48,14 @@
             {{-- fixed column widths, the same for every game; below 60rem the table scrolls --}}
             <table style="width:100%;min-width:60rem;table-layout:fixed;border-collapse:collapse;font-size:.875rem">
                 <colgroup>
-                    <col style="width:20%">
-                    <col style="width:9%">
-                    <col style="width:11%">
+                    <col style="width:26%">
+                    <col style="width:8%">
+                    <col style="width:10%">
                     <col style="width:10%">
                     <col style="width:7%">
-                    <col style="width:16%">
-                    <col style="width:12%">
                     <col style="width:15%">
+                    <col style="width:11%">
+                    <col style="width:13%">
                 </colgroup>
                 <thead>
                     <tr style="text-align:left;{{ $muted }}">
