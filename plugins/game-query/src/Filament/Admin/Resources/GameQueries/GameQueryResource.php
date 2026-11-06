@@ -97,7 +97,9 @@ class GameQueryResource extends Resource
                 TextColumn::make('query_type')
                     ->label(trans('game-query::query.type'))
                     ->badge()
-                    ->formatStateUsing(fn ($state, QueryTypeService $service) => $service->getMappings()[$state] ?? $state),
+                    // the games behind the " - " only on hover, they made the column the widest
+                    ->formatStateUsing(fn ($state, QueryTypeService $service) => Str::before($service->getMappings()[$state] ?? $state, ' - '))
+                    ->tooltip(fn ($state, QueryTypeService $service) => $service->getMappings()[$state] ?? $state),
                 TextColumn::make('query_port_offset')
                     ->label(trans('game-query::query.port_offset'))
                     ->placeholder(trans('game-query::query.no_offset')),
@@ -109,7 +111,9 @@ class GameQueryResource extends Resource
                     ->label(trans('game-query::query.eggs'))
                     ->placeholder(trans('game-query::query.no_eggs'))
                     ->icon('tabler-eggs')
-                    ->badge(),
+                    ->badge()
+                    // one egg per line, so a query for several games does not widen the table
+                    ->listWithLineBreaks(),
             ])
             ->recordActions([
                 Action::make('test')
