@@ -48,9 +48,9 @@
             {{-- fixed column widths, the same for every game; below 60rem the table scrolls --}}
             <table style="width:100%;min-width:60rem;table-layout:fixed;border-collapse:collapse;font-size:.875rem">
                 <colgroup>
-                    <col style="width:32%">
+                    <col style="width:30%">
                     <col style="width:8%">
-                    <col style="width:9%">
+                    <col style="width:11%">
                     <col style="width:9%">
                     <col style="width:7%">
                     <col style="width:13%">
