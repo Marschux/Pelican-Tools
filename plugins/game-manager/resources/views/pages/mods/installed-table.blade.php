@@ -7,19 +7,16 @@
         $types = collect([$withLoader && $loader ? 'loader' : null, $engineInstall || $canEngine ? 'engine' : null, $canBots ? 'plugin' : null])
             ->concat($installedTypes->sort())
             ->filter()->unique()->values();
-        // the filter only where the section mixes types; without it or an update note the header goes
+        // the filter only where the section mixes types; without it or "update all" the header goes
         $hasFilter = $installedTypes->unique()->count() > 1;
-        $hasHeader = $hasFilter || !$this->updatesChecked || ($updatable && $canUpdate);
+        $hasHeader = $hasFilter || ($updatable && $canUpdate);
     @endphp
     {{-- the section brings an x-data of its own, so the filter state lives around it --}}
-    <div x-data="{ type: '' }" style="display:contents" @unless ($this->updatesChecked) wire:init="checkUpdates" @endunless>
+    <div x-data="{ type: '' }" style="display:contents">
     <x-filament::section>
         @if ($hasHeader)
         <x-slot name="afterHeader">
             <div class="mod-head" style="display:flex;gap:.5rem">
-                @unless ($this->updatesChecked)
-                    <span style="{{ $muted }};display:inline-flex;align-items:center;gap:.4rem"><x-filament::loading-indicator style="width:1rem;height:1rem" />{{ trans('game-manager::mods.checking_updates') }}</span>
-                @endunless
                 @if ($updatable && $canUpdate)
                     <x-filament::button size="sm" icon="tabler-refresh" wire:click="updateAll">{{ trans('game-manager::mods.update_all', ['count' => $updatable]) }}</x-filament::button>
                 @endif

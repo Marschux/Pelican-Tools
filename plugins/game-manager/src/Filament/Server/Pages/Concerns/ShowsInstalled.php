@@ -2,6 +2,7 @@
 
 namespace Marschux\GameManager\Filament\Server\Pages\Concerns;
 
+use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Collection;
 use Marschux\GameManager\Installer;
@@ -145,10 +146,14 @@ trait ShowsInstalled
         return once(fn () => $this->installer()->updates());
     }
 
-    /** Called by the page once it is shown: the update arrows come with the next render. */
+    /** The button above the installed table: the update arrows come with this render. */
     public function checkUpdates(): void
     {
         $this->updatesChecked = true;
+
+        if ($this->installer()->updates(fresh: true) === []) {
+            Notification::make()->title(trans('game-manager::mods.no_updates'))->success()->send();
+        }
     }
 
     /** @return Collection<int, ModInstall> the mods, without the loader */

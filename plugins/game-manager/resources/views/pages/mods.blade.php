@@ -141,6 +141,10 @@
     </nav>
     {{-- on every tab, at the far right of the menu --}}
     <div style="margin-left:auto;display:flex;gap:.5rem">
+        @if ($onInstalled)
+            {{-- asking every source takes a moment, so only on demand --}}
+            <x-filament::button size="sm" color="gray" icon="tabler-cloud-search" :tooltip="trans('game-manager::mods.check_updates')" label-sr-only wire:click="checkUpdates">{{ trans('game-manager::mods.check_updates') }}</x-filament::button>
+        @endif
         @if ($canRestart)
             {{-- amber like the restart note while a change waits for it --}}
             <x-filament::button size="sm" :color="$this->needsRestart() ? 'warning' : 'gray'" icon="tabler-refresh" :tooltip="trans('game-manager::mods.restart.header')" label-sr-only wire:click="restart" wire:confirm="{{ trans('game-manager::mods.restart.confirm') }}">{{ trans('game-manager::mods.restart.header') }}</x-filament::button>

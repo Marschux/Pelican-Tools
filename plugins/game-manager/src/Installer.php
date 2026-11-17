@@ -345,15 +345,19 @@ class Installer
 
     /**
      * Installed packages with a newer version out, the loader included - pinned ones too, they
-     * only stay out of "update all".
+     * only stay out of "update all". Fresh: past this check's own cache (not the sources' hour).
      *
      * @return array<string, string> package => newest version
      */
-    public function updates(): array
+    public function updates(bool $fresh = false): array
     {
         // the game keeps workshop maps up to date itself
         $installs = $this->installs()->reject(fn (ModInstall $install) => str_starts_with($install->package, Workshop::PREFIX));
         $key = 'game-manager:updates:' . $this->server->uuid . ':' . md5(json_encode([$installs->map(fn (ModInstall $install) => [$install->package, $install->version])->values(), $this->gameVersion()]));
+
+        if ($fresh) {
+            Cache::forget($key);
+        }
 
         // the sources cache for an hour; this answer for less, so a release shows up soon
         return Cache::remember($key, now()->addMinutes(10), function () use ($installs) {

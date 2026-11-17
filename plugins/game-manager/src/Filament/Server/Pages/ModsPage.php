@@ -120,7 +120,7 @@ class ModsPage extends Page
 
     public string $configText = '';
 
-    /** the update check asks every source - the page shows first and runs it right after (wire:init) */
+    /** the update check asks every source, so it runs only from its button */
     public bool $updatesChecked = false;
 
     public static function canAccess(): bool
