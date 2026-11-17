@@ -39,6 +39,10 @@
             @if ($details['website'])
                 <x-filament::button color="gray" icon="tabler-world" tag="a" :href="$details['website']" target="_blank">{{ trans('game-manager::mods.website') }}</x-filament::button>
             @endif
+            @php $isStarred = isset($starred[$details['id']]); @endphp
+            <button type="button" class="mod-action" aria-pressed="{{ $isStarred ? 'true' : 'false' }}" style="width:2.25rem;height:2.25rem;{{ $isStarred ? 'color:rgb(234,179,8);border-color:rgba(234,179,8,.5);opacity:1' : '' }}" title="{{ trans($isStarred ? 'game-manager::mods.unstar' : 'game-manager::mods.star') }}" wire:click="toggleStar({{ $js($details['id']) }})">
+                <x-filament::icon :icon="$isStarred ? 'tabler-star-filled' : 'tabler-star'" />
+            </button>
         </div>
 
         <div style="display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))">

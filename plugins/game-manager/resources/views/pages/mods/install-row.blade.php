@@ -38,7 +38,16 @@
                     {{-- an upload has no page to show --}}
                     <div style="font-weight:600">{{ $install->name }}</div>
                 @else
-                    <div style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</div>
+                    <div style="display:flex;gap:.35rem;align-items:center">
+                        <span style="font-weight:600;cursor:pointer" x-on:click="$dispatch('open-modal', { id: 'mod-details' }); $wire.showDetails({{ $js($install->package) }})">{{ $install->name }}</span>
+                        {{-- the loader, the engine and the bots come with the game, nothing to find again --}}
+                        @unless ($isLoader || $isEngine || $isBots || $install->adopted)
+                            @php $isStarred = isset($starred[$install->package]); @endphp
+                            <button type="button" wire:click="toggleStar({{ $js($install->package) }})" title="{{ trans($isStarred ? 'game-manager::mods.unstar' : 'game-manager::mods.star') }}" aria-pressed="{{ $isStarred ? 'true' : 'false' }}" style="display:inline-flex;background:none;border:0;padding:0;cursor:pointer;{{ $isStarred ? 'color:rgb(234,179,8)' : 'color:inherit;opacity:.35' }}">
+                                <x-filament::icon :icon="$isStarred ? 'tabler-star-filled' : 'tabler-star'" style="width:1rem;height:1rem" />
+                            </button>
+                        @endunless
+                    </div>
                 @endif
                 @if ($origin = $this->origin($install->package))
                     <div style="{{ $muted }}">{{ $origin }}</div>

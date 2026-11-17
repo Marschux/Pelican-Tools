@@ -24,6 +24,8 @@
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
     $relations = $onInstalled ? $this->relations() : [];
+    // the stars on the installed rows, the browse tiles and the detail modal
+    $starred = $this->starredIds();
     // the loader's row is in the mods section only
     $loaderInstall = $section === 'mods' ? $this->loaderInstall() : null;
     // GoldSrc: ReHLDS, ReGameDLL and ReAPI, offered in a row of their own

@@ -1,7 +1,6 @@
 @php
     // the starred tab: the same tiles, as they were starred, without search or pages
     $onStarred = $tab === 'starred';
-    $starred = $this->starredIds();
 @endphp
 @if ($onStarred)
     @php
