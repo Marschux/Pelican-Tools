@@ -13,6 +13,7 @@ return [
         'mods' => 'Mods',
         'plugins' => 'Plugins',
         'collections' => 'Collections',
+        'starred' => 'Gemerkt',
     ],
 
     'nothing_installed' => 'Noch keine Mods installiert.',
@@ -72,6 +73,9 @@ return [
         'loader' => 'Loader',
     ],
     'is_installed' => 'Installiert',
+    'star' => 'Merken, um es wiederzufinden',
+    'unstar' => 'Nicht mehr merken',
+    'no_starred' => 'Noch nichts gemerkt: der Stern auf einer Kachel legt sie hier ab.',
     'remove' => 'Entfernen',
     'cancel' => 'Abbrechen',
     'update_all' => 'Alle aktualisieren (:count)',

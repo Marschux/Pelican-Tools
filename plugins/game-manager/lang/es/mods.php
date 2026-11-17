@@ -13,6 +13,7 @@ return [
         'mods' => 'Mods',
         'plugins' => 'Plugins',
         'collections' => 'Colecciones',
+        'starred' => 'Favoritos',
     ],
 
     'nothing_installed' => 'Todavía no hay mods instalados.',
@@ -72,6 +73,9 @@ return [
         'loader' => 'Cargador',
     ],
     'is_installed' => 'Instalado',
+    'star' => 'Marcar para encontrarlo luego',
+    'unstar' => 'Quitar de favoritos',
+    'no_starred' => 'Aún no hay favoritos: la estrella de una tarjeta la guarda aquí.',
     'remove' => 'Quitar',
     'cancel' => 'Cancelar',
     'update_all' => 'Actualizar todo (:count)',

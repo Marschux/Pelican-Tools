@@ -16,6 +16,7 @@ use Marschux\GameManager\Filament\Server\Pages\Concerns\HandlesRestart;
 use Marschux\GameManager\Filament\Server\Pages\Concerns\InstallsMods;
 use Marschux\GameManager\Filament\Server\Pages\Concerns\ManagesLoader;
 use Marschux\GameManager\Filament\Server\Pages\Concerns\ShowsInstalled;
+use Marschux\GameManager\Filament\Server\Pages\Concerns\StarsMods;
 use Marschux\GameManager\GameVersion;
 use Marschux\GameManager\Installer;
 use Marschux\GameManager\Models\ModProfile;
@@ -38,6 +39,7 @@ class ModsPage extends Page
     use EditsConfigs;
     use ShowsInstalled;
     use HandlesRestart;
+    use StarsMods;
 
     protected string $view = 'game-manager::pages.mods';
 
@@ -47,7 +49,7 @@ class ModsPage extends Page
 
     protected static ?int $navigationSort = 32;
 
-    /** installed | browse | upload | links | configs - browse, upload and links are the sub tabs of "add" */
+    /** installed | browse | starred | upload | links | configs - browse, starred, upload and links are the sub tabs of "add" */
     public string $tab = 'installed';
 
     /** what the installed tab shows: mods | plugins | datapacks | resourcepacks | maps, see sections() */
@@ -181,9 +183,9 @@ class ModsPage extends Page
 
     public function setTab(string $tab): void
     {
-        $this->tab = in_array($tab, ['installed', 'browse', 'upload', 'links', 'configs'], true) ? $tab : 'browse';
+        $this->tab = in_array($tab, ['installed', 'browse', 'starred', 'upload', 'links', 'configs'], true) ? $tab : 'browse';
 
-        if (in_array($this->tab, ['upload', 'links'], true)) {
+        if (in_array($this->tab, ['starred', 'upload', 'links'], true)) {
             $this->addTab = $this->tab;
             $this->remember();
         }

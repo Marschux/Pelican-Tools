@@ -20,7 +20,7 @@
     $configTab = $tab === 'configs' ? $this->configTab() : null;
     // the config tab lists them, the gears of the installed mods and plugins point into them
     $configs = $configTab === 'mods' || in_array($section, ['mods', 'plugins'], true) ? $this->configs() : [];
-    $onAdd = in_array($tab, ['browse', 'upload', 'links'], true);
+    $onAdd = in_array($tab, ['browse', 'starred', 'upload', 'links'], true);
     // GoldSrc only: the plugins of AMX Mod X's plugins.ini - shown as long as it is on the server
     $loaderPlugins = $section === 'plugins' ? $this->loaderPlugins() : [];
     $relations = $onInstalled ? $this->relations() : [];
@@ -87,6 +87,10 @@
     @php
         // "add": one sub tab per source (and per kind where Modrinth offers several), then upload and links
         $addTabs = collect($this->browseTabs())->map(fn ($label, $key) => ['browse', $key, $label, 'tabler-search']);
+        // what the user starred, from every source - only once there is something, or while it is open
+        if ($addTabs->isNotEmpty() && ($tab === 'starred' || $this->starredItems())) {
+            $addTabs->put('starred', ['starred', null, trans('game-manager::mods.tabs.starred'), 'tabler-star']);
+        }
         if ($canInstall && $this->canUpload()) {
             $addTabs->put('upload', ['upload', null, trans('game-manager::mods.tabs.upload_maps'), 'tabler-upload']);
         }

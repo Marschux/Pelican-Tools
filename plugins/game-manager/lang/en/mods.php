@@ -14,6 +14,7 @@ return [
         'mods' => 'Mods',
         'plugins' => 'Plugins',
         'collections' => 'Collections',
+        'starred' => 'Starred',
     ],
 
     'nothing_installed' => 'No mods installed yet.',
@@ -73,6 +74,9 @@ return [
         'loader' => 'Loader',
     ],
     'is_installed' => 'Installed',
+    'star' => 'Star to find it again',
+    'unstar' => 'Remove star',
+    'no_starred' => 'Nothing starred yet: the star on a tile keeps it here.',
     'remove' => 'Remove',
     'cancel' => 'Cancel',
     'update_all' => 'Update all (:count)',

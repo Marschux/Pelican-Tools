@@ -49,7 +49,7 @@ profiles of their eggs - then uninstall Access Lists. Uninstalling it first dele
 ## Using it
 
 - **Loader:** one button installs or updates it; configs already on the server stay.
-- **Browse:** search, categories, sorting; a tile shows versions, dependencies and changelog.
+- **Browse:** search, categories, sorting; a tile shows versions, dependencies and changelog. A star keeps a tile in "Starred", per user and game.
   Required dependencies are installed along.
 - **Installed:** mods, plugins and maps; update (one or all), switch off, remove. Mods installed by
   hand can be taken over. The restart button turns amber while a change waits for a restart.

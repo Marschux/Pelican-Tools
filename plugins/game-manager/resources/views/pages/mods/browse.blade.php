@@ -1,7 +1,19 @@
-@if ($this->needsSteamKey())
+@php
+    // the starred tab: the same tiles, as they were starred, without search or pages
+    $onStarred = $tab === 'starred';
+    $starred = $this->starredIds();
+@endphp
+@if ($onStarred)
+    @php
+        $items = $this->starredItems();
+        $pages = 1;
+    @endphp
+@elseif ($this->needsSteamKey())
     {{-- no key, no browsing: what to do instead of an empty grid --}}
     @include('game-manager::pages.mods.empty', ['icon' => 'tabler-key', 'text' => trans('game-manager::mods.workshop.key_hint')])
-@else
+@endif
+@if ($onStarred || !$this->needsSteamKey())
+@unless ($onStarred)
 @php
     $gameVersion = $this->gameVersion();
 @endphp
@@ -44,6 +56,7 @@
         </label>
     @endif
 </form>
+@endunless
 
 {{-- while the next page loads the tiles stay and only fade, so nothing jumps --}}
 <style>.mod-loading { opacity: .4; pointer-events: none; transition: opacity .15s; }</style>
@@ -106,10 +119,14 @@
                 @if ($item['url'] ?? null)
                     <x-filament::button size="sm" color="gray" icon="tabler-external-link" tag="a" :href="$item['url']" target="_blank">{{ $this->sourceName($item['id']) }}</x-filament::button>
                 @endif
+                @php $isStarred = isset($starred[$item['id']]); @endphp
+                <button type="button" class="mod-action" aria-pressed="{{ $isStarred ? 'true' : 'false' }}" style="margin-left:auto;{{ $isStarred ? 'color:rgb(234,179,8);border-color:rgba(234,179,8,.5);opacity:1' : '' }}" title="{{ trans($isStarred ? 'game-manager::mods.unstar' : 'game-manager::mods.star') }}" wire:click="toggleStar({{ $js($item['id']) }})">
+                    <x-filament::icon :icon="$isStarred ? 'tabler-star-filled' : 'tabler-star'" />
+                </button>
             </div>
         </div>
     @empty
-        <span style="opacity:.7">{{ trans('game-manager::mods.no_results') }}</span>
+        <span style="opacity:.7">{{ trans($onStarred ? 'game-manager::mods.no_starred' : 'game-manager::mods.no_results') }}</span>
     @endforelse
 </div>
 
